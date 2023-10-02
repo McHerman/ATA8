@@ -1,0 +1,602 @@
+
+ATA8
+
+             ┌──────────────────────────────────────────┐
+             │                                          │
+    ┌────────┤             XILINX PCIE DMA              │
+    │        │                                          │
+    │        └─────────┬───────────▲────────────────────┘
+    │                  │ AXI4-LITE │ AXI4-MM
+    │        ┌─────────┼───────────┼────────────────────┐
+    │        │         │           │                    │
+    │        │     ┌───▼───┐   ┌───▼───┐   ┌─────────┐  │
+    │        │     │CONFIG │   │AXI4   │   │         │  │
+    │        │     │REG    │   │HOST   ├───► INSTMEM │  │
+    │        │     │BANK   │   │       │   │         │  │
+    │        │     └───┬───┘   └───▲───┘   └────┬────┘  │
+    │        │         │           │            │       │
+┌───▼──┐     │     ┌───▼───────────▼────────────▼────┐  │
+│      │     │     │                                 │  │
+│ DRAM ├─────┼─────►                                 │  │
+│      │  A  │     │          CONTROL CORE           │  │
+└──────┘  X  │  ┌──►                                 │  │
+          I  │  │  │                                 │  │
+          4  │  │  └───┬──────────────────┬──────────┘  │
+          |  │  │      │                  │             │
+          M  │  │  ┌───▼───┐   ┌──────────▼──────────┐  │
+          M  │  │  │CONFIG │   │                     │  │
+             │  │  │STATE  │   │     WEIGHT MEM      │  │
+             │  │  │MACHINE│   │                     │  │
+             │  │  └───────┘   └──────────┬──────────┘  │             
+             │  │                         │             │
+             │  │  ┌───────┐   ┌──────────▼──────────┐  │
+             │  │  │       │   │                     │  │
+             │  │  │   E   │   │                     │  │
+             │  │  │   D   │   │                     │  │
+             │  │  │   G   │   │                     │  │
+             │  │  │   E   │   │                     │  │
+             │  │  │       ├───►  MATRIX MULT UNIT   │  │
+             │  │  │   M   │   │                     │  │
+             │  │  │   E   │   │                     │  │
+             │  │  │   M   │   │                     │  │
+             │  │  │       │   │                     │  │
+             │  │  │       │   │                     │  │
+             │  │  └───────┘   └──────────┬──────────┘  │
+             │  │                         │             │
+             │  │              ┌──────────▼──────────┐  │
+             │  │              │                     │  │
+             │  └──────────────┤     WEIGHT MEM      │  │
+             │                 │                     │  │
+             │                 └─────────────────────┘  │
+             │                                          │
+             └──────────────────────────────────────────┘
+
+
+
+
+
+
+              ┌───────────────────────────────────────┐
+              │                                       │
+              │                                       │
+              │              XILINX XDMA              │
+              │                                       │
+              │                                       │
+              └─────────┬────────────▲────────────────┘
+                        │            │
+┌──────────┐  ┌─────────┼────────────┼────────────────┐
+│          │  │         │            │                │
+│          │  │      ┌──▼────────────┴──┐  ┌───────┐  │
+│   DRAM   ◄──┼──────┤                  │  │       │  │
+│          │  │      │   AXI-ST HOST    ├──► INST  │  │
+│          │  │   ┌──►                  │  │       │  │
+└────┬─────┘  │   │  └──────────────────┘  └───┬───┘  │
+     │        │   │                            │      │
+     │        │   │  ┌────────────┬────────────┼───┐  │
+     │        │   │  │            │            │   │  │
+     │        │   │  │            │  ┌─────────▼┐  │  │
+     │        │   │  │            │  │          │  │  │
+     └────────┼───┼──►   TILER    ◄──┤ DECODER  │  │  │
+              │   │  │            │  │          │  │  │
+              │   │  │            │  └──────────┘  │  │
+              │   │  │            │                │  │
+              │   │  └──┬───┬─────┴──────┬─────────┘  │
+              │   │     │   │            │            │
+              │   │     │   │ ┌──────────▼─────────┐  │
+              │   │     │   │ │                    │  │
+              │   │     │   └─►     WEIGHT MEM     │  │
+              │   │     │     │                    │  │
+              │   │     │     └──────────┬─────────┘  │
+              │   │     │                │            │
+              │   │  ┌──▼──┐  ┌──────┬───▼─────────┐  │
+              │   │  │     │  │      │             │  │
+              │   │  │     │  │ CTRL │             │  │
+              │   │  │  E  │  │      │             │  │
+              │   │  │  D  │  ├──────┘             │  │
+              │   │  │  G  │  │                    │  │
+              │   │  │  E  │  │                    │  │
+              │   │  │     ├──►  MATRIX MULT UNIT  │  │
+              │   │  │  M  │  │                    │  │
+              │   │  │  E  │  │                    │  │
+              │   │  │  M  │  │                    │  │
+              │   │  │     │  │                    │  │
+              │   │  │     │  │                    │  │
+              │   │  └─────┘  └──────────┬─────────┘  │
+              │   │                      │            │
+              │   │           ┌──────────┴─────────┐  │
+              │   │           │                    │  │
+              │   │           │      ACCU MEM      │  │
+              │   └───────────┤                    │  │
+              │               └────────────────────┘  │
+              │                                       │
+              └───────────────────────────────────────┘
+
+
+
+Design principles: 
+
+    Hide low level memory management to the host system 
+    Simplify data dependensies, tag / id system
+    ALU like system that removes the dependency on a compiler like system for the host
+    Continuous data streaming: 
+        Host system continously streams instruction data to the hardware accelerator while recieving data back sporatically. 
+        This maximizes the data transfer size to minimize communication overhead in PCIe. 
+    Less emphasis on von-neuman esque topology.
+    System should be based on fast paralel memory access, controller must be able to read and write form sys array at high levels of parralalism. 
+    Fine grained control, emphesis on streaming individual instructions instead of large compiled pieces of code. 
+    High levels of intercorrelation between individual operations, with simplistic refrencing system. 
+    Buffering system should allow the host to store and buffer larger ammounts of pending commands, which can in turn be tied together by the accelerator
+
+
+Write process 
+
+Hypothetical fully connected layer matrix op: 
+
+    Stream from host:
+        Transactional information
+        Operation / Pattern information
+        Data 
+        ID 
+        Writeback 
+        - Manual config info 
+    
+    Slave gathers transactional information and operation, passes data to tiler, 
+    which checks for availability in matrix. If space is available at current time, the tiler will alocate the given 
+    area, as well as adecuate space in the buffer memory and compile a compute kernel. When the data is streamed, control logic will 
+    send the information to either the allocated buffer, or the available space in the DRAM, 
+    and initialize a DMA descriptor to transfer the data back when the buffer is available. 
+    When the data transfer is complete, the kernel will be passed to the state machine along with adecuate accu buffer pointers. 
+    The core keeps track of the memories used via an ID based system, where certain pointers to either DRAM or buffer space is kept is a lookup table along with size information and such. 
+    Instructions can either stream data, or ID refrences
+
+
+Hyp ISA 
+
+Descriptor: Data sizes 
+Type: streamed data vs pointers to host mem
+Operation: GMM vs Conv vs Max pool. 
+Pattern: 
+Data: 
+ID: 
+Hardware specific stuff: 
+Subsequent ops (chaining): 
+
+IDEA: 
+    The ISA in mind is not actually an ISA, it is a standard for communicating GMM operational information from a host system to a hardware accelerator with minimal overhead.
+    The Intended design is meant to serve as a command based interface, that can be integrated into multible different systems irregardless of topology. 
+    For an example the interface can be used directly in RISC-V fine grained accelerator as the way data is communicated from a piece of logic used by a custom ISA extention. 
+
+Hybrid system: Can both be implemented as a loosely and tightly coupled interface. 
+
+
+Really good stuff: 
+
+An Analysis of Accelerator Coupling
+in Heterogeneous Architectures
+
+TCADer: A Tightly Coupled Accelerator Design framework for heterogeneous
+system with hardware/software co-design: 
+
+CUBA: An Architecture for Efficient CPU/Co-processor
+Data Communication: 
+    We argue that a programming model where coarse-
+    grained co-processors are encapsulated as function calls is
+    a useful and powerful model that presents two main bene-
+    fits.
+
+Architecture Support for Accelerator-Rich CMPs:
+    To communicate with an accelerator, a program would first write
+    to a region of shared memory a description of the work to be per-
+    formed. This description includes location of arguments, data lay-
+    out, which accelerators are involved in the computation, the compu-
+    tation to be performed, and the order in which to perform necessary
+    operations
+
+    A virtual accelerator is an accelerator that is implemented
+    as a series of calls to other physical accelerators, available in hard-
+    ware
+
+In-Datacenter Performance Analysis of a Tensor Processing Unit
+    
+https://www.youtube.com/watch?v=4HgShra-KnY -- Chris latner
+
+Configurable Multi-directional Systolic Array Architecture for Convolutional Neural Networks
+
+
+To Read:
+    A Highly Configurable Hardware/Software Stack
+    for DNN Inference Acceleration
+
+
+
+
+ .oooooo..o   .oooooo.   ooooo        ooooo     ooo ooooooooooooo ooooo   .oooooo.   ooooo      ooo .o. .o. .o. .o. .o. 
+d8P'    `Y8  d8P'  `Y8b  `888'        `888'     `8' 8'   888   `8 `888'  d8P'  `Y8b  `888b.     `8' 888 888 888 888 888 
+Y88bo.      888      888  888          888       8       888       888  888      888  8 `88b.    8  888 888 888 888 888 
+ `"Y8888o.  888      888  888          888       8       888       888  888      888  8   `88b.  8  Y8P Y8P Y8P Y8P Y8P 
+     `"Y88b 888      888  888          888       8       888       888  888      888  8     `88b.8  `8' `8' `8' `8' `8' 
+oo     .d8P `88b    d88'  888       o  `88.    .8'       888       888  `88b    d88'  8       `888  .o. .o. .o. .o. .o. 
+8""88888P'   `Y8bood8P'  o888ooooood8    `YbodP'        o888o     o888o  `Y8bood8P'  o8o        `8  Y8P Y8P Y8P Y8P Y8P 
+
+                                                                                                                        
+                          ┌───────────────┐
+                          │               │
+                          │    SYS-MEM    │
+                          │               │
+                          └───────▲───────┘
+                                  │
+                                  │                                           Hardware accelerator is fundametally
+                                  │                                           indenpedent of control system.
+                                  │                                    ┌───   It can be invoked using fine grained
+                      ┌───────────┴───────────┐                        │      functional calls, or when used with
+                      │                       │                        │      a COMU, coarsly grained ops in an SOC
+                      │                       │                        │      or as an external accelerator.
+                      │                       │                        │
+                      │                       │                        │
+                      │                       │
+                ┌─────▼──┬────┐         ┌─────▼─────┐         ┌──────────────────────┐
+                │        │    │         │           │         │                      │
+                │        │    │         │           │         │                      │
+                │        │    │         │           │         │                      │
+                │ RISC-V │ EX ├─────────►   COMU    ◄─────────► Hardware accelerator │
+                │        │    │         │           │         │                      │
+                │        │    │    │    │           │    │    ├───────────┐          │
+                │        │    │    │    │           │    │    │SCRATCH-PAD│          │
+                └────────┴────┘    │    └───────────┘    │    └───────────┴──────────┘
+                                   │                     │
+                                   │          │          │
+                                   │          │          │
+                                   │          │          │
+                                   │          │          │
+The control core                   │          │          │       The COMU fetches data from
+communicates operations       ─────┘          │          └─────  memory and communicates directly
+to the COMU via specialized                   │                  to hardware accelerator using
+ACCEL instructions                            │                  fine grained DSA VLIW
+                                              │
+                                              │
+                                              │
+                                              │                  The COMU (Coprocessor management unit)
+                                              │                  is resposible for accepting execution
+                                              │                  commands from the execution stage of
+                                              └───────────────   the RISC-V processor, as well as
+                                                                 interfacing with the memory system.
+                                                                 It relays opcodes and data to the
+                                                                 accelerator via a streaming interface
+
+
+
+┌────────────────────────┐    ┌────────────┐    ┌─────────────┐
+│                        │    │            │    │             │
+│                        │    │            │    │             │
+│                        ◄────┤  DECODER   ◄────┤  RECIEVER   │
+│                        │    │            │    │             │
+│                        │    │            │    │             │
+│                        │    └─────┬──────┘    └──────┬──────┘
+│     TILING ENGINE      │          │                  │
+│                        │          │                  │
+│                        │    ┌─────▼──────┐    ┌──────▼──────┐
+│                        │    │            │    │             │
+│                        │    │            │    │             │
+│                        ├────► ALLLOCATER ├────►  DATA MUX   │
+│                        │    │            │    │             │
+│                        │    │            │    │             │
+└───────────┬────────────┘    └─────┬──────┘    └──────┬──────┘
+            │                       │                  │
+            │                       │                  │                Streams data to various memories
+┌───────────▼───────────────────────▼──────┐           │  ────────────  or buffers based on avalability
+│                                          │           │                and size.
+│                                          │           ▼
+│                                          │
+│          SYSTOLIC ARRAY CONTROL          │
+│                                          │
+│                                          │
+│                                          │
+└───┬─────────────────────────────────┬────┘
+    │                                 │
+    │                                 │
+┌───▼──┬────────────────────┐    ┌────▼────┐
+│ CTRL │                    │    │         │
+├──────┘                    │    │         │
+│        SYS BUFFERS        ◄────┤   DMA   ◄───────────
+│                           │    │         │
+│                           │    │         │
+└───────────────────────────┘    └─────────┘
+
+
+FLOW:
+    RECIEVE COMMAND DESRIPTOR
+    DECODE COMMAND DESCRIPTOR
+    RECIEVE OP
+    DECODE OP
+    PASS DESCRIPTOR TO TILER
+    TILER PASSES INFORMATION TO ALLOCATOR
+    ALLOCATER LINKS DATA STORAGE INFO TO SYS ARRAY ALLOCATION
+    ALLOCATER PASSES DATA TO DATA MUX THAT STREAMS DATA INTO MEMORIES
+    SYSTOLIC ARRAY CTRL STORES OP
+    WHEN ARRAY SECTION IS AVAILABLE SAC PASSES DESCRIPTOR TO DMA
+    SAC STARTS OP
+    WHEN COMPLETETED BUFFER DMA STREAMS DATA TO HOST
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+┌───────────────────────────────────┐
+│                                   │
+│  ┌──────────┐  ┌───┬───┬───┬───┐  │
+│  │          │  │ F │ F │ F │ F │  │
+│  │          │  │ I │ I │ I │ I │  │
+│  │   CTRL   │  │ F │ F │ F │ F │  │
+│  │          │  │ O │ O │ O │ O │  │
+│  │          │  │   │   │   │   │  │
+│  └──────────┘  └─┬─┴─┬─┴─┬─┴─┬─┘  │
+│                  │   │   │   │    │
+│  ┌──────────┐  ┌─▼───▼───▼───▼─┐  │
+│  │ FIFO BUF ├──► ┌───┬───┬───┬─┼──┼────►
+│  ├──────────┤  │ │   │   │   │ │  │
+│  │ FIFO BUF ├──► ├───┼───┼───┼─┼──┼────►
+│  ├──────────┤  │ │   │   │   │ │  │
+│  │ FIFO BUF ├──► ├───┼───┼───┼─┼──┼────►
+│  ├──────────┤  │ │   │   │   │ │  │
+│  │ FIFO BUF ├──► ├───┼───┼───┼─┼──┼────►
+│  └──────────┘  └─┼───┼───┼───┼─┘  │
+│                  │   │   │   │    │
+└──────────────────┼───┼───┼───┼────┘
+                   │   │   │   │
+                   ▼   ▼   ▼   ▼
+
+
+
+
+SPEC V1:
+    SYS ARRAY:
+        WS dataflow is systolic array + Possibility for OS using buffers for weights and data. 
+        Possibility for slaving a grain to take inputs from another systolic array
+        Circular buffer for each input with the Possibility of mulitble pointers to different data. 
+        Circular buffer with accumulation for accumulator mem
+    Tiler:
+        Build actual parameteraziable tiling system with single grain. 
+        No actual tiling so far. 
+    Allocator:
+        No pending operations, but build the functionality to enable DRAM communcation. 
+    ISA: 
+        No interoperational data dependensies yet, just the communcation of simple GEMM, but build the ISA with expandability in mind, add ID to different command fields, or expand to 128 bit.
+
+
+SPEC V2: 
+    SYS ARRAY: 
+        Add functionality to support 2dconv 
+        Add buffer support for multible pending operations for pipelined dataflow 
+    Tiler: 
+        Build tiling / sequeduling system, add support for paralel execution
+    Allocator: 
+        Allow operations to stream weight data directly into DRAM. 
+    Buffer: 
+        Add buffer system to support intermediary data 
+    ISA: 
+        Perhaps add extention to allow for more low level hardware control beyond simple operations. 
+        3
+        
+
+
+
+
+
+
+   AXI-STREAM           AXI-STREAM               AXI-STREAM
+
+       │                    │                         │
+       │                    │                         │
+       │                    │                         │
+       │                    │                         │
+       │                    │                         │
+       │                    │                         │
+       │                    │                         │
+┌──────▼───────┐    ┌───────▼────────┐    ┌───────────▼────────────┐
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│ DATA RECIVER │    │ WEIGHT REIEVER │    │     INST RECIEVER      │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+└──────┬───────┘    └───────┬────────┘    └───────────┬────────────┘
+       │                    │                         │
+       │                    │                         │
+┌──────┴───────┐    ┌───────┴────────┐    ┌───────────▼────────────┐
+│              ◄────┤                ◄────┤                        │
+│              │    │                │    │                        │
+│   DATA DMA   │    │   WEIGHT DMA   │    │        DECODER         │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+└──────┬───────┘    └───────┬────────┘    └───────────┬────────────┘
+       │                    │                         │
+       │                    │                         │
+┌──────▼───────┐    ┌───────▼────────┐    ┌───────────▼────────────┐
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│    BUFFER    │    │   WEIGHT RAM   │    │     TILING ENGINE      │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+└────┬────▲────┘    └───────┬────────┘    └───────────┬────────────┘
+     │    │                 │                         │
+     │    │                 │                         │
+┌────▼────┴────┐    ┌───────▼────────┐    ┌───────────▼────────────┐
+│              │    │                │    │        OP QUEUE        │
+│              │    │                │    ├────────────────────────┤
+│   SYSTOLIC   │    │                │    │                        │
+│    ARRAY     ◄────┤   WEIGHT DMA   ◄────┤ SYSTOLIC ARRAY CONTROL │
+│     DMA      │    │                │    │                        │
+│              │    │                │    │                        │
+│              │    │                │    │                        │
+└▲──┬──────────┘    └───────┬────────┘    └────────────────────────┘
+ │  │                       │
+ │  │                  ┌────┼────┬────┬────┬────┬────┬────┬────┐
+ │  │                  │    │    │    │    │    │    │    │    │
+ │  │                ┌─▼────▼────▼────▼────▼────▼────▼────▼────▼──┐
+ │  │                │                                            │
+ │  │                │               WEIGHT FIFO                  │
+ │  │                │                                            │
+ │  │                └─┬────┬────┬────┬────┬────┬────┬────┬────┬──┘
+ │  │                  │    │    │    │    │    │    │    │    │
+ │  │                  │    │    │    │    │    │    │    │    │
+ │  │               ┌──┼────┼────┼────┼────┼────┼────┼────┼────┼───┐
+ │  │  ┌───────┐    │  │    │    │    │    │    │    │    │    │   │
+ │  │  │       │    │ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ │
+ │  ├──►       ├────┼─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  │ │
+ │  │  │       │    │ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ │
+ │  │  │       │    │  │    │    │    │    │    │    │    │    │   │
+ │  │  │   A   │    │ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ │
+ │  ├──►   C   ├────┼─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  │ │
+ │  │  │   T   │    │ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ │
+ │  │  │   I   │    │  │    │    │    │    │    │    │    │    │   │
+ │  │  │   V   │    │ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ │
+ │  ├──►   A   ├────┼─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  │ │
+ │  │  │   T   │    │ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ │
+ │  │  │   I   │    │  │    │    │    │    │    │    │    │    │   │
+ │  │  │   O   │    │ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ │
+ │  ├──►   N   ├────┼─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  │ │
+ │  │  │       │    │ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ │
+ │  │  │   F   │    │  │    │    │    │    │    │    │    │    │   │
+ │  │  │   I   │    │ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ │
+ │  ├──►   F   ├────┼─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  │ │
+ │  │  │   O   │    │ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ │
+ │  │  │       │    │  │    │    │    │    │    │    │    │    │   │
+ │  │  │       │    │ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ ┌▼─┐ │
+ │  └──►       ├────┼─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  ├─►  │ │
+ │     │       │    │ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ └┬─┘ │
+ │     └───────┘    │  │    │    │    │    │    │    │    │    │   │
+ │                  └──┼────┼────┼────┼────┼────┼────┼────┼────┼───┘
+ │                     │    │    │    │    │    │    │    │    │
+ │                     │    │    │    │    │    │    │    │    │
+ │                   ┌─▼────▼────▼────▼────▼────▼────▼────▼────▼──┐
+ │                   │                                            │
+ │                   │               ACCUMULATOR                  │
+ │                   │                                            │
+ │                   └─┬────┬────┬────┬────┬────┬────┬────┬────┬──┘
+ │                     │    │    │    │    │    │    │    │    │
+ └─────────────────────▼◄───▼◄───▼◄───▼◄───▼◄───▼◄───▼◄───▼◄───▼
+
+
+
+Instructions: 
+    mv to buf - Size, Address 
+    mv to weightmem - Size, Address
+        Could be the same as prev using address space partion 
+    
+    matrixmul - Size, BufAddress, MemAddress, ReturnAddress 
+
+    mv to host - Size, Address 
+
+Renaming: 
+    Two Subsequent Address calls will trigger a transfer directly to fifo 
+
+
+
+
+Tiling / Pipelining 
+
+ 
+
+
+
+
+    ┌──────────────┐  ┌──────────────┐  ┌────────────────────────────────┐
+    │              │  │              │  │                                │
+    │   │    │     │  │   │    │     │  │   │    │            │    │     │
+    │  ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │
+    │ ─►  ├─►  ├─► │  │ ─►  ├─►  ├─► │  │ ─►  ├─►  ├─────────►  ├─►  ├─► │
+    │  └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │
+    │   │    │     │  │   │    │     │  │   │    │            │    │     │
+    │  ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │
+    │ ─►  ├─►  ├─► │  │ ─►  ├─►  ├─► │  │ ─►  ├─►  ├─────────►  ├─►  ├─► │
+    │  └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │
+    │   │    │     │  │   │    │     │  │   │    │            │    │     │
+    │              │  │              │  │   │    │            │    │     │
+    └──────────────┘  └──────────────┘  │   │    │            │    │     │
+                                        │   │    │            │    │     │
+    ┌──────────────┐  ┌──────────────┐  │   │    │            │    │     │
+    │              │  │              │  │   │    │            │    │     │
+    │   │    │     │  │   │    │     │  │   │    │            │    │     │
+    │  ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │
+    │ ─►  ├─►  ├─► │  │ ─►  ├─►  ├─► │  │ ─►  ├─►  ├─────────►  ├─►  ├─► │
+    │  └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │
+    │   │    │     │  │   │    │     │  │   │    │            │    │     │
+    │  ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │
+    │ ─►  ├─►  ├─► │  │ ─►  ├─►  ├─► │  │ ─►  ├─►  ├─────────►  ├─►  ├─► │
+    │  └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │
+    │   │    │     │  │   │    │     │  │   │    │            │    │     │
+    │              │  │              │  │                                │
+    └──────────────┘  └──────────────┘  └────────────────────────────────┘
+
+    ┌────────────────────────────────┐  ┌────────────────────────────────┐
+    │                                │  │                                │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │
+    │ ─►  ├─►  ├─────────►  ├─►  ├─► │  │ ─►  ├─►  ├─────────►  ├─►  ├─► │
+    │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │
+    │ ─►  ├─►  ├─────────►  ├─►  ├─► │  │ ─►  ├─►  ├─────────►  ├─►  ├─► │
+    │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │
+    │ ─►  ├─►  ├─────────►  ├─►  ├─► │  │ ─►  ├─►  ├─────────►  ├─►  ├─► │
+    │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │  │  ┌▼─┐ ┌▼─┐         ┌▼─┐ ┌▼─┐   │
+    │ ─►  ├─►  ├─────────►  ├─►  ├─► │  │ ─►  ├─►  ├─────────►  ├─►  ├─► │
+    │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │  │  └┬─┘ └┬─┘         └┬─┘ └┬─┘   │
+    │   │    │            │    │     │  │   │    │            │    │     │
+    │                                │  │                                │
+    └────────────────────────────────┘  └────────────────────────────────┘
+
+
+
+  ┌───────┬───────┬───────┬───────┐
+  │ OP1   │  OP2  │  OP3  │  OP4  │
+  ├───────┴───────┼───────┴───────┤
+  │      OP5      │      OP6      │
+  ├───────────────┴───────────────┤
+  │              OP7              │
+  ├───────────────┬───────┬───────┤
+  │      OP8      │  OP9  │  OP10 │
+  ├───────────────┴───────┴───────┤
+  │              OP11             │
+  └───────────────────────────────┘
+
+
+ISA:
+    mvin, addr, size, tag 
+    mvout, addr, size 
+    
+    MaxtrixMul, tag, tag 
