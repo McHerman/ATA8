@@ -4,6 +4,10 @@ import chisel3._
 import chisel3.util._
 import chisel3.experimental.ChiselEnum
 
+class InstructionPackage extends Bundle {
+  val instruction = UInt(64.W)
+}
+
 class ExecuteInst(implicit c: Configuration) extends Bundle {
   val Op = UInt(1.W) // TODO: magic number
   val mode = UInt(c.modeWidth.W)
