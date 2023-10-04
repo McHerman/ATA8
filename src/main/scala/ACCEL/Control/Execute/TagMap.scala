@@ -7,25 +7,21 @@ import chisel3.util._
 
 //class ResStation(implicit c: Configuration) extends Module {
 class TagMap(implicit c: Configuration) extends Module {
-  def vecSearch(reg: Vec[UInt], size: Int, search: UInt): (UInt, Bool) = {
+
+  def vecSearch(reg: Vec[mapping], search: UInt): (UInt, Bool, Bool) = {
     val tag = WireDefault (0.U)
     val valid = WireDefault (false.B)
+    val ready = WireDefault (false.B)
 
-    reg.foreach(case (element) => 
-      when(reg(i) === search){
+    reg.zipWithIndex.foreach{case (element,i) => 
+      when(element.addr === search){
         tag := i.U
-        valid := true.B
-      }
-    )
-
-    for(i <- 0 until size){ //TODO: Rewrite to be more functional 
-      when(reg(i) === search){
-        tag := i.U
-        valid := true.B
+        ready := element.ready
+        valid := element.valid
       }
     }
   
-    (tag,valid)
+    (tag,valid,ready)
   }
   
 
@@ -40,6 +36,7 @@ class TagMap(implicit c: Configuration) extends Module {
   class mapping(implicit c: Configuration) extends Bundle {
     val addr = UInt(c.addrWidth.W)
     val ready = Bool()
+    val valid = Bool()
   } 
 
 
@@ -50,7 +47,7 @@ class TagMap(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val Writeport = Decoupled(new Bundle {val tag = Output(UInt(c.tagWidth.W)); val addr = Input(UInt(c.addrWidth.W))})
     // val Writeport = Vec(c.tagProducers,Flipped(Decoupled(new Bundle {val addr = Output(UInt(c.addrWidth.W)); val tag = Input(UInt(c.tagWidth.W))})))
-    val ReadData = Vec(c.tagRecievers,Decoupled(new Bundle {val tag = Output(UInt(c.tagWidth.W)); val addr = Input(UInt(c.addrWidth.W))}))
+    val ReadData = Vec(c.tagRecievers,Decoupled(new Bundle {val tag = Output(UInt(c.tagWidth.W)); val ready = Output(Bool()); val addr = Input(UInt(c.addrWidth.W))}))
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val tagValid = Output(Vec(c.dmaCount,Bool())) 
   })
@@ -68,21 +65,13 @@ class TagMap(implicit c: Configuration) extends Module {
 
   io.ReadData.foreach { case (element) => 
     when(element.ready){
-      val (tag,valid) = vecSearch(Map.addr,c.tagCount,element.bits.addr) // change this to be independent of size variable 
+      val (tag,valid,ready) = vecSearch(Map,element.bits.addr) 
       element.bits.tag := tag
+      element.bits.ready := ready
       element.valid := valid
     }
   }
 
-
-  /* for(i <- 0 until c.dmaCount){
-    when(io.ReadData(i).ready){
-      val (tag,valid) = vecSearch(Map,c.tagCount,io.ReadData(i).addr) // change this to be independent of size variable 
-      io.ReadData(i).bits.tag := tag
-      io.ReadData(i).valid := valid
-    }
-
-  } */
 
   /*
 
@@ -105,9 +94,11 @@ class TagMap(implicit c: Configuration) extends Module {
   when(io.Writeport.ready && !full){
     Map(Head).addr := io.Writeport.bits.addr
     Map(Head).ready := false.B
+    Map(Head).valid := true.B
 
     io.Writeport.valid := true.B
     io.Writeport.bits.tag := Head
+    
     when(Head === (c.tagCount.U - 1.U)){
       Head := 0.U
       HeadFlip := ~HeadFlip
@@ -118,6 +109,8 @@ class TagMap(implicit c: Configuration) extends Module {
 
 
   when(io.tagDealloc.valid && Tail === io.tagDealloc.bits){
+    Map(Tail).valid := false.B
+
     when(Tail === (c.grainFIFOSize.U - 1.U)){
       Tail := 0.U
       TailFlip := ~TailFlip

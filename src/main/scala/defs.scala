@@ -64,7 +64,7 @@ class Readport_V2(val dataWidth: Int,val addrWidth: Int) extends Bundle {
   }))
 }
 
-class ReadportBuf(implicit c: Configuration) extends Bundle {
+class ReadportScratch(implicit c: Configuration) extends Bundle {
   val request = Decoupled(new Bundle {
     val addr = UInt(8.W)
     val burst = UInt(8.W)
@@ -82,7 +82,7 @@ class Writeport[T <: Data](private val dataType: T, val addrWidth: Int) extends 
 }
 
 
-class WriteportBuf(implicit c: Configuration) extends Bundle {
+class WriteportScratch(implicit c: Configuration) extends Bundle {
   val request = Decoupled(new Bundle {
     val addr = UInt(8.W) // TODO find non arbitry value for this 
     val burst = UInt(8.W)

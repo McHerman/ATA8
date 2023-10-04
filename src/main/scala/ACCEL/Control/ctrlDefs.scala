@@ -9,7 +9,7 @@ class InstructionPackage extends Bundle {
 }
 
 class ExecuteInst(implicit c: Configuration) extends Bundle {
-  val Op = UInt(1.W) // TODO: magic number
+  val op = UInt(1.W) // TODO: magic number
   val mode = UInt(c.modeWidth.W)
   val grainSize = UInt(c.sysWidth.W)
   val ids = Vec(2, new Bundle { val ready = Bool(); val id = UInt(c.tagWidth.W)})
