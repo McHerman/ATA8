@@ -10,11 +10,13 @@ class InstructionPackage extends Bundle {
 
 class ExecuteInst(implicit c: Configuration) extends Bundle {
   val op = UInt(1.W) // TODO: magic number
-  val mode = UInt(c.modeWidth.W)
-  val grainSize = UInt(c.sysWidth.W)
-  val ids = Vec(2, new Bundle { val ready = Bool(); val id = UInt(c.tagWidth.W)})
+  val mode = UInt(1.W)
+  //val grainSize = UInt(c.sysWidth.W)
+  val grainSize = UInt(4.W)
+  val ids = Vec(2, new Bundle {val ready = Bool(); val tag = UInt(c.tagWidth.W)})
   val idd = UInt(c.tagWidth.W) // Dest Address
-  val size = UInt(c.grainSizeWidth.W)
+  //val size = UInt(c.grainSizeWidth.W)
+  val size = UInt(8.W)
 } 
 
 class IssuePackage(implicit c: Configuration) extends Bundle {
@@ -31,5 +33,25 @@ object EventType extends ChiselEnum {
 
 class Event(implicit c: Configuration) extends Bundle {
   //val eventType = EventType
-  val id = UInt(c.tagWidth.W)
+  val tag = UInt(c.tagWidth.W)
+} 
+
+
+
+class TagWrite(implicit c: Configuration) extends Bundle {
+  //val tag = Output(UInt(c.tagWidth.W))
+  //val addr = Input(UInt(c.addrWidth.W))
+
+  val addr = Decoupled(UInt(16.W)) //FIXME: Magic number
+  val tag = Flipped(Valid(UInt(c.tagWidth.W)))
+} 
+
+class TagRead(implicit c: Configuration) extends Bundle {
+  val request = Valid(new Bundle {
+    val addr = UInt(16.W) //FIXME: Magic number
+  })
+  val response = Flipped(Valid(new Bundle {
+    val tag = UInt(c.tagWidth.W)
+    val ready = Bool()
+  }))
 } 

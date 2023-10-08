@@ -3,9 +3,7 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-class ScratchPad(config: Configuration) extends Module {
-  implicit val c = config
-  
+class Scratchpad(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
   	//val Readport = Vec(c.bufferReadPorts, Flipped(new ReadportBuf(c.arithDataWidth,10)))
   	//val Writeport = Vec(c.bufferWritePorts, Flipped(new WriteportBuf(c.arithDataWidth,10)))

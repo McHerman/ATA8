@@ -59,7 +59,7 @@ package object ATA8 {
     }
     def test(): Configuration = {
       Configuration(
-        128, // bufferSize
+        64, // bufferSize
         1,    // bufferReadPorts
         1,    // bufferWritePorts
         8,     // grainDim
@@ -68,12 +68,12 @@ package object ATA8 {
         128,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        32,    // tagCount
+        16,    // tagCount
         8,   // issueQueueSize
         8,   // resStationSize
         32,    // addrWidth
 				1,    // dmaCount
-        4,    // issueWidth
+        1,    // issueWidth
         2,    // tagProducers
         3     // tagRecievers
       )

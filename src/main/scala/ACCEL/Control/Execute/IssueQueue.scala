@@ -78,9 +78,9 @@ object PENIS {
   }
 }
 
-//class IssueQueue()(implicit c: Configuration) extends Module {
-class IssueQueue(config: Configuration) extends Module {
-  implicit val c = config
+class IssueQueue(implicit c: Configuration) extends Module {
+//class IssueQueue(config: Configuration) extends Module {
+  //implicit val c = config
 
   val positions = c.issueQueueSize
   val w = c.tagWidth
@@ -90,7 +90,7 @@ class IssueQueue(config: Configuration) extends Module {
   val io = IO(new Bundle {
     val alloc = Flipped(Decoupled(new ExecuteInst))
 		//val issue = Vec(c.sysDim, Decoupled(new IssuePackage))
-    val issue = Vec(c.sysDim, Decoupled(new ExecuteInst))
+    val issue = Vec(c.sysDim, Decoupled(new ExecuteInst)) // TODO: Fix this so its sysDim * sysDim also change to IssuePackage //FIXME: Make this the issuepackage type
     val event = Flipped(Valid(new Event))
   })
 
@@ -193,11 +193,11 @@ class IssueElement()(implicit c: Configuration) extends Module{
   val AgeReg = RegInit(0.U(8.W))
 
   when(io.Port.event.valid && !emptyReg){
-    when(io.Port.event.bits.id === valueReg.ids(0).id){
+    when(io.Port.event.bits.tag === valueReg.ids(0).tag){
       valueReg.ids(0).ready := true.B
     }
 
-    when(io.Port.event.bits.id === valueReg.ids(1).id){
+    when(io.Port.event.bits.tag === valueReg.ids(1).tag){
       valueReg.ids(1).ready := true.B
     }
   }
@@ -232,6 +232,6 @@ class IssueElement()(implicit c: Configuration) extends Module{
 
 }
 
-object IssueQueue extends App {
+/* object IssueQueue extends App {
   (new chisel3.stage.ChiselStage).emitVerilog(new IssueQueue(Configuration.default()))
-}
+} */

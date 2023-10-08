@@ -3,17 +3,18 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-//class ResStation(implicit c: Configuration) extends Module {
-class ResStation(config: Configuration) extends Module { // Todo, change this to the bufferFIFO primitive
-  implicit val c = config
+class ResStation(implicit c: Configuration) extends Module {
+//class ResStation(config: Configuration) extends Module { // Todo, change this to the bufferFIFO primitive
+  //implicit val c = config
   
   var pointerwidth = log2Ceil(c.grainFIFOSize - 1)
 
   val io = IO(new Bundle {
-    val WriteData = Flipped(Decoupled(new IssuePackage()))
-    val ReadData = Decoupled(new IssuePackage())
-    //val Full = Output(Bool())
-    //val Fill = Output(UInt(pointerwidth.W))
+    /* val WriteData = Flipped(Decoupled(new IssuePackage()))
+    val ReadData = Decoupled(new IssuePackage()) */
+
+    val WriteData = Flipped(Decoupled(new ExecuteInst())) //TODO: Change this back
+    val ReadData = Decoupled(new ExecuteInst())
   })
 
   //io.WriteData.ready := false.B
@@ -26,7 +27,9 @@ class ResStation(config: Configuration) extends Module { // Todo, change this to
 
   val Readvalid = RegInit(0.U(1.W))
   
-  val Mem = Module(new DualPortRAM(c.grainFIFOSize, new IssuePackage()))
+  //val Mem = Module(new DualPortRAM(c.grainFIFOSize, new IssuePackage()))
+  val Mem = Module(new DualPortRAM(c.grainFIFOSize, new ExecuteInst()))
+
 	
   //io.ReadData.bits := Mem.io.Read.bits.data 
   io.ReadData.bits := Mem.io.Read.data 
@@ -99,6 +102,6 @@ class ResStation(config: Configuration) extends Module { // Todo, change this to
 }
 
 
-object ResStation extends App {
+/* object ResStation extends App {
   (new chisel3.stage.ChiselStage).emitVerilog(new ResStation(Configuration.default()))
-}
+} */

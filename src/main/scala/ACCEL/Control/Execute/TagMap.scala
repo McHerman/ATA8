@@ -25,38 +25,44 @@ class TagMap(implicit c: Configuration) extends Module {
   }
   
 
-  /* def isFull(head: UInt, tail: UInt, HeadFlip: Bool, TailFlip: Bool)(implicit c: Configuration): (Bool) = {
-    val full = WireDefault (false.B)
-
-    when()
-  
-    (full)
-  } */
-
   class mapping(implicit c: Configuration) extends Bundle {
     val addr = UInt(c.addrWidth.W)
     val ready = Bool()
     val valid = Bool()
   } 
 
-
-  
-  
   var pointerwidth = log2Ceil(c.grainFIFOSize - 1)
 
   val io = IO(new Bundle {
-    val Writeport = Decoupled(new Bundle {val tag = Output(UInt(c.tagWidth.W)); val addr = Input(UInt(c.addrWidth.W))})
+    val Writeport = Flipped(new TagWrite())
     // val Writeport = Vec(c.tagProducers,Flipped(Decoupled(new Bundle {val addr = Output(UInt(c.addrWidth.W)); val tag = Input(UInt(c.tagWidth.W))})))
-    val ReadData = Vec(c.tagRecievers,Decoupled(new Bundle {val tag = Output(UInt(c.tagWidth.W)); val ready = Output(Bool()); val addr = Input(UInt(c.addrWidth.W))}))
+    val ReadData = Vec(4,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
-    val tagValid = Output(Vec(c.dmaCount,Bool())) 
+    val event = Flipped(Valid(new Event()))
   })
 
-  val Head = RegInit(UInt(c.tagWidth.W))
-  val Tail = RegInit(UInt(c.tagWidth.W))
+  //val Head = RegInit(UInt(c.tagWidth.W))
+  //val Tail = RegInit(UInt(c.tagWidth.W))
 
-  val HeadFlip = RegInit(UInt(1.W))
-  val TailFlip = RegInit(UInt(1.W))
+  //val HeadFlip = RegInit(UInt(1.W))
+  //val TailFlip = RegInit(UInt(1.W))
+
+  val Head = RegInit(0.U(c.tagWidth.W))
+  val Tail = RegInit(0.U(c.tagWidth.W))
+  val HeadFlip = RegInit(0.U(1.W))
+  val TailFlip = RegInit(0.U(1.W))
+
+  val full = Wire(Bool())
+  full := (Head === Tail) && !(HeadFlip === TailFlip)
+  val empty = Wire(Bool())
+  empty := (Head === Tail) && (HeadFlip === TailFlip)
+
+  io.ReadData.foreach{case (element) => element.response.valid := false.B; element.response.bits := DontCare}
+
+  io.tagDealloc.ready := !empty
+  io.Writeport.tag.valid := false.B
+  io.Writeport.tag.bits := DontCare
+
 
   //val Map = Reg(Vec(c.tagCount,UInt(c.addrWidth.W)))
 
@@ -64,40 +70,29 @@ class TagMap(implicit c: Configuration) extends Module {
 
 
   io.ReadData.foreach { case (element) => 
-    when(element.ready){
-      val (tag,valid,ready) = vecSearch(Map,element.bits.addr) 
-      element.bits.tag := tag
-      element.bits.ready := ready
-      element.valid := valid
+    when(element.request.valid){
+      val (tag,valid,ready) = vecSearch(Map,element.request.bits.addr) 
+      element.response.bits.tag := tag
+
+      when(io.event.valid && io.event.bits.tag === tag){ // Event forwarding
+        element.response.bits.ready := true.B
+      }.otherwise{
+        element.response.bits.ready := ready
+      }
+      
+      element.response.valid := valid
     }
   }
 
+  io.Writeport.addr.ready := !full
 
-  /*
-
-  val tempIdx = Wire(Vec(c.tagProducers+1,UInt(4.W)))
-  tempIdx(0) := Head
-
-  io.Writeport.zipWithIndex.foreach { case (port, i) =>
-    when(port.valid && !full){
-      port.ready := true.B
-      port.bits.tag := tempIdx(i)
-      Map(tempIdx(i)) := port.bits.addr
-      tempIdx(i+1) := tempIdx(i) + 1.U
-    }.otherwise {
-      tempIdx(i+1) := tempIdx(i)
-    }
-  }
-
-  */
-
-  when(io.Writeport.ready && !full){
-    Map(Head).addr := io.Writeport.bits.addr
+  when(io.Writeport.addr.valid && !full){
+    Map(Head).addr := io.Writeport.addr.bits
     Map(Head).ready := false.B
     Map(Head).valid := true.B
 
-    io.Writeport.valid := true.B
-    io.Writeport.bits.tag := Head
+    io.Writeport.tag.valid := true.B
+    io.Writeport.tag.bits := Head
     
     when(Head === (c.tagCount.U - 1.U)){
       Head := 0.U
@@ -106,7 +101,6 @@ class TagMap(implicit c: Configuration) extends Module {
       Head := Head + 1.U
     }
   }
-
 
   when(io.tagDealloc.valid && Tail === io.tagDealloc.bits){
     Map(Tail).valid := false.B
@@ -119,7 +113,10 @@ class TagMap(implicit c: Configuration) extends Module {
     }
   }
 
-  val full = Wire(Bool())
-  full := (Head === Tail) && !(HeadFlip === TailFlip)
+  when(io.event.valid){
+    when(Map(io.event.bits.tag).valid){
+      Map(io.event.bits.tag).ready := true.B
+    } 
+  }
 
 }

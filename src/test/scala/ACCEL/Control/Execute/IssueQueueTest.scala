@@ -17,33 +17,33 @@ class IssueQueueTest extends AnyFlatSpec with ChiselScalatestTester {
   val n = 8
 
 
-  //implicit val Config = Configuration.default().copy(issueQueueSize = n, simulation = true)
+  implicit val Config = Configuration.test()
 
   it should "allocate n spaces sequentially" in {
     //val n = 2 + Random.nextInt(30)
     //val n = 16
 
-    test(new IssueQueue(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
-      for(id <- 0 until n) {
+    test(new IssueQueue()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+      for(tag <- 0 until n) {
 
         dut.io.alloc.ready.expect(1.B)
 
         dut.io.alloc.bits.grainSize.poke(1.U)
         dut.io.alloc.bits.size.poke(7.U)
 
-        dut.io.alloc.bits.idd.poke(id.U)
+        dut.io.alloc.bits.idd.poke(tag.U)
         
 
         dut.io.alloc.bits.ids(0).ready.poke(false.B)
         dut.io.alloc.bits.ids(1).ready.poke(false.B)
 
-        dut.io.alloc.bits.ids(0).id.poke(id.U)
-        dut.io.alloc.bits.ids(1).id.poke((id+1).U)
+        dut.io.alloc.bits.ids(0).tag.poke(tag.U)
+        dut.io.alloc.bits.ids(1).tag.poke((tag+1).U)
 
         dut.io.alloc.valid.poke(1.B)
         
         dut.clock.step()
-        //println(id)
+        //println(tag)
       }
       dut.io.alloc.ready.expect(0.B)
     }
@@ -53,32 +53,32 @@ class IssueQueueTest extends AnyFlatSpec with ChiselScalatestTester {
 
   it should "deallocate n spaces sequentially" in {
 
-    test(new IssueQueue(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
-      for(id <- 0 until n) {
+    test(new IssueQueue()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+      for(tag <- 0 until n) {
 
         /*
-        dut.io.alloc.id.expect(id)
+        dut.io.alloc.tag.expect(tag)
         dut.io.alloc.offer.expect(1.B)
 
         */
         dut.io.alloc.ready.expect(true.B)
-        dut.io.alloc.bits.idd.poke(id.U)
+        dut.io.alloc.bits.idd.poke(tag.U)
 
         dut.io.alloc.bits.ids(0).ready.poke(false.B)
         dut.io.alloc.bits.ids(1).ready.poke(false.B)
 
-        dut.io.alloc.bits.ids(0).id.poke(id.U)
-        dut.io.alloc.bits.ids(1).id.poke((id+1).U)
+        dut.io.alloc.bits.ids(0).tag.poke(tag.U)
+        dut.io.alloc.bits.ids(1).tag.poke((tag+1).U)
 
         dut.io.alloc.valid.poke(true.B)
         
         dut.clock.step()
-        //println(id)
+        //println(tag)
       }
 
       dut.io.alloc.bits.idd.poke(0.U)
-      dut.io.alloc.bits.ids(0).id.poke(0.U)
-      dut.io.alloc.bits.ids(1).id.poke(0.U)
+      dut.io.alloc.bits.ids(0).tag.poke(0.U)
+      dut.io.alloc.bits.ids(1).tag.poke(0.U)
 
 
 
@@ -94,7 +94,7 @@ class IssueQueueTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.event.valid.poke(true.B)
       //dut.io.event.bits.eventType.poke(CompletionWithValue)
-      dut.io.event.bits.id.poke(0.U)
+      dut.io.event.bits.tag.poke(0.U)
       //dut.io.event.bits.writeBackValue.poke(0.U)
 
       dut.io.issue(0).ready.poke(true.B)
@@ -108,7 +108,7 @@ class IssueQueueTest extends AnyFlatSpec with ChiselScalatestTester {
       
       dut.io.event.valid.poke(true.B)
       //dut.io.event.bits.eventType.poke(CompletionWithValue)
-      dut.io.event.bits.id.poke(1.U)
+      dut.io.event.bits.tag.poke(1.U)
       //dut.io.event.bits.writeBackValue.poke(0.U)
 
       dut.io.issue(0).ready.poke(true.B)
@@ -125,7 +125,7 @@ class IssueQueueTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.event.valid.poke(true.B)
       //dut.io.event.bits.eventType.poke(CompletionWithValue)
-      dut.io.event.bits.id.poke(2.U)
+      dut.io.event.bits.tag.poke(2.U)
       //dut.io.event.bits.writeBackValue.poke(0.U)
       dut.io.issue(0).ready.poke(true.B)
       dut.io.issue(0).valid.expect(true.B)
@@ -147,7 +147,7 @@ class IssueQueueTest extends AnyFlatSpec with ChiselScalatestTester {
 
         dut.io.event.valid.poke(true.B)
         //dut.io.event.bits.eventType.poke(CompletionWithValue)
-        dut.io.event.bits.id.poke((tag+2).U)
+        dut.io.event.bits.tag.poke((tag+2).U)
         //dut.io.event.bits.writeBackValue.poke(0.U)
 
 

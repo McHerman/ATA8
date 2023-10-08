@@ -8,9 +8,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import scala.util.Random
 import scala.io.Source
 
-class BufTest extends AnyFlatSpec with ChiselScalatestTester {
+class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
 
-  behavior of "Buffer"
+  behavior of "Scratchpad"
   
 	val n = 8
 
@@ -25,12 +25,12 @@ class BufTest extends AnyFlatSpec with ChiselScalatestTester {
     Array(1, 2, 3, 4, 1, 2, 3, 4)
   )
 
-
+  implicit val Config = Configuration.default()
 
 	
-  "BufTest " should "pass" in {
+  "ScratchpadTest " should "pass" in {
     //test(new Grain(n,n,8)).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
-    test(new Buffer(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+    test(new Scratchpad()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 
       for (i <- 0 until n) {
         dut.io.Writeport(0).request.valid.poke(true.B)
@@ -63,7 +63,7 @@ class BufTest extends AnyFlatSpec with ChiselScalatestTester {
 
   "BufTest2 " should "pass" in {
     //test(new Grain(n,n,8)).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
-    test(new Buffer(Configuration.buftest())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+    test(new Scratchpad()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 
       for (i <- 0 until n) {
         dut.io.Writeport(0).request.valid.poke(true.B)
