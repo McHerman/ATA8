@@ -19,7 +19,7 @@ class Execute(config: Configuration) extends Module {
   })
 
   val Decode = Module(new ExeDecode(c))
-  val TagMap = Module(new TagMap())
+  val TagMap = Module(new TagMap(4))
   val IssueQueue = Module(new IssueQueue())
   //val ResStations = Seq.fill(c.sysDim)(Module(new ResStation())) // Queues for indidual sys Grains 
 

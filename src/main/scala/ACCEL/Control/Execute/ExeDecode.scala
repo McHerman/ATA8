@@ -41,6 +41,8 @@ class ExeDecode(config: Configuration) extends Module {
 
   val tagFetched = Reg(Vec(2,Bool()))    
 
+  //val inst = io.instructionStream.bits.instruction.asTypeOf(new penis)
+
 
   val addrd = io.instructionStream.bits.instruction(31, 16)
   val addrs = VecInit(io.instructionStream.bits.instruction(47, 32), io.instructionStream.bits.instruction(63, 48))
@@ -80,7 +82,8 @@ class ExeDecode(config: Configuration) extends Module {
   stall := false.B
 
   when(!stall && io.tagRegister.addr.ready && !nop){
-    io.tagRegister.addr.bits := addrd
+    io.tagRegister.addr.bits.addr := addrd
+    io.tagRegister.addr.bits.ready := false.B
     io.tagRegister.addr.valid := true.B 
 
     when(io.tagRegister.tag.valid){

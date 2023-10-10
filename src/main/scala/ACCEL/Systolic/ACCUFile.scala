@@ -21,7 +21,7 @@ class ACCUFile(implicit c: Configuration) extends Module {
   io.Readport.response.bits := DontCare
 
 
-  val moduleArray = Seq.fill(c.grainDim)(Module(new BufferFIFO()))
+  val moduleArray = Seq.fill(c.grainDim)(Module(new BufferFIFO(c.grainFIFOSize, UInt(c.arithDataWidth.W))))
 
   val ACCUAct = Reg(Vec(c.grainDim,UInt(1.W)))
   val ActDReg = RegInit(0.U(1.W))

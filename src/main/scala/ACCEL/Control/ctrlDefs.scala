@@ -8,6 +8,21 @@ class InstructionPackage extends Bundle {
   val instruction = UInt(64.W)
 }
 
+
+class penis(implicit c: Configuration) extends Bundle {
+  val op = UInt(2.W) // TODO: magic number
+  val op2 = UInt(1.W)
+  val mode = UInt(1.W)
+  //val grainSize = UInt(c.sysWidth.W)
+  val fill = UInt(4.W)
+
+  val size = UInt(8.W)
+  val addrs1 = UInt(16.W)
+  val addrs2 = UInt(16.W)
+  val addrd = UInt(16.W) // Dest Address
+  //val size = UInt(c.grainSizeWidth.W
+} 
+
 class ExecuteInst(implicit c: Configuration) extends Bundle {
   val op = UInt(1.W) // TODO: magic number
   val mode = UInt(1.W)
@@ -17,6 +32,15 @@ class ExecuteInst(implicit c: Configuration) extends Bundle {
   val idd = UInt(c.tagWidth.W) // Dest Address
   //val size = UInt(c.grainSizeWidth.W)
   val size = UInt(8.W)
+} 
+
+class LoadInst(implicit c: Configuration) extends Bundle {
+  val op = UInt(1.W) // TODO: magic number
+  val mode = UInt(1.W)
+  val fill = UInt(22.W)
+
+  val size = UInt(8.W)
+  val addr = UInt(32.W)
 } 
 
 class IssuePackage(implicit c: Configuration) extends Bundle {
@@ -42,8 +66,9 @@ class TagWrite(implicit c: Configuration) extends Bundle {
   //val tag = Output(UInt(c.tagWidth.W))
   //val addr = Input(UInt(c.addrWidth.W))
 
-  val addr = Decoupled(UInt(16.W)) //FIXME: Magic number
-  val tag = Flipped(Valid(UInt(c.tagWidth.W)))
+  //val addr = Decoupled(UInt(16.W)) //FIXME: Magic number
+  val addr = Decoupled(new Bundle{val addr = UInt(16.W); val ready = Bool()})
+  val tag = Flipped(Valid(UInt(c.tagWidth.W))) 
 } 
 
 class TagRead(implicit c: Configuration) extends Bundle {

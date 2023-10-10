@@ -19,7 +19,7 @@ class YFile(implicit c: Configuration) extends Module {
   io.Memport.bits.readData := DontCare
  
 
-  val moduleArray = Seq.fill(c.grainDim)(Module(new BufferFIFO()))
+  val moduleArray = Seq.fill(c.grainDim)(Module(new BufferFIFO(c.grainFIFOSize, UInt(c.arithDataWidth.W))))
 
   val YACT = Reg(Vec(c.grainDim,UInt(1.W)))
   val YEn = Reg(Vec(c.grainDim,UInt(1.W)))

@@ -6,7 +6,7 @@ import chisel3.util._
 
 
 //class ResStation(implicit c: Configuration) extends Module {
-class TagMap(implicit c: Configuration) extends Module {
+class TagMap(readports: Int)(implicit c: Configuration) extends Module {
 
   def vecSearch(reg: Vec[mapping], search: UInt): (UInt, Bool, Bool) = {
     val tag = WireDefault (0.U)
@@ -36,7 +36,7 @@ class TagMap(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val Writeport = Flipped(new TagWrite())
     // val Writeport = Vec(c.tagProducers,Flipped(Decoupled(new Bundle {val addr = Output(UInt(c.addrWidth.W)); val tag = Input(UInt(c.tagWidth.W))})))
-    val ReadData = Vec(4,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
+    val ReadData = Vec(readports,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val event = Flipped(Valid(new Event()))
   })
@@ -87,7 +87,7 @@ class TagMap(implicit c: Configuration) extends Module {
   io.Writeport.addr.ready := !full
 
   when(io.Writeport.addr.valid && !full){
-    Map(Head).addr := io.Writeport.addr.bits
+    Map(Head).addr := io.Writeport.addr.bits.addr
     Map(Head).ready := false.B
     Map(Head).valid := true.B
 
