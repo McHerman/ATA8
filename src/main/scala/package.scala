@@ -20,7 +20,8 @@ package object ATA8 {
     dmaCount: Int,
     issueWidth: Int,
     tagProducers: Int,
-    tagRecievers: Int/* ,
+    tagRecievers: Int,
+    multibleDMA: Boolean/* ,
     initialStateMap: Seq[Int],
     simulation: Boolean = false */
   ){
@@ -50,11 +51,12 @@ package object ATA8 {
         8,    // tagCount
         16,   // issueQueueSize
         16,   // resStationSize
-        32,   // addrWidth
+        16,   // addrWidth
         4,    // dmaCount
         4,    // issueWidth
         2,    // tagProducers
-        3     // tagRecievers
+        3,    // tagRecievers
+        false
       )
     }
     def test(): Configuration = {
@@ -71,11 +73,12 @@ package object ATA8 {
         16,    // tagCount
         8,   // issueQueueSize
         8,   // resStationSize
-        32,    // addrWidth
+        16,    // addrWidth
 				1,    // dmaCount
         1,    // issueWidth
         2,    // tagProducers
-        3     // tagRecievers
+        3,    // tagRecievers
+        false
       )
     }
     def test16(): Configuration = {
@@ -92,11 +95,12 @@ package object ATA8 {
         8,    // tagCount
         16,   // issueQueueSize
         16,   // resStationSize
-        32,    // addrWidth
+        16,    // addrWidth
 				4,    // dmaCount
         4,    // issueWidth
         2,    // tagProducers
-        3     // tagRecievers
+        3,    // tagRecievers
+        false
       )
     }
     def buftest(): Configuration = {
@@ -113,11 +117,12 @@ package object ATA8 {
         8,    // tagCount
         16,    // issueQueueSize
         16,   // resStationSize
-        32,    // addrWidth
+        16,    // addrWidth
 				4,    // dmaCount
         4,    // issueWidth
         2,    // tagProducers
-        3     // tagRecievers
+        3,    // tagRecievers
+        false
       )
     }
   }

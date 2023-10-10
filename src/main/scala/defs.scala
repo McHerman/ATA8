@@ -66,7 +66,7 @@ class Readport_V2(val dataWidth: Int,val addrWidth: Int) extends Bundle {
 
 class ReadportScratch(implicit c: Configuration) extends Bundle {
   val request = Decoupled(new Bundle {
-    val addr = UInt(8.W)
+    val addr = UInt(16.W)
     val burst = UInt(8.W)
   })
   val data = Flipped(Decoupled(new Bundle {

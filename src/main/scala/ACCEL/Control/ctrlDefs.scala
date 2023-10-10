@@ -80,3 +80,8 @@ class TagRead(implicit c: Configuration) extends Bundle {
     val ready = Bool()
   }))
 } 
+
+class SysOP(implicit c: Configuration) extends Bundle {
+  val mode = UInt(1.W)
+  val size = UInt(8.W)
+} 
