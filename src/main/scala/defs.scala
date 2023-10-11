@@ -49,9 +49,12 @@ class ST2PointDMA(val addr_width: Int, val id_width: Int) extends Bundle {
 
 
 class Readport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
-  val addr = Output(UInt(addrWidth.W))
-  //val data = Input(dataType)
-  val data = Input(dataType.cloneType)
+  val request = Decoupled(new Bundle {
+    val addr = UInt(addrWidth.W)
+  })
+  val response = Flipped(Valid(new Bundle {
+    val readData = dataType.cloneType
+  }))
 }
 
 
@@ -69,7 +72,7 @@ class ReadportScratch(implicit c: Configuration) extends Bundle {
     val addr = UInt(16.W)
     val burst = UInt(8.W)
   })
-  val data = Flipped(Decoupled(new Bundle {
+  val data = Flipped(Decoupled(new Bundle { //TODO: Change this to comply with the naming scheme of other readports
     val readData = Vec(c.grainDim,UInt(c.arithDataWidth.W))
   }))
 }

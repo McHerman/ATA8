@@ -16,6 +16,7 @@ class Execute(config: Configuration) extends Module {
     val tagFetchfromLoad = Vec(2,new TagRead())  // Outgoing fetch 
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val DMARead = Vec(c.sysDim, Decoupled(new ExecuteInst()))
+    val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
   })
 
   val Decode = Module(new ExeDecode(c))
@@ -37,6 +38,7 @@ class Execute(config: Configuration) extends Module {
 
   TagMap.io.tagDealloc <> io.tagDealloc
   TagMap.io.event <> io.event
+  TagMap.io.readAddr <> io.readAddr
 
   io.tagFetch.zipWithIndex.foreach{case (element,i) => element <> TagMap.io.ReadData(i+2)} 
 

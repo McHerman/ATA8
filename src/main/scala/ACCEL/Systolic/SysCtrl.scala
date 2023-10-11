@@ -4,15 +4,15 @@ import chisel3._
 import chisel3.util._
 
 
-class SysCtrl() extends Module {
+class SysCtrl(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
-    val State = Input(UInt(1.W))
-    val Cnt = Input(UInt(8.W))
+    val in = Flipped(Decoupled(new SysOP))
+    
     val Activate = Output(Bool())
     val Shift = Output(Bool())
-    val Trigger = Input(Bool())
     val Enable = Output(Bool())
   })
+  io.in.ready := false.B
 
   io.Shift := false.B
   io.Activate := false.B
@@ -28,10 +28,12 @@ class SysCtrl() extends Module {
 
   switch(StateReg){ // TODO, Add enumerations  
     is(0.U){
-      when(io.Trigger){
-        FinalCnt := io.Cnt
+      io.in.ready := true.B
+
+      when(io.in.valid){
+        FinalCnt := io.in.bits.size
   
-        switch(io.State){
+        switch(io.in.bits.mode){
           is(0.U){
             StateReg := 1.U
           }

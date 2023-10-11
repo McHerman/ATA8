@@ -9,7 +9,7 @@ class BufferFIFO[T <: Data](val size: Int, val dataType: T) extends Module {
   
   val io = IO(new Bundle {
     val WriteData = Flipped(Decoupled(dataType))  // updated line
-    val ReadData = Decoupled(dataType)  // updated line
+    val ReadData = Flipped(new Readport(dataType,0))  // updated line
   })
 
   val Head = RegInit(0.U(pointerwidth.W))
@@ -18,21 +18,20 @@ class BufferFIFO[T <: Data](val size: Int, val dataType: T) extends Module {
   val HeadFlip = RegInit(0.U(1.W))
   val TailFlip = RegInit(0.U(1.W))
 
-  val Readvalid = RegInit(0.U(1.W))
-  
+  val Full = Wire(Bool())
+  Full := (Head === Tail) && !(HeadFlip === TailFlip)
+  val empty = Wire(Bool())
+  empty := (Head === Tail) && (HeadFlip === TailFlip)
+
   val Mem = Module(new DualPortRAM(size, dataType))  // updated line
 
-  io.ReadData.bits := Mem.io.Read.data 
-  io.ReadData.valid := false.B
+  io.ReadData.response.bits.readData := Mem.io.Read.data 
+  io.ReadData.response.valid := false.B
 
   Mem.io.Write.valid := false.B
   Mem.io.Write.bits := DontCare
 
   Mem.io.Read := DontCare
-
-  Readvalid := io.ReadData.ready
-  io.ReadData.valid := Readvalid
-
 
   when(io.WriteData.valid){
     Mem.io.Write.valid := true.B
@@ -49,8 +48,10 @@ class BufferFIFO[T <: Data](val size: Int, val dataType: T) extends Module {
     }
   }
 
+  io.ReadData.request.ready := !empty
+  
+  when(io.ReadData.request.valid){
 
-  when(io.ReadData.ready){
     Mem.io.Read.addr := Tail
 
     when(Tail === (size.U - 1.U)){
@@ -60,12 +61,10 @@ class BufferFIFO[T <: Data](val size: Int, val dataType: T) extends Module {
       Tail := Tail + 1.U
     }
 
-    io.ReadData.valid := true.B
+    io.ReadData.response.valid := true.B
   }
 
-  val Full = Wire(Bool())
-  Full := (Head === Tail) && !(HeadFlip === TailFlip)
-
   io.WriteData.ready := !Full
+
 }
 

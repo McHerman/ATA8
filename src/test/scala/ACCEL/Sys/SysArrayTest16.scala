@@ -47,9 +47,13 @@ class SysArrayTest16 extends AnyFlatSpec with ChiselScalatestTester {
         }
 
 
-        dut.io.State.poke(0.U)
+        /* dut.io.State.poke(0.U)
         dut.io.Trigger.poke(false.B)
-        dut.io.Size.poke(n.U)
+        dut.io.Size.poke(n.U) */
+
+        dut.io.in.valid.poke(false.B)
+        dut.io.in.bits.mode.poke(0.U)
+        dut.io.in.bits.size.poke(n.U)
 
         dut.io.Readport.request.valid.poke(false.B)
 
@@ -66,9 +70,13 @@ class SysArrayTest16 extends AnyFlatSpec with ChiselScalatestTester {
           dut.io.Memport.bits.writeData(k).poke(matrix(i)(k).U(n.W))
         }
    
-        dut.io.State.poke(0.U)
+        /* dut.io.State.poke(0.U)
         dut.io.Trigger.poke(false.B)
-        dut.io.Size.poke(n.U)
+        dut.io.Size.poke(n.U) */
+
+        dut.io.in.valid.poke(false.B)
+        dut.io.in.bits.mode.poke(0.U)
+        dut.io.in.bits.size.poke(n.U)
 
         dut.io.Readport.request.valid.poke(false.B)
   
@@ -81,8 +89,12 @@ class SysArrayTest16 extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.clock.step(10) 
 
-      dut.io.Trigger.poke(true.B)
-      dut.io.Size.poke(n.U)
+      /* dut.io.Trigger.poke(true.B)
+      dut.io.Size.poke(n.U) */
+
+      dut.io.in.valid.poke(false.B)
+      dut.io.in.bits.mode.poke(0.U)
+      dut.io.in.bits.size.poke(n.U)
 
       dut.clock.step()
 

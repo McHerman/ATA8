@@ -37,10 +37,11 @@ class XFile(implicit c: Configuration) extends Module {
       }
     }
     
-    moduleArray(i).io.ReadData.ready := XACT(i)
+    moduleArray(i).io.ReadData.request.valid := XACT(i)
+    moduleArray(i).io.ReadData.request.bits := DontCare
 
-    when(moduleArray(i).io.ReadData.valid){
-      io.Out(i).X := moduleArray(i).io.ReadData.bits
+    when(moduleArray(i).io.ReadData.request.valid){
+      io.Out(i).X := moduleArray(i).io.ReadData.response.bits.readData
     }.otherwise{
       io.Out(i).X := 0.U
     }

@@ -14,6 +14,7 @@ class Load(config: Configuration) extends Module {
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
     val writeport = new WriteportScratch
+    val readAddr = Vec(2 /*FIXME: magic fucking number*/ ,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
   })
 
   val queue = Module(new BufferFIFO(16,new LoadInst))
@@ -34,6 +35,7 @@ class Load(config: Configuration) extends Module {
   TagMap.io.tagDealloc <> io.tagDealloc
   TagMap.io.Writeport <> LoadController.io.tagRegister
   TagMap.io.event <> io.event
+  TagMap.io.readAddr <> io.readAddr
 
 }
 

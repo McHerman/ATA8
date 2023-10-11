@@ -39,7 +39,7 @@ class TagMap(readports: Int)(implicit c: Configuration) extends Module {
     val ReadData = Vec(readports,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val event = Flipped(Valid(new Event()))
-    val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(Decoupled(new Readport(UInt(c.addrWidth.W), c.tagWidth))))
+    val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
   })
 
   //val Head = RegInit(UInt(c.tagWidth.W))
@@ -59,16 +59,13 @@ class TagMap(readports: Int)(implicit c: Configuration) extends Module {
   empty := (Head === Tail) && (HeadFlip === TailFlip)
 
   io.ReadData.foreach{case (element) => element.response.valid := false.B; element.response.bits := DontCare}
+  io.readAddr.foreach{case (element) => element.request.ready := false.B; element.response.valid := false.B; element.response.bits := DontCare}
 
   io.tagDealloc.ready := !empty
   io.Writeport.tag.valid := false.B
   io.Writeport.tag.bits := DontCare
 
-
-  //val Map = Reg(Vec(c.tagCount,UInt(c.addrWidth.W)))
-
   val Map = Reg(Vec(c.tagCount,new mapping()))
-
 
   io.ReadData.foreach { case (element) => 
     when(element.request.valid){
@@ -86,8 +83,10 @@ class TagMap(readports: Int)(implicit c: Configuration) extends Module {
   }
 
   io.readAddr.foreach {case (element) => 
-    when(element.valid){
-      element.bits.data := Map(element.bits.addr)
+    element.request.ready := true.B
+    when(element.request.valid){
+      element.response.bits.readData := Map(element.request.bits.addr).addr
+      element.response.valid := Map(element.request.bits.addr).valid
     }
   }
 

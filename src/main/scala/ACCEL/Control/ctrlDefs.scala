@@ -43,6 +43,14 @@ class LoadInst(implicit c: Configuration) extends Bundle {
   val addr = UInt(32.W)
 } 
 
+class StoreInst(implicit c: Configuration) extends Bundle {
+  val op = UInt(1.W) // TODO: magic number
+  val fill = UInt(23.W)
+
+  val size = UInt(8.W)
+  val addr = UInt(32.W)
+} 
+
 class IssuePackage(implicit c: Configuration) extends Bundle {
   val mode = UInt(c.modeWidth.W)
   val elementOffset = UInt(c.sysWidth.W)

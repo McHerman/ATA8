@@ -12,7 +12,9 @@ class ACCUFile(implicit c: Configuration) extends Module {
     val Shift = Input(Bool())
     //val Memport = Flipped(Decoupled(new Memport_V3(dataWidth*grainWidth,addr_width)))
     //val Memport = Flipped(Decoupled(new Memport_V3(32,addr_width)))
-    val Readport = Flipped(new Readport_V2(c.arithDataWidth*c.grainDim,10))
+    //val Readport = Flipped(new Readport_V2(c.arithDataWidth*c.grainDim,10))
+    val Readport = Flipped(new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10))
+
     val State = Input(UInt(1.W))
   })
 
@@ -26,7 +28,11 @@ class ACCUFile(implicit c: Configuration) extends Module {
   val ACCUAct = Reg(Vec(c.grainDim,UInt(1.W)))
   val ActDReg = RegInit(0.U(1.W))
 
-  ActDReg := io.Activate  
+  ActDReg := io.Activate 
+
+  /* io.Readport.request <>  
+
+  val dataVec = VecInit(moduleArray.map(_.io.ReadData.response.readData)) */
 
   for(i <- 0 until c.grainDim){
     if(i == 0){
@@ -36,13 +42,14 @@ class ACCUFile(implicit c: Configuration) extends Module {
     }
 
     moduleArray(i).io.WriteData.valid := false.B
-    moduleArray(i).io.ReadData.ready := false.B
+    moduleArray(i).io.ReadData.request.valid := false.B
+    moduleArray(i).io.ReadData.request.bits := DontCare
 
     when(io.Readport.request.valid){
-      moduleArray(i).io.ReadData.ready := true.B
+      moduleArray(i).io.ReadData.request.valid := true.B
     }
 
-    io.Readport.response.bits.readData(i) := moduleArray(i).io.ReadData.bits 
+    io.Readport.response.bits.readData(i) := moduleArray(i).io.ReadData.response.bits.readData // FIXME: All this shit sucks
 
     switch(io.State){
       is(0.U){

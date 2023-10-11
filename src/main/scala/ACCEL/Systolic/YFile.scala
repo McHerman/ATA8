@@ -42,14 +42,16 @@ class YFile(implicit c: Configuration) extends Module {
 
     io.Out(i).PEState.State := io.State
 
-    when(moduleArray(i).io.ReadData.valid){
-      io.Out(i).Y := moduleArray(i).io.ReadData.bits
+    when(moduleArray(i).io.ReadData.response.valid){
+      io.Out(i).Y := moduleArray(i).io.ReadData.response.bits.readData
     }.otherwise{
       io.Out(i).Y := 0.U
     }
 
     moduleArray(i).io.WriteData.valid := false.B
     moduleArray(i).io.WriteData.bits := 0.U
+
+    
 
     when(io.Memport.valid){
       when(io.Memport.bits.wenable){
@@ -58,19 +60,19 @@ class YFile(implicit c: Configuration) extends Module {
       }
     }
 
-    moduleArray(i).io.ReadData.ready := false.B
-
+    moduleArray(i).io.ReadData.request.valid := false.B
+    moduleArray(i).io.ReadData.request.bits := DontCare
 
     val shiftdelay = RegInit(0.U(1.W))
 
     switch(io.State){
       is(0.U){
         shiftdelay := io.Shift
-        moduleArray(i).io.ReadData.ready := io.Shift
+        moduleArray(i).io.ReadData.request.valid := io.Shift
         io.Out(i).PEState.Shift := shiftdelay
       }
       is(1.U){
-        moduleArray(i).io.ReadData.ready := YACT(i)
+        moduleArray(i).io.ReadData.request.valid := YACT(i)
         io.Out(i).PEState.Shift := io.Shift
       }
     }

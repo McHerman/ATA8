@@ -12,13 +12,16 @@ class LoadController(implicit c: Configuration) extends Module {
   }
 
   val io = IO(new Bundle {
-    val instructionStream = Flipped(Decoupled(new LoadInst))
+    //val instructionStream = Flipped(Decoupled(new LoadInst))
+    val instructionStream = new Readport(new LoadInst,0)
     val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
     val writeport = new WriteportScratch
     val tagRegister = new TagWrite
   })
 
-	io.instructionStream.ready := false.B
+	io.instructionStream.request.valid := false.B
+	io.instructionStream.request.bits := DontCare
+
 	io.writeport.request.valid := false.B
 	io.writeport.data.valid := false.B
 
@@ -40,10 +43,10 @@ class LoadController(implicit c: Configuration) extends Module {
 
   switch(StateReg){
 		is(0.U){
-			io.instructionStream.ready := true.B
+			io.instructionStream.request.valid := true.B
 
-			when(io.instructionStream.valid){
-				reg := io.instructionStream.bits
+			when(io.instructionStream.response.valid){
+				reg := io.instructionStream.response.bits.readData
         StateReg := 1.U
 			}
 		}

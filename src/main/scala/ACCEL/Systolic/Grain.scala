@@ -8,11 +8,12 @@ class Grain(config: Configuration) extends Module {
   implicit val c = config
   
   val io = IO(new Bundle {
-    val State = Input(UInt(1.W))
+    //val State = Input(UInt(1.W))
+    //val Size = Input(UInt(8.W))
+    val in = Flipped(Decoupled(new SysOP)) 
     val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10))) // Add actual memport
     val Readport = Flipped(new Readport_V2(c.arithDataWidth*c.grainDim,10))
     val Trigger = Input(Bool())
-    val Size = Input(UInt(8.W))
   })
 
   val XFile = Module(new XFile())
@@ -20,9 +21,7 @@ class Grain(config: Configuration) extends Module {
   val ACCUFile = Module(new ACCUFile())
   val SysCtrl = Module(new SysCtrl())
 
-  SysCtrl.io.Cnt := io.Size
-  SysCtrl.io.Trigger := io.Trigger
-  SysCtrl.io.State := io.State
+  SysCtrl.io.in <> io.in
 
   XFile.io.Memport.valid := false.B
   XFile.io.Memport.bits := DontCare
@@ -40,7 +39,7 @@ class Grain(config: Configuration) extends Module {
 
   io.Memport.ready := true.B
 
-  when(io.Memport.valid){
+  when(io.Memport.valid){ // Fix this shit
     when(io.Memport.bits.addr === 1.U){
       XFile.io.Memport <> io.Memport
     }.elsewhen(io.Memport.bits.addr === 2.U){
@@ -66,8 +65,11 @@ class Grain(config: Configuration) extends Module {
   
   ACCUFile.io.Activate := XFile.io.ActivateOut
 
-  YFile.io.State := io.State
-  ACCUFile.io.State := io.State 
+  //YFile.io.State := io.State
+  //ACCUFile.io.State := io.State 
+
+  YFile.io.State := io.in.bits.mode
+  ACCUFile.io.State := io.in.bits.mode
 
   //YFile.io.Shift := 0.U
   //ACCUFile.io.Shift := 0.U
