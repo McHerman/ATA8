@@ -16,11 +16,11 @@ class Execute(config: Configuration) extends Module {
     val tagFetchfromLoad = Vec(2,new TagRead())  // Outgoing fetch 
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val DMARead = Vec(c.sysDim, Decoupled(new ExecuteInst()))
-    val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
+    val readAddr = Vec(2 /*FIXME: magic fucking number*/ ,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
   })
 
   val Decode = Module(new ExeDecode(c))
-  val TagMap = Module(new TagMap(4))
+  val TagMap = Module(new TagMap(c.exTagCount,4,0))
   val IssueQueue = Module(new IssueQueue())
   //val ResStations = Seq.fill(c.sysDim)(Module(new ResStation())) // Queues for indidual sys Grains 
 

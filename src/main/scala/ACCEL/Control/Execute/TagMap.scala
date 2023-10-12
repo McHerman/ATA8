@@ -6,7 +6,7 @@ import chisel3.util._
 
 
 //class ResStation(implicit c: Configuration) extends Module {
-class TagMap(readports: Int)(implicit c: Configuration) extends Module {
+class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configuration) extends Module {
 
   def vecSearch(reg: Vec[mapping], search: UInt): (UInt, Bool, Bool) = {
     val tag = WireDefault (0.U)
@@ -42,12 +42,6 @@ class TagMap(readports: Int)(implicit c: Configuration) extends Module {
     val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
   })
 
-  //val Head = RegInit(UInt(c.tagWidth.W))
-  //val Tail = RegInit(UInt(c.tagWidth.W))
-
-  //val HeadFlip = RegInit(UInt(1.W))
-  //val TailFlip = RegInit(UInt(1.W))
-
   val Head = RegInit(0.U(c.tagWidth.W))
   val Tail = RegInit(0.U(c.tagWidth.W))
   val HeadFlip = RegInit(0.U(1.W))
@@ -65,14 +59,14 @@ class TagMap(readports: Int)(implicit c: Configuration) extends Module {
   io.Writeport.tag.valid := false.B
   io.Writeport.tag.bits := DontCare
 
-  val Map = Reg(Vec(c.tagCount,new mapping()))
+  val Map = Reg(Vec(tagCount,new mapping()))
 
   io.ReadData.foreach { case (element) => 
     when(element.request.valid){
       val (tag,valid,ready) = vecSearch(Map,element.request.bits.addr) 
-      element.response.bits.tag := tag
+      element.response.bits.tag := tag + offset.U// TODO: Add offset
 
-      when(io.event.valid && io.event.bits.tag === tag){ // Event forwarding
+      when(io.event.valid && io.event.bits.tag + offset.U === tag){ // Event forwarding // TODO: Add offset
         element.response.bits.ready := true.B
       }.otherwise{
         element.response.bits.ready := ready
@@ -82,11 +76,11 @@ class TagMap(readports: Int)(implicit c: Configuration) extends Module {
     }
   }
 
-  io.readAddr.foreach {case (element) => 
+  io.readAddr.foreach {case (element) => // For use in SysCtrl, checks for stat
     element.request.ready := true.B
     when(element.request.valid){
-      element.response.bits.readData := Map(element.request.bits.addr).addr
-      element.response.valid := Map(element.request.bits.addr).valid
+      element.response.bits.readData := Map(element.request.bits.addr).addr - offset.U// TODO: subtract offset
+      element.response.valid := Map(element.request.bits.addr).valid - offset.U // TODO: subtract offset
     }
   }
 
@@ -98,9 +92,9 @@ class TagMap(readports: Int)(implicit c: Configuration) extends Module {
     Map(Head).valid := true.B
 
     io.Writeport.tag.valid := true.B
-    io.Writeport.tag.bits := Head
+    io.Writeport.tag.bits := Head + offset.U // TODO: Add offset
     
-    when(Head === (c.tagCount.U - 1.U)){
+    when(Head === (tagCount.U - 1.U)){
       Head := 0.U
       HeadFlip := ~HeadFlip
     }.otherwise{
@@ -120,7 +114,7 @@ class TagMap(readports: Int)(implicit c: Configuration) extends Module {
   }
 
   when(io.event.valid){
-    when(Map(io.event.bits.tag).valid){
+    when(Map(io.event.bits.tag).valid){ //Subtract offset
       Map(io.event.bits.tag).ready := true.B
     } 
   }

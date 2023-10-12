@@ -19,7 +19,7 @@ class Load(config: Configuration) extends Module {
 
   val queue = Module(new BufferFIFO(16,new LoadInst))
   val LoadController = Module(new LoadController)
-  val TagMap = Module(new TagMap(2))
+  val TagMap = Module(new TagMap(c.loadTagCount,2,c.exTagCount))
 
   val inst = io.instructionStream.bits.instruction.asTypeOf(new LoadInst)
 

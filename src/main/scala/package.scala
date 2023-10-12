@@ -13,7 +13,8 @@ package object ATA8 {
     grainACCUSize: Int,
     arithDataWidth: Int,
     modeWidth: Int,
-    tagCount: Int,
+    exTagCount: Int,
+    loadTagCount: Int,
     issueQueueSize: Int, 
     resStationSize: Int,
     addrWidth: Int,
@@ -25,7 +26,7 @@ package object ATA8 {
     initialStateMap: Seq[Int],
     simulation: Boolean = false */
   ){
-    val tagWidth =  log2Ceil(tagCount)
+    val tagWidth =  log2Ceil(exTagCount + loadTagCount)
     val syncIdWidth = log2Ceil(sysDim)
     val sysWidth = log2Ceil(2)
     //val sysWidth = log2Ceil(sysDim*sysDim) //Gives 0 
@@ -48,7 +49,8 @@ package object ATA8 {
         128,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        8,    // tagCount
+        8,    // exTagCount
+        8,    // loadTagCount
         16,   // issueQueueSize
         16,   // resStationSize
         16,   // addrWidth
@@ -70,7 +72,8 @@ package object ATA8 {
         128,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        16,    // tagCount
+        8,    // exTagCount
+        8,    // loadTagCount
         8,   // issueQueueSize
         8,   // resStationSize
         16,    // addrWidth
@@ -92,7 +95,8 @@ package object ATA8 {
         128,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        8,    // tagCount
+        8,    // exTagCount
+        8,    // loadTagCount
         16,   // issueQueueSize
         16,   // resStationSize
         16,    // addrWidth
@@ -114,7 +118,8 @@ package object ATA8 {
         128,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        8,    // tagCount
+        8,    // exTagCount
+        8,    // loadTagCount
         16,    // issueQueueSize
         16,   // resStationSize
         16,    // addrWidth
