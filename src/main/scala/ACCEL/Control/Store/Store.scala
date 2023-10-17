@@ -8,28 +8,25 @@ class Store(config: Configuration) extends Module {
   implicit val c = config
 
   val io = IO(new Bundle {
-    val instructionStream = Flipped(Decoupled(new InstructionPackage))
+    val instructionStream = Flipped(Decoupled(new StoreInstIssue))
     val tagDealloc = Decoupled(UInt(c.tagWidth.W))
     val AXIST = new AXIST_2(64,2,1,1,1)
     val readport = new ReadportScratch
-		val tagRead = new TagRead
+		//val tagRead = new TagRead
 		val event = Flipped(Valid(new Event()))
   })
 
-  val queue = Module(new BufferFIFO(16,new StoreInst))
+  val queue = Module(new BufferFIFO(16,new StoreInstIssue))
   val StoreController = Module(new StoreController)
 
-  val inst = io.instructionStream.bits.instruction.asTypeOf(new StoreInst)
-
-  queue.io.WriteData.bits <> inst
-  queue.io.WriteData.valid := io.instructionStream.valid
+  queue.io.WriteData <> io.instructionStream
 
   io.instructionStream.ready := queue.io.WriteData.ready
 
  	StoreController.io.instructionStream <> queue.io.ReadData
   StoreController.io.AXIST <> io.AXIST
 	StoreController.io.event <> io.event
-	StoreController.io.tagRead <> io.tagRead
+	//StoreController.io.tagRead <> io.tagRead
 	
 	io.tagDealloc <> StoreController.io.tagDealloc
 

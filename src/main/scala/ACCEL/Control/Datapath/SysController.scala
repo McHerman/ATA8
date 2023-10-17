@@ -8,7 +8,7 @@ class SysController(config: Configuration) extends Module {
   implicit val c = config
   
   val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new ExecuteInst))
+    val in = Flipped(Decoupled(new ExecuteInstIssue))
     val scratchOut = new WriteportScratch
     val scratchIn = Vec(2,new ReadportScratch)
 		val readAddr = Vec(2/* FIXME: magic fucking number*/,new Readport(UInt(c.addrWidth.W), c.tagWidth))
@@ -37,11 +37,11 @@ class SysController(config: Configuration) extends Module {
 	io.scratchIn(1).data.ready := false.B
 	io.scratchIn(1).data.bits := DontCare */
 
-	io.readAddr(0).request.valid := false.B
+/* 	io.readAddr(0).request.valid := false.B
 	io.readAddr(0).request.bits := DontCare
 
 	io.readAddr(1).request.valid := false.B
-	io.readAddr(1).request.bits := DontCare
+	io.readAddr(1).request.bits := DontCare */
 
 	io.memport(0).valid := false.B
 	io.memport(0).bits := DontCare
@@ -66,7 +66,7 @@ class SysController(config: Configuration) extends Module {
 	
 	opbuffer.io.ReadData.request.valid := false.B
 
-	val reg = Reg(new ExecuteInst)
+	val reg = Reg(new ExecuteInstIssue)
   val StateReg = RegInit(0.U(4.W))
 	
 	val transfercompleted = Reg(Vec(2,Bool()))
@@ -80,12 +80,10 @@ class SysController(config: Configuration) extends Module {
 			}
 		}
 		is(1.U){
-			io.readAddr.zipWithIndex.foreach { case (element,i) => element.request.valid := true.B; element.request.bits.addr := reg.ids(i).tag}
-
-			when(SysDMA.io.in.ready && SysDMA2.io.in.ready && io.readAddr(0).response.valid && io.readAddr(1).response.valid){ //TODO: clean up this shit
-				SysDMA.io.in.bits.addr := io.readAddr(0).response.bits.readData
+			when(SysDMA.io.in.ready && SysDMA2.io.in.ready){ //TODO: clean up this shit
+				SysDMA.io.in.bits.addr := reg.addrs(0).addr
 				SysDMA.io.in.bits.size := reg.size
-				SysDMA2.io.in.bits.addr := io.readAddr(1).response.bits.readData
+				SysDMA2.io.in.bits.addr := reg.addrs(0).addr
 				SysDMA2.io.in.bits.size := reg.size
 
 				StateReg := 2.U

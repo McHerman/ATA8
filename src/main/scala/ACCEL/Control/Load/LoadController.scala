@@ -13,7 +13,7 @@ class LoadController(implicit c: Configuration) extends Module {
 
   val io = IO(new Bundle {
     //val instructionStream = Flipped(Decoupled(new LoadInst))
-    val instructionStream = new Readport(new LoadInst,0)
+    val instructionStream = new Readport(new LoadInstIssue,0)
     val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
     val writeport = new WriteportScratch
     val tagRegister = new TagWrite
@@ -37,7 +37,7 @@ class LoadController(implicit c: Configuration) extends Module {
   val addrTemp = RegInit(0.U(32.W))
   val idReg = RegInit(0.U(2.W))
 
-  val reg = Reg(new LoadInst)
+  val reg = Reg(new LoadInstIssue)
 
   val StateReg = RegInit(0.U(4.W))
 
@@ -61,7 +61,7 @@ class LoadController(implicit c: Configuration) extends Module {
           burstAddrReg := burstAddrReg + 1.U // Increase address by 4 bytes for next beat
         }
 
-        io.writeport.request.bits.addr := reg.addr + burstAddrReg
+        io.writeport.request.bits.addr := reg.addr.addr + burstAddrReg
 					
 				when(io.writeport.request.ready){ // Assuming that the line remains open.
 					io.writeport.request.valid := true.B

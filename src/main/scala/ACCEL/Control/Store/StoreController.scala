@@ -12,10 +12,10 @@ class StoreController(implicit c: Configuration) extends Module {
   }
 
   val io = IO(new Bundle {
-    val instructionStream = new Readport(new StoreInst,0)
+    val instructionStream = new Readport(new StoreInstIssue,0)
     val AXIST = new AXIST_2(64,2,1,1,1) 
     val readport = new ReadportScratch
-		val tagRead = new TagRead
+		//val tagRead = new TagRead
 		val tagDealloc = Decoupled(UInt(c.tagWidth.W))
 		val event = Flipped(Valid(new Event()))
   })
@@ -33,8 +33,8 @@ class StoreController(implicit c: Configuration) extends Module {
 
 	io.readport.data.ready := false.B
 
-	io.tagRead.request.valid := false.B
-	io.tagRead.request.bits := DontCare
+	/* io.tagRead.request.valid := false.B
+	io.tagRead.request.bits := DontCare */
 
 	//io.tagRead.response.ready := false.B
 
@@ -46,7 +46,7 @@ class StoreController(implicit c: Configuration) extends Module {
   val idReg = RegInit(0.U(2.W))
 	val tagReg = RegInit(0.U(c.tagWidth.W))
 
-  val reg = Reg(new StoreInst)
+  val reg = Reg(new StoreInstIssue)
 
   val StateReg = RegInit(0.U(4.W))
 
@@ -60,27 +60,8 @@ class StoreController(implicit c: Configuration) extends Module {
 			}
 		}
 		is(1.U){
-			io.tagRead.request.valid := true.B
-			io.tagRead.request.bits.addr := reg.addr
-
-			when(io.tagRead.response.valid){
-				tagReg := io.tagRead.response.bits.tag
-
-				when(io.tagRead.response.bits.ready){
-					StateReg := 3.U
-				}.otherwise{
-					StateReg := 2.U
-				}
-			}
-		}
-		is(2.U){ // Wait for event
-			when(io.event.valid && io.event.bits.tag === tagReg){
-				StateReg := 3.U
-			}
-		}
-		is(3.U){
 			io.readport.request.valid := true.B
-			io.readport.request.bits.addr := reg.addr
+			io.readport.request.bits.addr := reg.addr.addr
 			io.readport.request.bits.burst := reg.size
 
 			when (io.AXIST.tready) {
@@ -106,7 +87,7 @@ class StoreController(implicit c: Configuration) extends Module {
 				}
       }
 		}
-		is(4.U){
+		is(2.U){
       io.tagDealloc.valid := true.B
 			io.tagDealloc.bits := tagReg
 			StateReg := 0.U

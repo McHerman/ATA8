@@ -9,12 +9,12 @@ class InstructionPackage extends Bundle {
 }
 
 
-class penis(implicit c: Configuration) extends Bundle {
+class ExeInstDecode(implicit c: Configuration) extends Bundle {
+  val func = UInt(4.W)
   val op = UInt(2.W) // TODO: magic number
   val op2 = UInt(1.W)
   val mode = UInt(1.W)
   //val grainSize = UInt(c.sysWidth.W)
-  val fill = UInt(4.W)
 
   val size = UInt(8.W)
   val addrs1 = UInt(16.W)
@@ -23,7 +23,26 @@ class penis(implicit c: Configuration) extends Bundle {
   //val size = UInt(c.grainSizeWidth.W
 } 
 
-class ExecuteInst(implicit c: Configuration) extends Bundle {
+class LoadInstDecode(implicit c: Configuration) extends Bundle {
+  val func = UInt(4.W)
+  val op = UInt(1.W) // TODO: magic number
+  val mode = UInt(1.W)
+  val fill = UInt(18.W)
+
+  val size = UInt(8.W)
+  val addr = UInt(32.W)
+} 
+
+class StoreInstDecode(implicit c: Configuration) extends Bundle {
+  val func = UInt(4.W)
+  val op = UInt(1.W) // TODO: magic number
+  val fill = UInt(19.W)
+
+  val size = UInt(8.W)
+  val addr = UInt(32.W)
+} 
+
+/* class ExecuteInst(implicit c: Configuration) extends Bundle {
   val op = UInt(1.W) // TODO: magic number
   val mode = UInt(1.W)
   //val grainSize = UInt(c.sysWidth.W)
@@ -32,23 +51,32 @@ class ExecuteInst(implicit c: Configuration) extends Bundle {
   val idd = UInt(c.tagWidth.W) // Dest Address
   //val size = UInt(c.grainSizeWidth.W)
   val size = UInt(8.W)
-} 
+} */
 
-class LoadInst(implicit c: Configuration) extends Bundle {
+class ExecuteInstIssue(implicit c: Configuration) extends Bundle {
   val op = UInt(1.W) // TODO: magic number
   val mode = UInt(1.W)
-  val fill = UInt(22.W)
-
+  //val grainSize = UInt(c.sysWidth.W)
+  val grainSize = UInt(4.W)
+  val addrs = Vec(2, new Bundle {val ready = Bool(); val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)})
+  val addrd = new Bundle {val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)}// Dest Address
+  //val size = UInt(c.grainSizeWidth.W)
   val size = UInt(8.W)
-  val addr = UInt(32.W)
 } 
 
-class StoreInst(implicit c: Configuration) extends Bundle {
+class LoadInstIssue(implicit c: Configuration) extends Bundle {
   val op = UInt(1.W) // TODO: magic number
-  val fill = UInt(23.W)
+  val mode = UInt(1.W)
+  
+  val size = UInt(8.W)
+  val addr = new Bundle {val ready = Bool(); val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)}
+} 
+
+class StoreInstIssue(implicit c: Configuration) extends Bundle {
+  val op = UInt(1.W) // TODO: magic number
 
   val size = UInt(8.W)
-  val addr = UInt(32.W)
+  val addr = new Bundle {val ready = Bool(); val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)}
 } 
 
 class IssuePackage(implicit c: Configuration) extends Bundle {
@@ -88,6 +116,27 @@ class TagRead(implicit c: Configuration) extends Bundle {
     val ready = Bool()
   }))
 } 
+
+class ROBWrite(implicit c: Configuration) extends Bundle {
+  //val tag = Output(UInt(c.tagWidth.W))
+  //val addr = Input(UInt(c.addrWidth.W))
+
+  //val addr = Decoupled(UInt(16.W)) //FIXME: Magic number
+  val addr = Decoupled(new Bundle{val addr = UInt(16.W); val ready = Bool()})
+  val tag = Flipped(Valid(UInt(c.tagWidth.W))) 
+} 
+
+class ROBRead(implicit c: Configuration) extends Bundle {
+  val request = Valid(new Bundle {
+    val addr = UInt(16.W) //FIXME: Magic number
+  })
+  val response = Flipped(Valid(new Bundle {
+    val tag = UInt(c.tagWidth.W)
+    val ready = Bool()
+  }))
+} 
+
+
 
 class SysOP(implicit c: Configuration) extends Bundle {
   val mode = UInt(1.W)

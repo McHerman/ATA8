@@ -6,7 +6,7 @@ import chisel3.util._
 
 
 //class ResStation(implicit c: Configuration) extends Module {
-class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configuration) extends Module {
+class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configuration) extends Module {
 
   def vecSearch(reg: Vec[mapping], search: UInt): (UInt, Bool, Bool) = {
     val tag = WireDefault (0.U)
@@ -23,6 +23,16 @@ class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configu
   
     (tag,valid,ready)
   }
+
+  def full(head: UInt, tail: UInt, headFlip: Bool, tailFlip: Bool): (Bool) = {
+    val full = WireDefault (false.B)
+  
+    when(!(headFlip === tailFlip) && head >= tail){ // build wrapping
+      full := true.B
+    }
+  
+    (full)
+  }
   
 
   class mapping(implicit c: Configuration) extends Bundle {
@@ -38,7 +48,7 @@ class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configu
     // val Writeport = Vec(c.tagProducers,Flipped(Decoupled(new Bundle {val addr = Output(UInt(c.addrWidth.W)); val tag = Input(UInt(c.tagWidth.W))})))
     val ReadData = Vec(readports,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
-    val event = Flipped(Valid(new Event()))
+    val event = Vec(3,Flipped(Valid(new Event())))
     val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
   })
 
@@ -56,8 +66,9 @@ class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configu
   io.readAddr.foreach{case (element) => element.request.ready := false.B; element.response.valid := false.B; element.response.bits := DontCare}
 
   io.tagDealloc.ready := !empty
-  io.Writeport.tag.valid := false.B
-  io.Writeport.tag.bits := DontCare
+
+	io.Writeport.tag.valid := false.B
+	io.Writeport.tag.bits := DontCare
 
   val Map = Reg(Vec(tagCount,new mapping()))
 
@@ -66,12 +77,14 @@ class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configu
       val (tag,valid,ready) = vecSearch(Map,element.request.bits.addr) 
       element.response.bits.tag := tag + offset.U// TODO: Add offset
 
-      when(io.event.valid && io.event.bits.tag + offset.U === tag){ // Event forwarding // TODO: Add offset
-        element.response.bits.ready := true.B
-      }.otherwise{
-        element.response.bits.ready := ready
-      }
-      
+			io.event.foreach{case (event) => 
+				when(event.valid && event.bits.tag === tag){
+					element.response.bits.ready := true.B
+				}.otherwise{
+					element.response.bits.ready := ready
+				}
+			}
+
       element.response.valid := valid
     }
   }
@@ -84,9 +97,9 @@ class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configu
     }
   }
 
-  io.Writeport.addr.ready := !full
+  //io.Writeport.addr.ready := !full
 
-  when(io.Writeport.addr.valid && !full){
+	when(io.Writeport.addr.valid && !full){
     Map(Head).addr := io.Writeport.addr.bits.addr
     Map(Head).ready := false.B
     Map(Head).valid := true.B
@@ -101,7 +114,7 @@ class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configu
       Head := Head + 1.U
     }
   }
-
+ 
   when(io.tagDealloc.valid && Tail === io.tagDealloc.bits){
     Map(Tail).valid := false.B
 
@@ -113,10 +126,11 @@ class TagMap(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configu
     }
   }
 
-  when(io.event.valid){
-    when(Map(io.event.bits.tag).valid){ //Subtract offset
-      Map(io.event.bits.tag).ready := true.B
-    } 
+  io.event.foreach{case (element) => 
+    when(element.valid){
+      when(Map(element.bits.tag).valid){ 
+        Map(element.bits.tag).ready := true.B
+      } 
+    }
   }
-
 }
