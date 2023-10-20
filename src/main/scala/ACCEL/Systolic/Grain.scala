@@ -11,9 +11,10 @@ class Grain(config: Configuration) extends Module {
     //val State = Input(UInt(1.W))
     //val Size = Input(UInt(8.W))
     val in = Flipped(Decoupled(new SysOP)) 
-    val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10))) // Add actual memport
-    val Readport = Flipped(new Readport_V2(c.arithDataWidth*c.grainDim,10))
-    val Trigger = Input(Bool())
+    //val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10))) // Add actual memport
+    val Memport = Vec(2,Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10)))) // TODO: Change to more streamlined memport
+    val Readport = new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)
+    val completed = Valid(new Bundle{val id = UInt(4.W)})
   })
 
   val XFile = Module(new XFile())
@@ -22,57 +23,23 @@ class Grain(config: Configuration) extends Module {
   val SysCtrl = Module(new SysCtrl())
 
   SysCtrl.io.in <> io.in
+  io.completed := SysCtrl.io.completed
 
-  XFile.io.Memport.valid := false.B
-  XFile.io.Memport.bits := DontCare
+  XFile.io.Memport <> io.Memport(0)
+  YFile.io.Memport <> io.Memport(1)
 
-  YFile.io.Memport.valid := false.B
-  YFile.io.Memport.bits := DontCare
-
-  /* ACCUFile.io.Memport.valid := false.B
-  ACCUFile.io.Memport.bits := DontCare
- */
-
+  ACCUFile.io.Readport <> io.Readport
   ACCUFile.io.Readport.request.valid := false.B
   ACCUFile.io.Readport.request.bits := DontCare
 
-
-  io.Memport.ready := true.B
-
-  when(io.Memport.valid){ // Fix this shit
-    when(io.Memport.bits.addr === 1.U){
-      XFile.io.Memport <> io.Memport
-    }.elsewhen(io.Memport.bits.addr === 2.U){
-      YFile.io.Memport <> io.Memport
-    }
-  }
-
-  ACCUFile.io.Readport <> io.Readport
-
-
-  /*
-  XFile.io.MemPort <> io.Memport
-  YFile.io.MemPort <> io.Memport
-  ACCUFile.io.MemPort <> io.Memport
-  */
-
-  //XFile.io.Activate := false.B
-  //YFile.io.Activate := false.B
-  
   XFile.io.Activate := SysCtrl.io.Activate
   YFile.io.Activate := SysCtrl.io.Activate
   YFile.io.Enable := SysCtrl.io.Enable
   
   ACCUFile.io.Activate := XFile.io.ActivateOut
 
-  //YFile.io.State := io.State
-  //ACCUFile.io.State := io.State 
-
-  YFile.io.State := io.in.bits.mode
-  ACCUFile.io.State := io.in.bits.mode
-
-  //YFile.io.Shift := 0.U
-  //ACCUFile.io.Shift := 0.U
+  YFile.io.State :=  SysCtrl.io.Mode // FIXME: kinda poopy, add another bit
+  ACCUFile.io.State :=  SysCtrl.io.Mode
   
   YFile.io.Shift := SysCtrl.io.Shift
   ACCUFile.io.Shift := SysCtrl.io.Shift

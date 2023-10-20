@@ -51,6 +51,9 @@ class Decoder(config: Configuration) extends Module {
 
 	when(io.instructionStream.valid && !stall){
 		switch(io.instructionStream.bits.instruction(3,0)){
+      is(0.U){
+        selReg := 0.U
+      }
 			is(1.U){
 				exeFile := io.instructionStream.bits.instruction.asTypeOf(new ExeInstDecode)
 				selReg := 1.U
@@ -78,7 +81,7 @@ class Decoder(config: Configuration) extends Module {
   switch(selReg){
 		is(1.U){ // Execute
 
-      when(io.exeStream.ready){
+      when(io.exeStream.ready || !exeValid){
         val addrs = VecInit(exeFile.addrs1, exeFile.addrs2)
         io.tagFetch.zipWithIndex.foreach { case (element,i) => element.request.valid := true.B; element.request.bits.addr := addrs(i); 
           when(element.response.valid){
@@ -109,11 +112,10 @@ class Decoder(config: Configuration) extends Module {
         }
       }.otherwise{
         stall := true.B
-
       }
 		} 
 		is(2.U){ // Load
-      when(io.loadStream.ready){
+      when(io.loadStream.ready || !loadValid){
         when(io.tagRegister.addr.ready){
           io.tagRegister.addr.bits.addr := loadFile.addr
           io.tagRegister.addr.bits.ready := false.B
@@ -135,7 +137,7 @@ class Decoder(config: Configuration) extends Module {
       }
 		}
 		is(3.U){ // Store 
-      when(io.storeStream.ready){
+      when(io.storeStream.ready || !storeValid){
         io.tagFetch(0).request.valid := true.B
         io.tagFetch(0).request.bits.addr := storeFile.addr
 

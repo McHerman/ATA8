@@ -87,7 +87,7 @@ class Writeport[T <: Data](private val dataType: T, val addrWidth: Int) extends 
 
 class WriteportScratch(implicit c: Configuration) extends Bundle { // TODO: Might be a good idea to introduce a "locking" feature where a continued transaction is insured even with intermitten interuptions 
   val request = Decoupled(new Bundle {
-    val addr = UInt(8.W) // TODO find non arbitry value for this 
+    val addr = UInt(16.W) // TODO find non arbitry value for this 
     val burst = UInt(8.W)
   })
   val data = Decoupled(new Bundle {

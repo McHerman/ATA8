@@ -7,7 +7,7 @@ class SysDMA(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val in = Flipped(Decoupled(new Bundle{val addr = UInt(16.W); val size = UInt(8.W)}))
     val scratchIn = new ReadportScratch
-    val memport = Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10))
+    val memport = Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10)) //FIXME: replace with updated memport
     val completed = Output(Bool())
   })
 

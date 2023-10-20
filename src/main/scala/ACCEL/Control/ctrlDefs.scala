@@ -8,50 +8,33 @@ class InstructionPackage extends Bundle {
   val instruction = UInt(64.W)
 }
 
-
 class ExeInstDecode(implicit c: Configuration) extends Bundle {
-  val func = UInt(4.W)
-  val op = UInt(2.W) // TODO: magic number
-  val op2 = UInt(1.W)
-  val mode = UInt(1.W)
-  //val grainSize = UInt(c.sysWidth.W)
-
-  val size = UInt(8.W)
-  val addrs1 = UInt(16.W)
-  val addrs2 = UInt(16.W)
   val addrd = UInt(16.W) // Dest Address
-  //val size = UInt(c.grainSizeWidth.W
-} 
+  val addrs2 = UInt(16.W)
+  val addrs1 = UInt(16.W)
+  val size = UInt(8.W)
+  val mode = UInt(1.W)
+  val op2 = UInt(1.W)
+  val op = UInt(2.W) // TODO: magic number
+  val func = UInt(4.W)
+}
 
 class LoadInstDecode(implicit c: Configuration) extends Bundle {
-  val func = UInt(4.W)
-  val op = UInt(1.W) // TODO: magic number
-  val mode = UInt(1.W)
-  val fill = UInt(18.W)
-
-  val size = UInt(8.W)
   val addr = UInt(32.W)
+  val size = UInt(8.W)
+  val fill = UInt(18.W)
+  val mode = UInt(1.W)  
+  val op = UInt(1.W) // TODO: magic number  
+  val func = UInt(4.W)
 } 
 
 class StoreInstDecode(implicit c: Configuration) extends Bundle {
-  val func = UInt(4.W)
-  val op = UInt(1.W) // TODO: magic number
-  val fill = UInt(19.W)
-
-  val size = UInt(8.W)
   val addr = UInt(32.W)
-} 
-
-/* class ExecuteInst(implicit c: Configuration) extends Bundle {
-  val op = UInt(1.W) // TODO: magic number
-  val mode = UInt(1.W)
-  //val grainSize = UInt(c.sysWidth.W)
-  val grainSize = UInt(4.W)
-  val ids = Vec(2, new Bundle {val ready = Bool(); val tag = UInt(c.tagWidth.W)})
-  val idd = UInt(c.tagWidth.W) // Dest Address
-  //val size = UInt(c.grainSizeWidth.W)
   val size = UInt(8.W)
-} */
+  val fill = UInt(19.W)
+  val op = UInt(1.W) // TODO: magic number
+  val func = UInt(4.W)
+} 
 
 class ExecuteInstIssue(implicit c: Configuration) extends Bundle {
   val op = UInt(1.W) // TODO: magic number
@@ -96,8 +79,6 @@ class Event(implicit c: Configuration) extends Bundle {
   val tag = UInt(c.tagWidth.W)
 } 
 
-
-
 class TagWrite(implicit c: Configuration) extends Bundle {
   //val tag = Output(UInt(c.tagWidth.W))
   //val addr = Input(UInt(c.addrWidth.W))
@@ -141,4 +122,5 @@ class ROBRead(implicit c: Configuration) extends Bundle {
 class SysOP(implicit c: Configuration) extends Bundle {
   val mode = UInt(1.W)
   val size = UInt(8.W)
+  val id = UInt(4.W)
 } 

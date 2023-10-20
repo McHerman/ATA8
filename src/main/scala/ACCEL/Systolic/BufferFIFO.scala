@@ -68,3 +68,4 @@ class BufferFIFO[T <: Data](val size: Int, val dataType: T) extends Module {
 
 }
 
+//TODO: change port names to camelcase

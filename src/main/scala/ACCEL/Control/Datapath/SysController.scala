@@ -11,16 +11,20 @@ class SysController(config: Configuration) extends Module {
     val in = Flipped(Decoupled(new ExecuteInstIssue))
     val scratchOut = new WriteportScratch
     val scratchIn = Vec(2,new ReadportScratch)
-		val readAddr = Vec(2/* FIXME: magic fucking number*/,new Readport(UInt(c.addrWidth.W), c.tagWidth))
 		val memport = Vec(2,Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10)))
+    val readPort = new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)
 		val out = Decoupled(new SysOP)
+    val sysCompleted = Flipped(Valid(new Bundle{val id = UInt(4.W)}))
   })
 
-  val opbuffer = Module(new BufferFIFO(8,new SysOP))
+  val opbuffer = Module(new BufferFIFO(8,new SysOP)) // FIXME: Magic number
+  val readBuffer = Module(new BufferFIFO(8, new Bundle{val addr = UInt(16.W); val size = UInt(8.W)}))
 
 	val SysDMA = Module(new SysDMA())
 	val SysDMA2 = Module(new SysDMA())
 
+  val SysWriteDMA = Module(new SysWriteDMA())
+ 
 	io.in.ready := false.B
 
 	io.scratchOut.request.valid := false.B
@@ -29,25 +33,17 @@ class SysController(config: Configuration) extends Module {
 	io.scratchOut.data.valid := false.B
 	io.scratchOut.data.bits := DontCare
 
-	/* io.scratchIn(0).request.valid := false.B
-	io.scratchIn(0).data.ready := false.B
-	io.scratchIn(0).request.bits := DontCare
-
-	io.scratchIn(1).request.valid := false.B
-	io.scratchIn(1).data.ready := false.B
-	io.scratchIn(1).data.bits := DontCare */
-
-/* 	io.readAddr(0).request.valid := false.B
-	io.readAddr(0).request.bits := DontCare
-
-	io.readAddr(1).request.valid := false.B
-	io.readAddr(1).request.bits := DontCare */
-
 	io.memport(0).valid := false.B
 	io.memport(0).bits := DontCare
 
 	io.memport(1).valid := false.B
 	io.memport(1).bits := DontCare
+
+  io.scratchOut <> SysWriteDMA.io.scratchOut
+  io.readPort <> SysWriteDMA.io.readPort
+
+  SysWriteDMA.io.in.valid := false.B
+  SysWriteDMA.io.in.bits := DontCare
 
 	SysDMA.io.scratchIn <> io.scratchIn(0)
 	SysDMA2.io.scratchIn <> io.scratchIn(1)
@@ -65,6 +61,14 @@ class SysController(config: Configuration) extends Module {
 	opbuffer.io.WriteData.bits := DontCare
 	
 	opbuffer.io.ReadData.request.valid := false.B
+  opbuffer.io.ReadData.request.bits := DontCare
+
+  readBuffer.io.WriteData.valid := false.B
+	readBuffer.io.WriteData.bits := DontCare
+	
+	readBuffer.io.ReadData.request.valid := false.B
+  readBuffer.io.ReadData.request.bits := DontCare
+
 
 	val reg = Reg(new ExecuteInstIssue)
   val StateReg = RegInit(0.U(4.W))
@@ -103,17 +107,35 @@ class SysController(config: Configuration) extends Module {
 			}
 		}
 		is(3.U){
-			when(opbuffer.io.WriteData.ready){
+			when(opbuffer.io.WriteData.ready && readBuffer.io.WriteData.ready){
 				opbuffer.io.WriteData.valid := true.B
 				opbuffer.io.WriteData.bits.mode := reg.mode
 				opbuffer.io.WriteData.bits.size := reg.mode
+        opbuffer.io.WriteData.bits.id := 0.U // FIXME: Temporary fix, build tag allocator
+
+
+        readBuffer.io.WriteData.valid := true.B
+				readBuffer.io.WriteData.bits.addr := reg.addrd.addr
+				readBuffer.io.WriteData.bits.size := reg.size
 
 				StateReg := 0.U
 			}
 		}
 	}
 
-	io.out <> opbuffer.io.ReadData
+
+  when(io.sysCompleted.valid && readBuffer.io.ReadData.request.ready){ // FIXME: Dangerous, can lock if syscompleted only stays high for one cc
+    when(SysWriteDMA.io.in.ready){
+      readBuffer.io.ReadData.request.valid := true.B
+      SysWriteDMA.io.in.bits <> readBuffer.io.ReadData.response.bits.readData
+      SysWriteDMA.io.in.valid := true.B
+    }
+  }
+
+  opbuffer.io.ReadData.request.valid := io.out.ready
+  io.out.valid := opbuffer.io.ReadData.response.valid
+	io.out.bits <> opbuffer.io.ReadData.response.bits.readData
+
 
 }
 
