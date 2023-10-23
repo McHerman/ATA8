@@ -20,6 +20,7 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
 
   io.scratchOut.data.valid := false.B
   io.scratchOut.data.bits := DontCare
+  io.scratchOut.data.bits.last := false.B
 
   io.readPort.request.valid := false.B
   io.readPort.request.bits := DontCare
@@ -59,7 +60,7 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
         when(io.readPort.response.valid){
           io.scratchOut.data.valid := true.B
 
-          when(burstCNT < reg.size){ //FIXME: Might have to change size width
+          when(burstCNT < (reg.size - 1.U)){ //FIXME: Might have to change size width
             burstCNT := burstCNT + 1.U
           }.otherwise{
             io.scratchOut.data.bits.last := true.B

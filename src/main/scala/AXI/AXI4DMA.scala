@@ -9,7 +9,7 @@ import chisel3.util._
 class AXI4DMA() extends Module {
   val io = FlatIO(new Bundle {
     val AXI4 = new AXI4(64,32,2).suggestName("")
-    val Memport = Decoupled(new Memport(64,64))
+    val Memport = Decoupled(new Memport(UInt(64.W),64))
     val Descrip = Flipped(Decoupled(new Point2PointDMA(32,32,1)))
   })
 
@@ -75,14 +75,14 @@ class AXI4DMA() extends Module {
         StateReg := 2.U
 
         io.Memport.valid := true.B
-        io.Memport.bits.araddr := DescripReg.BRAM_addr
+        io.Memport.bits.addr := DescripReg.BRAM_addr
         addrTemp := 0.U
       }
     }
     is(2.U){ // WRITE DATA
 
       io.Memport.valid := true.B
-      io.Memport.bits.araddr := DescripReg.BRAM_addr + addrTemp
+      io.Memport.bits.addr := DescripReg.BRAM_addr + addrTemp
 
       io.AXI4.AXI4WriteData.wvalid := true.B
 
@@ -96,7 +96,7 @@ class AXI4DMA() extends Module {
           StateReg := 0.U // Return to idle 
           addrTemp := 0.U
         }.otherwise{
-          io.Memport.bits.araddr := DescripReg.BRAM_addr + addrTemp + 1.U
+          io.Memport.bits.addr := DescripReg.BRAM_addr + addrTemp + 1.U
           addrTemp := addrTemp + 1.U
         }
       }
@@ -129,12 +129,12 @@ class AXI4DMA() extends Module {
             StateReg := 0.U
 
             addrTemp := 0.U
-            io.Memport.bits.araddr := 0.U
+            io.Memport.bits.addr := 0.U
             io.Memport.valid := true.B
           }.otherwise {
             addrTemp := addrTemp + 1.U // Increase address by 4 bytes for next beat
 
-            io.Memport.bits.araddr := addrTemp
+            io.Memport.bits.addr := addrTemp
             io.Memport.valid := true.B
             io.Memport.bits.wenable := true.B  // Request next beat
             io.Memport.bits.writeData := io.AXI4.AXI4ReadData.rdata
@@ -145,11 +145,11 @@ class AXI4DMA() extends Module {
 
         when (io.AXI4.AXI4ReadData.rvalid) {
 
-          io.Memport.bits.araddr := addrTemp
+          io.Memport.bits.addr := addrTemp
           io.Memport.valid := true.B
           io.Memport.bits.wenable := true.B  // Request next beat
           io.Memport.bits.writeData := io.AXI4.AXI4ReadData.rdata
-          io.Memport.bits.strb := 0xff.U
+          //io.Memport.bits.strb := 0xff.U
 
           when (io.AXI4.AXI4ReadData.rlast) {
             StateReg := 0.U

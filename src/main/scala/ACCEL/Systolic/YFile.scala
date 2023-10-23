@@ -11,7 +11,7 @@ class YFile(implicit c: Configuration) extends Module {
     val Activate = Input(Bool())
     val Enable = Input(Bool())
     val Shift = Input(Bool())
-    val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,addr_width)))
+    val Memport = Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)), addr_width)))
     val State = Input(UInt(1.W))
   })
 
@@ -50,8 +50,6 @@ class YFile(implicit c: Configuration) extends Module {
 
     moduleArray(i).io.WriteData.valid := false.B
     moduleArray(i).io.WriteData.bits := 0.U
-
-    
 
     when(io.Memport.valid){
       when(io.Memport.bits.wenable){

@@ -23,6 +23,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
   io.Mode := 0.U
 
   io.completed.valid := false.B
+  io.completed.bits := DontCare
 
   //val FinalCnt = RegInit(0.U(8.W))
   val ShiftCnt = RegInit(0.U(8.W))
@@ -40,7 +41,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
 
       when(io.in.valid){
 
-        inReg :=  io.in.bits
+        inReg := io.in.bits
         //FinalCnt := io.in.bits.size
   
         switch(io.in.bits.mode){
@@ -72,7 +73,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
         ActivateCnt := ActivateCnt + 1.U
       }
       
-      when(EnableCnt < (inReg.size << 1)){
+      when(EnableCnt < (inReg.size * 2.U)){
         io.Enable := true.B
         EnableCnt := EnableCnt + 1.U
       }.otherwise{
@@ -80,7 +81,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
         EnableCnt := 0.U
         StateReg := 0.U
 
-        io.completed.bits := inReg.id
+        io.completed.bits.id := inReg.id
         io.completed.valid := true.B
       }
     }
@@ -121,7 +122,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
         ShiftCnt := 0.U
         StateReg := 0.U
 
-        io.completed.bits := inReg.id
+        io.completed.bits.id := inReg.id
         io.completed.valid := true.B
       }
     }

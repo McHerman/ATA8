@@ -10,7 +10,7 @@ class XFile(implicit c: Configuration) extends Module {
     val Out = Output(Vec(c.grainDim, new PEX(c.arithDataWidth)))
     val Activate = Input(Bool())
     val ActivateOut = Output(Bool())
-    val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,addr_width)))
+    val Memport = Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),addr_width)))
   })
 
   io.Memport.ready := true.B

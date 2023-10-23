@@ -3,14 +3,25 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-class Memport(val dataWidth: Int,val addrWidth: Int) extends Bundle {
+/* class Memport(val dataWidth: Int,val addrWidth: Int) extends Bundle {
   val araddr  = Output(UInt(addrWidth.W))
   //val enable  = Output(Bool())
   val wenable = Output(Bool())
   val readData = Input(UInt(dataWidth.W))
   val writeData = Output(UInt(dataWidth.W))
   val strb = Output(UInt((dataWidth/8).W)) // Add strobe signal here
+} */
+
+class Memport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
+  val addr  = Output(UInt(addrWidth.W))
+  //val enable  = Output(Bool())
+  val wenable = Output(Bool())
+  val readData = Input(dataType.cloneType)
+  val writeData = Output(dataType.cloneType)
+  //val strb = Output(UInt((dataWidth/8).W)) // Add strobe signal here
 }
+
+
 
 class Memport_V2(val dataWidth: Int,val addrWidth: Int) extends Bundle {
   val addr  = Output(UInt(addrWidth.W))

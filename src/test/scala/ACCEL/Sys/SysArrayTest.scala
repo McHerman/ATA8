@@ -71,12 +71,12 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new Grain(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 
       for (i <- 0 until 8) {
-        dut.io.Memport.valid.poke(true.B)
-        dut.io.Memport.bits.addr.poke(2.U)
-        dut.io.Memport.bits.wenable.poke(true.B)
+        dut.io.Memport(1).valid.poke(true.B)
+        //dut.io.Memport.bits.addr.poke(2.U)
+        dut.io.Memport(1).bits.wenable.poke(true.B)
 
         for(k <- 0 until 8){
-          dut.io.Memport.bits.writeData(k).poke(WMatrix(7-i)(k).U(8.W))
+          dut.io.Memport(1).bits.writeData(k).poke(WMatrix(7-i)(k).U(8.W))
         }
 
 
@@ -93,14 +93,16 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
         dut.clock.step()
       }
 
+      dut.io.Memport(1).valid.poke(false.B)
+
       for (i <- 0 until 8) {
-        dut.io.Memport.valid.poke(true.B)
-        dut.io.Memport.bits.addr.poke(1.U)
-        dut.io.Memport.bits.wenable.poke(true.B)
+        dut.io.Memport(0).valid.poke(true.B)
+        //dut.io.Memport.bits.addr.poke(1.U)
+        dut.io.Memport(0).bits.wenable.poke(true.B)
 
 
         for(k <- 0 until 8){
-          dut.io.Memport.bits.writeData(k).poke(AMatrix(i)(k).U(8.W))
+          dut.io.Memport(0).bits.writeData(k).poke(AMatrix(i)(k).U(8.W))
         }
    
         /* dut.io.State.poke(0.U)
@@ -116,7 +118,7 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
         dut.clock.step()
       }
 
-      dut.io.Memport.valid.poke(false.B)
+      dut.io.Memport(0).valid.poke(false.B)
 
 
 
@@ -131,7 +133,7 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.clock.step()
 
-      dut.io.Trigger.poke(false.B)
+      //dut.io.Trigger.poke(false.B)
 
       dut.clock.step(80)
       

@@ -23,13 +23,13 @@ class AXI_ST() extends Module {
   val RAM = Module(new RamSingle(64,32,1024))
   //val Memport_dummy = Wire(new Memport(64,32))
 
-  RAM.io.port.bits.araddr := 0.U
+  RAM.io.port.bits.addr := 0.U
   RAM.io.port.bits.wenable := false.B
   RAM.io.port.bits.writeData := 0.U
-  RAM.io.port.bits.strb := 0.U
+  //RAM.io.port.bits.strb := 0.U
 
   /*
-  Memport_dummy.araddr := 0.U
+  Memport_dummy.addr := 0.U
   Memport_dummy.enable := false.B
   Memport_dummy.wenable := false.B
   Memport_dummy.writeData := 0.U
@@ -41,13 +41,13 @@ class AXI_ST() extends Module {
   val RAM2 = Module(new RamSingle(64,32,1024))  
   //val Memport_dummy2 = Wire(new Memport(64,32))
 
-  RAM2.io.port.bits.araddr := 0.U
+  RAM2.io.port.bits.addr := 0.U
   RAM2.io.port.bits.wenable := false.B
   RAM2.io.port.bits.writeData := 0.U
-  RAM2.io.port.bits.strb := 0.U
+  //RAM2.io.port.bits.strb := 0.U
 
   /*
-  Memport_dummy2.araddr := 0.U
+  Memport_dummy2.addr := 0.U
   Memport_dummy2.enable := false.B
   Memport_dummy2.wenable := false.B
   Memport_dummy2.writeData := 0.U
@@ -94,16 +94,16 @@ class AXI_ST() extends Module {
 
           //RAM.io.port.enable := true.B
           RAM.io.port.valid := true.B
-          RAM.io.port.bits.araddr := 0.U
+          RAM.io.port.bits.addr := 0.U
         }.otherwise {
           burstAddrReg := burstAddrReg + 1.U // Increase address by 4 bytes for next beat
 
-          RAM.io.port.bits.araddr := burstAddrReg
+          RAM.io.port.bits.addr := burstAddrReg
           //RAM.io.port.enable := true.B
           RAM.io.port.valid := true.B
           RAM.io.port.bits.wenable := true.B  // Request next beat
           RAM.io.port.bits.writeData := io.AXIST.tdata
-          RAM.io.port.bits.strb := io.AXIST.tstrb
+          //RAM.io.port.bits.strb := io.AXIST.tstrb
         }
       }
     }
@@ -125,7 +125,7 @@ class AXI_ST() extends Module {
 
         //RAM.io.port.enable := true.B
         RAM.io.port.valid := true.B
-        RAM.io.port.bits.araddr := 0.U
+        RAM.io.port.bits.addr := 0.U
         addrTemp := 0.U
       }
     }
@@ -133,7 +133,7 @@ class AXI_ST() extends Module {
 
       //RAM.io.port.enable := true.B
       RAM.io.port.valid := true.B
-      RAM.io.port.bits.araddr := addrTemp
+      RAM.io.port.bits.addr := addrTemp
 
       io.AXI4.AXI4WriteData.wvalid := true.B
 
@@ -147,7 +147,7 @@ class AXI_ST() extends Module {
           StateReg := 3.U
           addrTemp := 0.U
         }.otherwise{
-          RAM.io.port.bits.araddr := addrTemp + 1.U
+          RAM.io.port.bits.addr := addrTemp + 1.U
           addrTemp := addrTemp + 1.U
         }
       }
@@ -174,7 +174,7 @@ class AXI_ST() extends Module {
       // Write data
 
       RAM.io.port.enable := true.B
-      RAM.io.port.araddr := addrTemp
+      RAM.io.port.addr := addrTemp
 
       io.AXI4.AXI4WriteData.wvalid := true.B
 
@@ -229,23 +229,23 @@ class AXI_ST() extends Module {
           idReg:= io.AXI4.AXI4ReadData.rid
           
           addrTemp := 0.U
-          RAM2.io.port.bits.araddr := 0.U
+          RAM2.io.port.bits.addr := 0.U
           //RAM2.io.port.enable := true.B
           RAM2.io.port.valid := true.B
         }.otherwise {
           addrTemp := addrTemp + 1.U // Increase address by 4 bytes for next beat
 
-          RAM2.io.port.bits.araddr := addrTemp
+          RAM2.io.port.bits.addr := addrTemp
           //RAM2.io.port.enable := true.B
           RAM2.io.port.valid := true.B
           RAM2.io.port.bits.wenable := true.B  // Request next beat
           RAM2.io.port.bits.writeData := io.AXI4.AXI4ReadData.rdata
-          RAM2.io.port.bits.strb := 0xff.U
+          //RAM2.io.port.bits.strb := 0xff.U
         }
       }
     }
     is(6.U){ // WRITE DATA 
-      RAM2.io.port.bits.araddr := addrTemp
+      RAM2.io.port.bits.addr := addrTemp
       //RAM2.io.port.enable := true.B
       RAM2.io.port.valid := true.B
 
@@ -265,7 +265,7 @@ class AXI_ST() extends Module {
 
           idReg := 0.U
         }.otherwise{
-          RAM2.io.port.bits.araddr := addrTemp + 1.U
+          RAM2.io.port.bits.addr := addrTemp + 1.U
           addrTemp := addrTemp + 1.U
         }
       }

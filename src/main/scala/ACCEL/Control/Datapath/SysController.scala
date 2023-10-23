@@ -3,15 +3,15 @@ package ATA8
 import chisel3._
 import chisel3.util._
   
-class SysController(config: Configuration) extends Module {
+class SysController(implicit c: Configuration) extends Module {
 
-  implicit val c = config
+  //implicit val c = config
   
   val io = IO(new Bundle {
     val in = Flipped(Decoupled(new ExecuteInstIssue))
     val scratchOut = new WriteportScratch
     val scratchIn = Vec(2,new ReadportScratch)
-		val memport = Vec(2,Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10)))
+		val memport = Vec(2,Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)))
     val readPort = new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)
 		val out = Decoupled(new SysOP)
     val sysCompleted = Flipped(Valid(new Bundle{val id = UInt(4.W)}))
@@ -26,6 +26,9 @@ class SysController(config: Configuration) extends Module {
   val SysWriteDMA = Module(new SysWriteDMA())
  
 	io.in.ready := false.B
+
+  io.out.valid := false.B
+  io.out.bits := DontCare
 
 	io.scratchOut.request.valid := false.B
 	io.scratchOut.request.bits := DontCare
@@ -81,14 +84,18 @@ class SysController(config: Configuration) extends Module {
 
 			when(io.in.valid){
 				reg := io.in.bits
+        StateReg := 1.U
 			}
 		}
 		is(1.U){
 			when(SysDMA.io.in.ready && SysDMA2.io.in.ready){ //TODO: clean up this shit
 				SysDMA.io.in.bits.addr := reg.addrs(0).addr
 				SysDMA.io.in.bits.size := reg.size
-				SysDMA2.io.in.bits.addr := reg.addrs(0).addr
+        SysDMA.io.in.valid := true.B
+
+				SysDMA2.io.in.bits.addr := reg.addrs(1).addr
 				SysDMA2.io.in.bits.size := reg.size
+        SysDMA2.io.in.valid := true.B
 
 				StateReg := 2.U
 			}
@@ -110,9 +117,8 @@ class SysController(config: Configuration) extends Module {
 			when(opbuffer.io.WriteData.ready && readBuffer.io.WriteData.ready){
 				opbuffer.io.WriteData.valid := true.B
 				opbuffer.io.WriteData.bits.mode := reg.mode
-				opbuffer.io.WriteData.bits.size := reg.mode
+				opbuffer.io.WriteData.bits.size := reg.size
         opbuffer.io.WriteData.bits.id := 0.U // FIXME: Temporary fix, build tag allocator
-
 
         readBuffer.io.WriteData.valid := true.B
 				readBuffer.io.WriteData.bits.addr := reg.addrd.addr
@@ -132,13 +138,16 @@ class SysController(config: Configuration) extends Module {
     }
   }
 
-  opbuffer.io.ReadData.request.valid := io.out.ready
+  /* opbuffer.io.ReadData.request.valid := io.out.ready
   io.out.valid := opbuffer.io.ReadData.response.valid
 	io.out.bits <> opbuffer.io.ReadData.response.bits.readData
+ */
+  when(opbuffer.io.ReadData.request.ready && io.out.ready){
+    io.out.valid := true.B
+    opbuffer.io.ReadData.request.valid := true.B
+
+    io.out.bits <> opbuffer.io.ReadData.response.bits.readData
+  }
 
 
-}
-
-object SysController extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new SysController(Configuration.default()))
 }

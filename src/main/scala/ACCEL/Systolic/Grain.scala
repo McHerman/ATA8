@@ -12,8 +12,8 @@ class Grain(config: Configuration) extends Module {
     //val Size = Input(UInt(8.W))
     val in = Flipped(Decoupled(new SysOP)) 
     //val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10))) // Add actual memport
-    val Memport = Vec(2,Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10)))) // TODO: Change to more streamlined memport
-    val Readport = new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)
+    val Memport = Vec(2,Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10))))
+    val Readport = Flipped(new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)) // TODO: change to consistant port naming
     val completed = Valid(new Bundle{val id = UInt(4.W)})
   })
 
@@ -46,7 +46,7 @@ class Grain(config: Configuration) extends Module {
 
   val peArray = Seq.fill(c.grainDim, c.grainDim)(Module(new PE())) // Create a 2D array of PE modules
 
-  for(i <- 0 until c.grainDim){
+  for(i <- 0 until c.grainDim){ //TODO: Make this a little more functional 
     for(k <- 0 until c.grainDim){
       if(i != c.grainDim-1){
         peArray(i)(k).io.X_OUT <> peArray(i+1)(k).io.X_IN
@@ -57,8 +57,6 @@ class Grain(config: Configuration) extends Module {
       }else{ 
         ACCUFile.io.In(i) <> peArray(i)(k).io.Y_OUT
       }
-
-
     }  
   }
 
