@@ -120,7 +120,7 @@ class SysArrayTest16 extends AnyFlatSpec with ChiselScalatestTester {
 
       //dut.clock.step(30)
 
-			val product = Array.ofDim[Int](16, 16)
+			/* val product = Array.ofDim[Int](16, 16)
 
 			for (i <- 0 until 16) {
 				for (j <- 0 until 16) {
@@ -135,7 +135,7 @@ class SysArrayTest16 extends AnyFlatSpec with ChiselScalatestTester {
 			// Print the product matrix
 			for (row <- product) {
 				println(row.mkString("\t"))
-			}
+			} */
     }
   }
 }  

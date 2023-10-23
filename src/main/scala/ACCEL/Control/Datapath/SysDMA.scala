@@ -9,6 +9,7 @@ class SysDMA(implicit c: Configuration) extends Module {
     val scratchIn = new ReadportScratch
     val memport = Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)) //FIXME: replace with updated memport
     val completed = Output(Bool())
+    val completeAgnoledge = Input(Bool())
   })
 
   io.in.ready := false.B
@@ -57,14 +58,20 @@ class SysDMA(implicit c: Configuration) extends Module {
 
           io.memport.valid := true.B
 
-          when(burstCNT <= reg.size){
-            burstCNT := 0.U
-            StateReg := 0.U
-            io.completed := true.B
-          }.otherwise{
+          when(burstCNT < (reg.size - 1.U)){
             burstCNT := burstCNT + 1.U 
+          }.otherwise{
+            burstCNT := 0.U 
+            StateReg := 3.U
           }
         }
+      }
+    }
+    is(3.U){ // FIXME: Change this
+      io.completed := true.B
+
+      when(io.completeAgnoledge){
+        StateReg := 0.U
       }
     }
   }

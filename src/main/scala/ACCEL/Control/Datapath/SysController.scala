@@ -56,9 +56,11 @@ class SysController(implicit c: Configuration) extends Module {
 
 	SysDMA.io.in.valid := false.B
 	SysDMA.io.in.bits := DontCare
+	SysDMA.io.completeAgnoledge := false.B
 
 	SysDMA2.io.in.valid := false.B
 	SysDMA2.io.in.bits := DontCare
+  SysDMA2.io.completeAgnoledge := false.B
 
 	opbuffer.io.WriteData.valid := false.B
 	opbuffer.io.WriteData.bits := DontCare
@@ -76,7 +78,10 @@ class SysController(implicit c: Configuration) extends Module {
 	val reg = Reg(new ExecuteInstIssue)
   val StateReg = RegInit(0.U(4.W))
 	
-	val transfercompleted = Reg(Vec(2,Bool()))
+	//val transfercompleted = Reg(Vec(2,Bool()))
+  val DMACompleted1 = RegInit(0.U(1.W))
+  val DMACompleted2 = RegInit(0.U(1.W))
+
 
 	switch(StateReg){
 		is(0.U){
@@ -101,7 +106,7 @@ class SysController(implicit c: Configuration) extends Module {
 			}
 		}
 		is(2.U){
-			when(SysDMA.io.completed){
+			/* when(SysDMA.io.completed){
 				transfercompleted(0) := true.B
 			}
 
@@ -111,6 +116,15 @@ class SysController(implicit c: Configuration) extends Module {
 
 			when((transfercompleted(0) || SysDMA.io.completed) && (transfercompleted(1) || SysDMA2.io.completed)){
 				StateReg := 3.U
+        transfercompleted(0) := false.B
+        transfercompleted(1) := false.B
+			}  */
+
+      when(SysDMA.io.completed && SysDMA2.io.completed){
+				SysDMA.io.completeAgnoledge := true.B
+				SysDMA2.io.completeAgnoledge := true.B
+
+        StateReg := 3.U
 			}
 		}
 		is(3.U){

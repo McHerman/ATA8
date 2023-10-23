@@ -107,7 +107,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.in.valid.poke(true.B)
 
       dut.io.in.bits.op.poke(0.U)
-      dut.io.in.bits.mode.poke(0.U)
+      dut.io.in.bits.mode.poke(1.U)
       dut.io.in.bits.grainSize.poke(0.U)
 
       dut.io.in.bits.addrs(0).addr.poke(0.U)
@@ -140,6 +140,9 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.scratchIn(0).data.ready.expect(true.B)
       dut.io.scratchIn(1).data.ready.expect(true.B)
 
+      dut.io.scratchIn(0).data.valid.poke(true.B)
+      dut.io.scratchIn(1).data.valid.poke(true.B)
+
       for(i <- 0 until n){
 
         /* for(k <- 0 until n){
@@ -151,14 +154,11 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
           dut.io.scratchIn(1).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
         }
 
-        //dut.io.scratchIn(0).data.bits.readData.poke(matrix(i))
-        dut.io.scratchIn(0).data.valid.poke(true.B)
-
-        //dut.io.scratchIn(1).data.bits.readData.poke(matrix2(i))
-        dut.io.scratchIn(1).data.valid.poke(true.B)
-
         dut.clock.step()
       }
+
+      dut.io.scratchIn(0).data.valid.poke(false.B)
+      dut.io.scratchIn(1).data.valid.poke(false.B)
 
       dut.io.scratchOut.request.ready.poke(true.B)
 
@@ -180,11 +180,8 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
       for (row <- 0 until n) {
         for (col <- 0 until n) {
           //dut.io.scratchOut.data.bits.writeData(col).expect(expectedResult(row)(col).U(8.W))
-          //dut.io.scratchOut.data.bits.writeData(col).expect(expectedResult(col)(row).U(8.W))
         }
         
-        //dut.io.scratchOut.data.bits.writeData.expect(VecInit(expectedResult(row).map(_.U(8.W))))
-
         if (row == n - 1) {
           dut.io.scratchOut.data.bits.last.expect(true.B)
         } else {

@@ -106,7 +106,7 @@ class OSTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.clock.step(30)
 
-			val product = Array.ofDim[Int](n, n)
+			/* val product = Array.ofDim[Int](n, n)
 
 			for (i <- 0 until n) {
 				for (j <- 0 until n) {
@@ -122,7 +122,7 @@ class OSTest extends AnyFlatSpec with ChiselScalatestTester {
 			for (row <- product) {
 				println("OS")
 				println(row.mkString("\t"))
-			}
+			} */
     }
   }
 }  

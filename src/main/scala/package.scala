@@ -43,7 +43,7 @@ package object ATA8 {
         4069, // bufferSize
         2,    // bufferReadPorts
         2,    // bufferWritePorts
-        8,   // grainDim
+        8,    // grainDim
         1,    // sysDim
         128,  // grainFIFOSize
         128,  // grainACCUSize
