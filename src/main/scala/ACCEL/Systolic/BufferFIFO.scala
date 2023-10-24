@@ -49,16 +49,18 @@ class BufferFIFO[T <: Data](val size: Int, val dataType: T) extends Module {
   }
 
   io.ReadData.request.ready := !empty
+
+  Mem.io.Read.addr := Tail
   
   when(io.ReadData.request.valid){
 
-    Mem.io.Read.addr := Tail
-
     when(Tail === (size.U - 1.U)){
       Tail := 0.U
+      Mem.io.Read.addr := 0.U
       TailFlip := ~TailFlip
     }.otherwise{
       Tail := Tail + 1.U
+      Mem.io.Read.addr := Tail + 1.U // FIXME: Might be a little dangerous in terms of combinational delays 
     }
 
     io.ReadData.response.valid := true.B

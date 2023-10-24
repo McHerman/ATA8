@@ -26,12 +26,13 @@ class YFile(implicit c: Configuration) extends Module {
 
   val EnDelayReg = RegInit(0.U(1.W))
 
-  EnDelayReg := io.Enable
+  //EnDelayReg := io.Enable
   
   for(i <- 0 until c.grainDim){
     if(i == 0){
       YACT(0) := io.Activate
-      YEn(0) := EnDelayReg
+      //YEn(0) := EnDelayReg
+      YEn(0) := io.Enable
     }else{
       YACT(i) := YACT(i-1)
       YEn(i) := YEn(i-1)
@@ -65,9 +66,12 @@ class YFile(implicit c: Configuration) extends Module {
 
     switch(io.State){
       is(0.U){
-        shiftdelay := io.Shift
+        /* shiftdelay := io.Shift
         moduleArray(i).io.ReadData.request.valid := io.Shift
-        io.Out(i).PEState.Shift := shiftdelay
+        io.Out(i).PEState.Shift := shiftdelay */
+
+        moduleArray(i).io.ReadData.request.valid := io.Shift
+        io.Out(i).PEState.Shift := io.Shift
       }
       is(1.U){
         moduleArray(i).io.ReadData.request.valid := YACT(i)

@@ -57,7 +57,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
     is(1.U){
       io.Mode := 0.U
 
-      when(ShiftCnt < (inReg.size - 1.U)){
+      when(ShiftCnt < inReg.size){
         io.Shift := true.B
         ShiftCnt := ShiftCnt + 1.U
       }.otherwise{
@@ -68,12 +68,12 @@ class SysCtrl(implicit c: Configuration) extends Module {
     is(2.U){ // 
       io.Mode := 0.U
 
-      when(ActivateCnt < (inReg.size - 1.U)){
+      when(ActivateCnt < inReg.size){
         io.Activate := true.B
         ActivateCnt := ActivateCnt + 1.U
       }
       
-      when(EnableCnt < ((inReg.size - 1.U) * 2.U)){
+      when(EnableCnt < (inReg.size * 2.U)){
         io.Enable := true.B
         EnableCnt := EnableCnt + 1.U
       }.otherwise{
@@ -88,12 +88,12 @@ class SysCtrl(implicit c: Configuration) extends Module {
     is(4.U){
       io.Mode := 1.U
 
-      when(ActivateCnt < (inReg.size - 1.U)){
+      when(ActivateCnt < inReg.size){
         io.Activate := true.B
         ActivateCnt := ActivateCnt + 1.U
       }
       
-      when(EnableCnt < (((inReg.size - 1.U) * 2.U))){
+      when(EnableCnt < ((inReg.size * 2.U))){
         io.Enable := true.B
         EnableCnt := EnableCnt + 1.U
       }.otherwise{
@@ -105,7 +105,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
     is(5.U){
       io.Mode := 1.U
 
-      when(WaitCnt < (inReg.size - 1.U)){
+      when(WaitCnt < inReg.size){
         WaitCnt := WaitCnt + 1.U
       }.otherwise{
         WaitCnt := 0.U
@@ -115,7 +115,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
     is(6.U){ // 
       io.Mode := 1.U
 
-      when(ShiftCnt < (inReg.size - 1.U)){
+      when(ShiftCnt < inReg.size){
         io.Shift := true.B
         ShiftCnt := ShiftCnt + 1.U
       }.otherwise{
