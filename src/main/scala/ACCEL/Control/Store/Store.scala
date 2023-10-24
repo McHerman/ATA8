@@ -13,19 +13,26 @@ class Store(config: Configuration) extends Module {
     val AXIST = new AXIST_2(64,2,1,1,1)
     val readport = new ReadportScratch
 		//val tagRead = new TagRead
-		val event = Flipped(Valid(new Event()))
+		val event = Vec(2,Flipped(Valid(new Event())))
   })
 
-  val queue = Module(new BufferFIFO(16,new StoreInstIssue))
+  //val queue = Module(new BufferFIFO(16,new StoreInstIssue))
+  val queue = Module(new DependTrack(16,new StoreInstIssue,1)) 
+
+  //val queue = Module(new DependTrack(16)) 
+
   val StoreController = Module(new StoreController)
 
   queue.io.WriteData <> io.instructionStream
+  queue.dependio.event <> io.event
+  //queue.io.event <> io.event
 
-  io.instructionStream.ready := queue.io.WriteData.ready
+
+  //io.instructionStream.ready := queue.io.WriteData.ready
 
  	StoreController.io.instructionStream <> queue.io.ReadData
   StoreController.io.AXIST <> io.AXIST
-	StoreController.io.event <> io.event
+	//StoreController.io.event <> io.event
 	//StoreController.io.tagRead <> io.tagRead
 	
 	io.tagDealloc <> StoreController.io.tagDealloc

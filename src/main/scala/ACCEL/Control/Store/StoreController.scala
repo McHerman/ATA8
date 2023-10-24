@@ -17,7 +17,7 @@ class StoreController(implicit c: Configuration) extends Module {
     val readport = new ReadportScratch
 		//val tagRead = new TagRead
 		val tagDealloc = Decoupled(UInt(c.tagWidth.W))
-		val event = Flipped(Valid(new Event()))
+		//val event = Flipped(Valid(new Event()))
   })
 
 	io.instructionStream.request.valid := false.B
@@ -52,16 +52,18 @@ class StoreController(implicit c: Configuration) extends Module {
 
   switch(StateReg){
 		is(0.U){
-			io.instructionStream.request.valid := true.B
+      when(io.instructionStream.request.ready){
+        io.instructionStream.request.valid := true.B
 
-			when(io.instructionStream.response.valid){
-				reg := io.instructionStream.response.bits.readData
-        StateReg := 1.U
-			}
+        when(io.instructionStream.response.valid){
+          reg := io.instructionStream.response.bits.readData
+          StateReg := 1.U
+        }
+      }
 		}
 		is(1.U){
 			io.readport.request.valid := true.B
-			io.readport.request.bits.addr := reg.addr.addr
+			io.readport.request.bits.addr := reg.addrs(0).addr
 			io.readport.request.bits.burst := reg.size
 
 			when (io.AXIST.tready) {

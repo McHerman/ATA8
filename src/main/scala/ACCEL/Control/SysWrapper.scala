@@ -8,7 +8,8 @@ class SysWrapper(config: Configuration) extends Module {
   implicit val c = config
   
   val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new ExecuteInstIssue))
+    //val in = Flipped(Decoupled(new ExecuteInstIssue))
+    val in = new Readport(new ExecuteInstIssue,0)
     val scratchOut = new WriteportScratch
     val scratchIn = Vec(2,new ReadportScratch)
   })

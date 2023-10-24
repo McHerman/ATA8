@@ -8,7 +8,8 @@ class SysController(implicit c: Configuration) extends Module {
   //implicit val c = config
   
   val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new ExecuteInstIssue))
+    //val in = Flipped(Decoupled(new ExecuteInstIssue))
+    val in = new Readport(new ExecuteInstIssue,0)
     val scratchOut = new WriteportScratch
     val scratchIn = Vec(2,new ReadportScratch)
 		val memport = Vec(2,Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)))
@@ -25,7 +26,10 @@ class SysController(implicit c: Configuration) extends Module {
 
   val SysWriteDMA = Module(new SysWriteDMA())
  
-	io.in.ready := false.B
+	//io.in.ready := false.B
+  
+  io.in.request.valid := false.B
+	io.in.request.bits := DontCare
 
   io.out.valid := false.B
   io.out.bits := DontCare
@@ -85,12 +89,21 @@ class SysController(implicit c: Configuration) extends Module {
 
 	switch(StateReg){
 		is(0.U){
-			io.in.ready := true.B
+			/* io.in.ready := true.B
 
 			when(io.in.valid){
 				reg := io.in.bits
         StateReg := 1.U
-			}
+			} */
+
+      when(io.in.request.ready){
+        io.in.request.valid := true.B
+
+        when(io.in.response.valid){
+          reg := io.in.response.bits.readData
+          StateReg := 1.U
+        }
+      }
 		}
 		is(1.U){
 			when(SysDMA.io.in.ready && SysDMA2.io.in.ready){ //TODO: clean up this shit

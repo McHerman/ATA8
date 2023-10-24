@@ -14,6 +14,7 @@ class Decoder(config: Configuration) extends Module {
     val storeStream = Decoupled(new StoreInstIssue)
     val tagFetch = Vec(2, new TagRead())
     val tagRegister = new TagWrite()
+    val event = Vec(1,Flipped(Valid(new Event)))
   })
   
   io.exeStream.valid := false.B
@@ -86,12 +87,12 @@ class Decoder(config: Configuration) extends Module {
         io.tagFetch.zipWithIndex.foreach { case (element,i) => element.request.valid := true.B; element.request.bits.addr := addrs(i); 
           when(element.response.valid){
             exeIssueReg.addrs(i).addr := addrs(i)
-            exeIssueReg.addrs(i).tag := element.response.bits.tag
-            exeIssueReg.addrs(i).ready := element.response.bits.ready
+            exeIssueReg.addrs(i).depend.tag := element.response.bits.tag
+            exeIssueReg.addrs(i).depend.ready := element.response.bits.ready
           }.otherwise{
             exeIssueReg.addrs(i).addr := addrs(i)
-            exeIssueReg.addrs(i).tag := 0.U
-            exeIssueReg.addrs(i).ready := true.B
+            exeIssueReg.addrs(i).depend.tag := 0.U
+            exeIssueReg.addrs(i).depend.ready := true.B
           }
         }
 
@@ -142,13 +143,13 @@ class Decoder(config: Configuration) extends Module {
         io.tagFetch(0).request.bits.addr := storeFile.addr
 
         when(io.tagFetch(0).response.valid){
-          storeIssueReg.addr.addr := storeFile.addr
-          storeIssueReg.addr.tag := io.tagFetch(0).response.bits.tag
-          storeIssueReg.addr.ready := io.tagFetch(0).response.bits.ready
+          storeIssueReg.addrs(0).addr := storeFile.addr
+          storeIssueReg.addrs(0).depend.tag := io.tagFetch(0).response.bits.tag
+          storeIssueReg.addrs(0).depend.ready := io.tagFetch(0).response.bits.ready
         }.otherwise{
-          storeIssueReg.addr.addr := storeFile.addr
-          storeIssueReg.addr.tag := 0.U
-          storeIssueReg.addr.ready := true.B
+          storeIssueReg.addrs(0).addr := storeFile.addr
+          storeIssueReg.addrs(0).depend.tag := 0.U
+          storeIssueReg.addrs(0).depend.ready := true.B
         }
 
         storeValid := true.B
@@ -161,6 +162,14 @@ class Decoder(config: Configuration) extends Module {
   when(io.exeStream.ready && exeValid){
     io.exeStream.valid := true.B
     io.exeStream.bits := exeIssueReg
+
+    io.event.foreach{case (event) => // Event fowarding
+      exeIssueReg.addrs.zipWithIndex.foreach{case (addr,i) => 
+        when(event.valid && event.bits.tag === addr.depend.tag){
+				  io.exeStream.bits.addrs(i).depend.ready := true.B
+        }
+      }
+		}
 
     exeValid := false.B
   }.elsewhen(exeValid){
@@ -181,13 +190,22 @@ class Decoder(config: Configuration) extends Module {
     io.storeStream.valid := true.B
     io.storeStream.bits := storeIssueReg
 
+    io.event.foreach{case (event) => // Event fowarding
+      /* storeIssueReg.addrs.foreach{case (addr,i) => 
+        when(event.valid && event.bits.tag === addr.depend.tag){
+				  io.exeStream.bits.addrs(i).depend.ready := true.B
+        }
+      } */
+
+      when(event.valid && event.bits.tag === storeIssueReg.addrs(0).depend.tag){
+				io.storeStream.bits.addrs(0).depend.ready := true.B
+      }
+		}
+
     storeValid := false.B
   }.elsewhen(storeValid){
     storeValid := true.B
   }
-
-
-
 }
 
 

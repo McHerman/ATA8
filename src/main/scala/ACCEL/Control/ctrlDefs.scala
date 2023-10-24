@@ -36,12 +36,19 @@ class StoreInstDecode(implicit c: Configuration) extends Bundle {
   val func = UInt(4.W)
 } 
 
-class ExecuteInstIssue(implicit c: Configuration) extends Bundle {
+trait HasAddrsField extends Bundle {
+  val addrs: Vec[Bundle {
+    val addr: UInt
+    val depend: Depend
+  }]
+}
+
+class ExecuteInstIssue(implicit c: Configuration) extends Bundle with HasAddrsField {
   val op = UInt(1.W) // TODO: magic number
   val mode = UInt(1.W)
   //val grainSize = UInt(c.sysWidth.W)
   val grainSize = UInt(4.W)
-  val addrs = Vec(2, new Bundle {val ready = Bool(); val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)})
+  val addrs = Vec(2, new Bundle {val addr = UInt(16.W); val depend = new Depend})
   val addrd = new Bundle {val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)}// Dest Address
   //val size = UInt(c.grainSizeWidth.W)
   val size = UInt(8.W)
@@ -55,11 +62,10 @@ class LoadInstIssue(implicit c: Configuration) extends Bundle {
   val addr = new Bundle {val ready = Bool(); val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)}
 } 
 
-class StoreInstIssue(implicit c: Configuration) extends Bundle {
+class StoreInstIssue(implicit c: Configuration) extends Bundle with HasAddrsField {
   val op = UInt(1.W) // TODO: magic number
-
   val size = UInt(8.W)
-  val addr = new Bundle {val ready = Bool(); val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)}
+  val addrs = Vec(1,new Bundle {val addr = UInt(16.W); val depend = new Depend})
 } 
 
 class IssuePackage(implicit c: Configuration) extends Bundle {
@@ -124,3 +130,20 @@ class SysOP(implicit c: Configuration) extends Bundle {
   val size = UInt(8.W)
   val id = UInt(4.W)
 } 
+
+/* class StoreDepend(implicit c: Configuration) extends Bundle {
+  val addrs = Vec(1, new Bundle {val ready = Bool(); val tag = UInt(c.tagWidth.W)})
+} 
+
+class ExeDepend(implicit c: Configuration) extends Bundle {
+  val addrs = Vec(2, new Bundle {val ready = Bool(); val tag = UInt(c.tagWidth.W)})
+}  */
+
+/* class Depend(implicit c: Configuration) extends Bundle {
+  val addrs = new Bundle {val ready = Bool(); val tag = UInt(c.tagWidth.W)}
+} */
+
+class Depend(implicit c: Configuration) extends Bundle {
+  val ready = Bool()
+  val tag = UInt(c.tagWidth.W)
+}
