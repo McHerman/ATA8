@@ -48,7 +48,7 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
     // val Writeport = Vec(c.tagProducers,Flipped(Decoupled(new Bundle {val addr = Output(UInt(c.addrWidth.W)); val tag = Input(UInt(c.tagWidth.W))})))
     val ReadData = Vec(readports,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
     val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
-    val event = Vec(3,Flipped(Valid(new Event())))
+    val event = Vec(2,Flipped(Valid(new Event())))
     val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
   })
 
@@ -75,9 +75,10 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
   io.ReadData.foreach { case (element) => 
     when(element.request.valid){
       val (tag,valid,ready) = vecSearch(Map,element.request.bits.addr) 
-      element.response.bits.tag := tag + offset.U// TODO: Add offset
+      //element.response.bits.tag := tag + offset.U// TODO: Add offset
+      element.response.bits.tag := tag
 
-			io.event.foreach{case (event) => 
+			io.event.foreach{case (event) => //event forwarding 
 				when(event.valid && event.bits.tag === tag){
 					element.response.bits.ready := true.B
 				}.otherwise{
@@ -92,8 +93,11 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
   io.readAddr.foreach {case (element) => // For use in SysCtrl, checks for stat
     element.request.ready := true.B
     when(element.request.valid){
-      element.response.bits.readData := Map(element.request.bits.addr).addr - offset.U// TODO: subtract offset
-      element.response.valid := Map(element.request.bits.addr).valid - offset.U // TODO: subtract offset
+      //element.response.bits.readData := Map(element.request.bits.addr).addr - offset.U// TODO: subtract offset
+      //element.response.valid := Map(element.request.bits.addr).valid - offset.U // TODO: subtract 
+      
+      element.response.bits.readData := Map(element.request.bits.addr).addr
+      element.response.valid := Map(element.request.bits.addr).valid
     }
   }
 
@@ -105,8 +109,9 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
     Map(Head).valid := true.B
 
     io.Writeport.tag.valid := true.B
-    io.Writeport.tag.bits := Head + offset.U // TODO: Add offset
-    
+    //io.Writeport.tag.bits := Head + offset.U // TODO: Add offset
+    io.Writeport.tag.bits := Head
+
     when(Head === (tagCount.U - 1.U)){
       Head := 0.U
       HeadFlip := ~HeadFlip
@@ -115,7 +120,37 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
     }
   }
  
-  when(io.tagDealloc.valid && Tail === io.tagDealloc.bits){
+  /* when(io.tagDealloc.valid && Tail === io.tagDealloc.bits){
+    Map(Tail).valid := false.B
+
+    when(Tail === (c.grainFIFOSize.U - 1.U)){
+      Tail := 0.U
+      TailFlip := ~TailFlip
+    }.otherwise{
+      Tail := Tail + 1.U
+    }
+  } */
+
+  io.event.foreach{case (element) => 
+    when(element.valid){
+      when(Map(element.bits.tag).valid){ 
+        Map(element.bits.tag).ready := true.B
+      } 
+    }
+  }
+
+  /* when(io.tagDealloc.valid && Tail === io.tagDealloc.bits){
+    Map(Tail).valid := false.B
+
+    when(Tail === (c.grainFIFOSize.U - 1.U)){
+      Tail := 0.U
+      TailFlip := ~TailFlip
+    }.otherwise{
+      Tail := Tail + 1.U
+    }
+  } */
+
+  when(Map(Tail).ready){
     Map(Tail).valid := false.B
 
     when(Tail === (c.grainFIFOSize.U - 1.U)){
@@ -126,11 +161,6 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
     }
   }
 
-  io.event.foreach{case (element) => 
-    when(element.valid){
-      when(Map(element.bits.tag).valid){ 
-        Map(element.bits.tag).ready := true.B
-      } 
-    }
-  }
+
+
 }

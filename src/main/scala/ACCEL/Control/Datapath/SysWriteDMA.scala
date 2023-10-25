@@ -5,15 +5,17 @@ import chisel3.util._
   
 class SysWriteDMA(implicit c: Configuration) extends Module {  
   val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new Bundle{val addr = UInt(16.W); val size = UInt(8.W)}))
+    val in = Flipped(Decoupled(new Bundle{val addr = UInt(16.W); val size = UInt(8.W); val tag = UInt(c.tagWidth.W)}))
     val scratchOut = new WriteportScratch
     val readPort = new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)
-    val completed = Output(Bool())
+    //val completed = Output(Bool())
+    val completed = Valid(UInt(c.tagWidth.W))
   })
 
   io.in.ready := false.B
 
-  io.completed := false.B
+  io.completed.valid := false.B
+  io.completed.bits := DontCare
 
   io.scratchOut.request.valid := false.B
   io.scratchOut.request.bits := DontCare
@@ -26,7 +28,7 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
   io.readPort.request.bits := DontCare
 
   val StateReg = RegInit(0.U(4.W))
-  val reg = Reg(new Bundle{val addr = UInt(16.W); val size = UInt(8.W)})
+  val reg = Reg(new Bundle{val addr = UInt(16.W); val size = UInt(8.W); val tag = UInt(c.tagWidth.W)})
 
   val burstCNT = RegInit(0.U(8.W))
 
@@ -64,10 +66,16 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
             burstCNT := burstCNT + 1.U
           }.otherwise{
             io.scratchOut.data.bits.last := true.B
-            StateReg := 0.U
+            StateReg := 3.U
           }
         }
       }
+    }
+    is(3.U){
+      io.completed.valid := true.B
+      io.completed.bits := reg.tag
+
+      StateReg := 0.U
     }
   }
 }

@@ -14,7 +14,7 @@ class Grain(config: Configuration) extends Module {
     //val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10))) // Add actual memport
     val Memport = Vec(2,Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10))))
     val Readport = Flipped(new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)) // TODO: change to consistant port naming
-    val completed = Valid(new Bundle{val id = UInt(4.W)})
+    val completed = Valid(new Bundle{val tag = UInt(c.tagWidth.W)})
   })
 
   val XFile = Module(new XFile())

@@ -13,7 +13,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
     val Enable = Output(Bool())
     val Mode = Output(UInt(1.W))
 
-    val completed = Valid(new Bundle{val id = UInt(4.W)})
+    val completed = Valid(new Bundle{val tag = UInt(c.tagWidth.W)})
   })
   io.in.ready := false.B
 
@@ -81,7 +81,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
         EnableCnt := 0.U
         StateReg := 0.U
 
-        io.completed.bits.id := inReg.id
+        io.completed.bits.tag := inReg.tag
         io.completed.valid := true.B
       }
     }
@@ -122,7 +122,7 @@ class SysCtrl(implicit c: Configuration) extends Module {
         ShiftCnt := 0.U
         StateReg := 0.U
 
-        io.completed.bits.id := inReg.id
+        io.completed.bits.tag := inReg.tag
         io.completed.valid := true.B
       }
     }

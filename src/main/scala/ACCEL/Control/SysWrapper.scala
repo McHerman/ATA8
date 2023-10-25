@@ -12,6 +12,7 @@ class SysWrapper(config: Configuration) extends Module {
     val in = new Readport(new ExecuteInstIssue,0)
     val scratchOut = new WriteportScratch
     val scratchIn = Vec(2,new ReadportScratch)
+    val event = Valid(new Event)
   })
 
   val SysController = Module(new SysController())
@@ -26,6 +27,8 @@ class SysWrapper(config: Configuration) extends Module {
   SysController.io.readPort <> SysGrain.io.Readport
 
   SysController.io.sysCompleted <> SysGrain.io.completed
+
+  io.event := SysController.io.event
 }
 
 object SysWrapper extends App {

@@ -123,25 +123,11 @@ class ROBRead(implicit c: Configuration) extends Bundle {
   }))
 } 
 
-
-
 class SysOP(implicit c: Configuration) extends Bundle {
   val mode = UInt(1.W)
   val size = UInt(8.W)
-  val id = UInt(4.W)
+  val tag = UInt(c.tagWidth.W)
 } 
-
-/* class StoreDepend(implicit c: Configuration) extends Bundle {
-  val addrs = Vec(1, new Bundle {val ready = Bool(); val tag = UInt(c.tagWidth.W)})
-} 
-
-class ExeDepend(implicit c: Configuration) extends Bundle {
-  val addrs = Vec(2, new Bundle {val ready = Bool(); val tag = UInt(c.tagWidth.W)})
-}  */
-
-/* class Depend(implicit c: Configuration) extends Bundle {
-  val addrs = new Bundle {val ready = Bool(); val tag = UInt(c.tagWidth.W)}
-} */
 
 class Depend(implicit c: Configuration) extends Bundle {
   val ready = Bool()

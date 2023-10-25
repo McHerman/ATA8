@@ -15,11 +15,12 @@ class SysController(implicit c: Configuration) extends Module {
 		val memport = Vec(2,Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)))
     val readPort = new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)
 		val out = Decoupled(new SysOP)
-    val sysCompleted = Flipped(Valid(new Bundle{val id = UInt(4.W)}))
+    val sysCompleted = Flipped(Valid(new Bundle{val tag = UInt(c.tagWidth.W)}))
+    val event = Valid(new Event)
   })
 
   val opbuffer = Module(new BufferFIFO(8,new SysOP)) // FIXME: Magic number
-  val readBuffer = Module(new BufferFIFO(8, new Bundle{val addr = UInt(16.W); val size = UInt(8.W)}))
+  val readBuffer = Module(new BufferFIFO(8, new Bundle{val addr = UInt(16.W); val tag = UInt(c.tagWidth.W); val size = UInt(8.W)}))
 
 	val SysDMA = Module(new SysDMA())
 	val SysDMA2 = Module(new SysDMA())
@@ -48,6 +49,9 @@ class SysController(implicit c: Configuration) extends Module {
 
   io.scratchOut <> SysWriteDMA.io.scratchOut
   io.readPort <> SysWriteDMA.io.readPort
+
+  io.event.valid := false.B
+  io.event.bits := DontCare
 
   SysWriteDMA.io.in.valid := false.B
   SysWriteDMA.io.in.bits := DontCare
@@ -119,20 +123,6 @@ class SysController(implicit c: Configuration) extends Module {
 			}
 		}
 		is(2.U){
-			/* when(SysDMA.io.completed){
-				transfercompleted(0) := true.B
-			}
-
-			when(SysDMA2.io.completed){
-				transfercompleted(1) := true.B
-			}
-
-			when((transfercompleted(0) || SysDMA.io.completed) && (transfercompleted(1) || SysDMA2.io.completed)){
-				StateReg := 3.U
-        transfercompleted(0) := false.B
-        transfercompleted(1) := false.B
-			}  */
-
       when(SysDMA.io.completed && SysDMA2.io.completed){
 				SysDMA.io.completeAgnoledge := true.B
 				SysDMA2.io.completeAgnoledge := true.B
@@ -145,10 +135,11 @@ class SysController(implicit c: Configuration) extends Module {
 				opbuffer.io.WriteData.valid := true.B
 				opbuffer.io.WriteData.bits.mode := reg.mode
 				opbuffer.io.WriteData.bits.size := reg.size
-        opbuffer.io.WriteData.bits.id := 0.U // FIXME: Temporary fix, build tag allocator
+        opbuffer.io.WriteData.bits.tag := reg.addrd.tag
 
         readBuffer.io.WriteData.valid := true.B
 				readBuffer.io.WriteData.bits.addr := reg.addrd.addr
+        readBuffer.io.WriteData.bits.tag := reg.addrd.tag
 				readBuffer.io.WriteData.bits.size := reg.size
 
 				StateReg := 0.U
@@ -161,8 +152,14 @@ class SysController(implicit c: Configuration) extends Module {
     when(SysWriteDMA.io.in.ready){
       readBuffer.io.ReadData.request.valid := true.B
       SysWriteDMA.io.in.bits <> readBuffer.io.ReadData.response.bits.readData
-      SysWriteDMA.io.in.valid := true.B
+      //SysWriteDMA.io.in.valid := true.B
+      SysWriteDMA.io.in.valid := io.sysCompleted.bits.tag === readBuffer.io.ReadData.response.bits.readData.tag // checks that the read op matches the finished sys op
     }
+  }
+
+  when(SysWriteDMA.io.completed.valid){
+    io.event.valid := true.B
+    io.event.bits.tag := SysWriteDMA.io.completed.bits
   }
 
   /* opbuffer.io.ReadData.request.valid := io.out.ready

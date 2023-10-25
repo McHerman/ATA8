@@ -12,7 +12,9 @@ class Execute(config: Configuration) extends Module {
     //val tagDealloc = Decoupled(UInt(c.tagWidth.W))
     val scratchOut = new WriteportScratch
     val scratchIn = Vec(2,new ReadportScratch)
-    val event = Vec(2,Flipped(Valid(new Event())))
+    //val event = Vec(2,Flipped(Valid(new Event())))
+    val eventIn = Flipped(Valid(new Event()))
+    val eventOut = Valid(new Event)
   })
 
   //val queue = Module(new BufferFIFO(16,new StoreInstIssue))
@@ -21,13 +23,16 @@ class Execute(config: Configuration) extends Module {
   val SysWrapper = Module(new SysWrapper(c))
 
   queue.io.WriteData <> io.instructionStream
-  queue.dependio.event <> io.event
-  
+  //queue.dependio.event <> io.event
+  queue.dependio.event(0) := io.eventIn
+  queue.dependio.event(1) := SysWrapper.io.event
+
   SysWrapper.io.scratchOut <> io.scratchOut
   SysWrapper.io.scratchIn <> io.scratchIn
 
   SysWrapper.io.in <> queue.io.ReadData
 
+  io.eventOut := SysWrapper.io.event
 }
 
 object Execute extends App {

@@ -16,7 +16,7 @@ class LoadController(implicit c: Configuration) extends Module {
     val instructionStream = new Readport(new LoadInstIssue,0)
     val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
     val writeport = new WriteportScratch
-    val tagRegister = new TagWrite
+    val event = Valid(new Event)
   })
 
 	io.instructionStream.request.valid := false.B
@@ -28,10 +28,10 @@ class LoadController(implicit c: Configuration) extends Module {
   io.writeport.request.bits := DontCare
   io.writeport.data.bits := DontCare
 
-  io.tagRegister.addr.valid := false.B
-  io.tagRegister.addr.bits := DontCare
-
 	io.AXIST.tready := false.B
+
+  io.event.valid := false.B
+  io.event.bits := DontCare
 
 	val burstAddrReg = RegInit(0.U(32.W))
   val addrTemp = RegInit(0.U(32.W))
@@ -75,7 +75,7 @@ class LoadController(implicit c: Configuration) extends Module {
       }
 		}
 		is(2.U){
-      when(io.tagRegister.addr.ready){
+      /* when(io.tagRegister.addr.ready){
         io.tagRegister.addr.bits.addr := reg.addr
         io.tagRegister.addr.bits.ready := true.B
 
@@ -84,7 +84,12 @@ class LoadController(implicit c: Configuration) extends Module {
         when(io.tagRegister.tag.valid){
           StateReg := 0.U
         }
-      }
+      } */
+
+      io.event.valid := true.B
+      io.event.bits.tag := reg.addr.tag
+
+      StateReg := 0.U
 		}
   }
 }

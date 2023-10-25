@@ -103,7 +103,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
 
     test(new SysWrapper(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 			
-      dut.io.in.ready.expect(true.B)
+      /* dut.io.in.ready.expect(true.B)
       dut.io.in.valid.poke(true.B)
 
       dut.io.in.bits.op.poke(0.U)
@@ -116,11 +116,31 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.in.bits.addrd.addr.poke(16.U)
 
       dut.io.in.bits.size.poke(8.U)
+      */
+
+      dut.io.in.request.ready.poke(true.B)
+      dut.io.in.request.valid.expect(true.B)
+
+      dut.io.in.response.valid.poke(true.B)
+
+      dut.io.in.response.bits.readData.op.poke(0.U)
+      dut.io.in.response.bits.readData.mode.poke(0.U)
+      dut.io.in.response.bits.readData.grainSize.poke(0.U)
+
+      dut.io.in.response.bits.readData.addrs(0).addr.poke(0.U)
+      dut.io.in.response.bits.readData.addrs(1).addr.poke(8.U)
+
+      dut.io.in.response.bits.readData.addrd.addr.poke(16.U)
+
+      dut.io.in.response.bits.readData.size.poke(8.U)
 
       dut.clock.step(1)
 
-      dut.io.in.ready.expect(false.B)
-      dut.io.in.valid.poke(false.B)
+      //dut.io.in.ready.expect(false.B)
+      //dut.io.in.valid.poke(false.B)
+
+      dut.io.in.request.ready.poke(false.B)
+      dut.io.in.request.valid.expect(false.B)
 
       dut.io.scratchIn(0).request.ready.poke(true.B)
       dut.io.scratchIn(1).request.ready.poke(true.B)
@@ -191,7 +211,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
         dut.clock.step()
       }
 
-      val product = Array.ofDim[Int](n, n)
+      /* val product = Array.ofDim[Int](n, n)
 
       for (i <- 0 until n) {
 				for (j <- 0 until n) {
@@ -206,25 +226,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
 			// Print the product matrix
 			for (row <- product) {
 				println(row.mkString("\t"))
-			}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      
-
-
-
+			} */
 
     }
   }
@@ -237,7 +239,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
 
     test(new SysWrapper(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 			
-      dut.io.in.ready.expect(true.B)
+      /* dut.io.in.ready.expect(true.B)
       dut.io.in.valid.poke(true.B)
 
       dut.io.in.bits.op.poke(0.U)
@@ -250,11 +252,31 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.in.bits.addrd.addr.poke(16.U)
 
       dut.io.in.bits.size.poke(8.U)
+      */
+
+      dut.io.in.request.ready.poke(true.B)
+      dut.io.in.request.valid.expect(true.B)
+
+      dut.io.in.response.valid.poke(true.B)
+
+      dut.io.in.response.bits.readData.op.poke(0.U)
+      dut.io.in.response.bits.readData.mode.poke(1.U)
+      dut.io.in.response.bits.readData.grainSize.poke(0.U)
+
+      dut.io.in.response.bits.readData.addrs(0).addr.poke(0.U)
+      dut.io.in.response.bits.readData.addrs(1).addr.poke(8.U)
+
+      dut.io.in.response.bits.readData.addrd.addr.poke(16.U)
+
+      dut.io.in.response.bits.readData.size.poke(8.U)
 
       dut.clock.step(1)
 
-      dut.io.in.ready.expect(false.B)
-      dut.io.in.valid.poke(false.B)
+      //dut.io.in.ready.expect(false.B)
+      //dut.io.in.valid.poke(false.B)
+
+      dut.io.in.request.ready.poke(false.B)
+      dut.io.in.request.valid.expect(false.B)
 
       dut.io.scratchIn(0).request.ready.poke(true.B)
       dut.io.scratchIn(1).request.ready.poke(true.B)
@@ -325,7 +347,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
         dut.clock.step()
       }
 
-      val product = Array.ofDim[Int](n, n)
+      /* val product = Array.ofDim[Int](n, n)
 
       for (i <- 0 until n) {
 				for (j <- 0 until n) {
@@ -340,7 +362,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
 			// Print the product matrix
 			for (row <- product) {
 				println(row.mkString("\t"))
-			}
+			} */
     }
   }
 }
