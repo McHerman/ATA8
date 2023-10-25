@@ -16,7 +16,7 @@ class StoreController(implicit c: Configuration) extends Module {
     val AXIST = new AXIST_2(64,2,1,1,1) 
     val readport = new ReadportScratch
 		//val tagRead = new TagRead
-		val tagDealloc = Decoupled(UInt(c.tagWidth.W))
+		//val tagDealloc = Decoupled(UInt(c.tagWidth.W))
 		//val event = Flipped(Valid(new Event()))
   })
 
@@ -38,8 +38,8 @@ class StoreController(implicit c: Configuration) extends Module {
 
 	//io.tagRead.response.ready := false.B
 
-	io.tagDealloc.valid := false.B
-	io.tagDealloc.bits := DontCare
+	/* io.tagDealloc.valid := false.B
+	io.tagDealloc.bits := DontCare */
 
 	val burstAddrReg = RegInit(0.U(32.W))
   val addrTemp = RegInit(0.U(32.W))
@@ -84,15 +84,16 @@ class StoreController(implicit c: Configuration) extends Module {
 						io.AXIST.tstrb := "h11".U
 
 						io.AXIST.tlast := true.B
-						StateReg := 4.U
+						//StateReg := 4.U
+            StateReg := 0.U
 					}			
 				}
       }
 		}
-		is(2.U){
+		/* is(2.U){
       io.tagDealloc.valid := true.B
 			io.tagDealloc.bits := tagReg
 			StateReg := 0.U
-		}
+		} */
   }
 }

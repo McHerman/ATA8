@@ -8,15 +8,20 @@ class Decoder(config: Configuration) extends Module {
   implicit val c = config
 
   val io = IO(new Bundle {
-    val instructionStream = Flipped(Decoupled(new InstructionPackage))
+    //val instructionStream = Flipped(Decoupled(new InstructionPackage))
+    val instructionStream = new Readport(new InstructionPackage,0)
+    
     val exeStream = Decoupled(new ExecuteInstIssue)
     val loadStream = Decoupled(new LoadInstIssue)
     val storeStream = Decoupled(new StoreInstIssue)
     val tagFetch = Vec(2, new TagRead())
     val tagRegister = new TagWrite()
-    val event = Vec(1,Flipped(Valid(new Event)))
+    val event = Vec(2,Flipped(Valid(new Event)))
   })
   
+  io.instructionStream.request.valid := false.B
+  io.instructionStream.request.bits := DontCare
+
   io.exeStream.valid := false.B
   io.exeStream.bits := DontCare
 
@@ -48,23 +53,25 @@ class Decoder(config: Configuration) extends Module {
 
   val stall = WireDefault(false.B)
 
-  io.instructionStream.ready := !stall
+  //io.instructionStream.ready := !stall
 
-	when(io.instructionStream.valid && !stall){
-		switch(io.instructionStream.bits.instruction(3,0)){
+	when(io.instructionStream.request.ready){
+    io.instructionStream.request.valid := !stall
+
+		switch(io.instructionStream.response.bits.readData.instruction(3,0)){ // TODO: Add a valid check here 
       is(0.U){
         selReg := 0.U
       }
 			is(1.U){
-				exeFile := io.instructionStream.bits.instruction.asTypeOf(new ExeInstDecode)
+				exeFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new ExeInstDecode)
 				selReg := 1.U
 			}
 			is(2.U){
-				loadFile := io.instructionStream.bits.instruction.asTypeOf(new LoadInstDecode)
+				loadFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new LoadInstDecode)
 				selReg := 2.U
 			}
 			is(3.U){
-				storeFile := io.instructionStream.bits.instruction.asTypeOf(new StoreInstDecode)
+				storeFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new StoreInstDecode)
 				selReg := 3.U
 			}
 		}

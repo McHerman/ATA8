@@ -4,7 +4,7 @@ import chisel3.util.log2Ceil
 package object ATA8 {
 
   case class Configuration(
-    bufferSize: Int,
+    scratchpadSize: Int,
     bufferReadPorts: Int,
     bufferWritePorts: Int,
     grainDim: Int,
@@ -13,10 +13,7 @@ package object ATA8 {
     grainACCUSize: Int,
     arithDataWidth: Int,
     modeWidth: Int,
-    exTagCount: Int,
-    loadTagCount: Int,
-    issueQueueSize: Int, 
-    resStationSize: Int,
+    tagCount: Int,
     addrWidth: Int,
     dmaCount: Int,
     issueWidth: Int,
@@ -26,7 +23,7 @@ package object ATA8 {
     initialStateMap: Seq[Int],
     simulation: Boolean = false */
   ){
-    val tagWidth =  log2Ceil(exTagCount + loadTagCount)
+    val tagWidth =  log2Ceil(tagCount)
     val syncIdWidth = log2Ceil(sysDim)
     val sysWidth = log2Ceil(2)
     //val sysWidth = log2Ceil(sysDim*sysDim) //Gives 0 
@@ -40,19 +37,16 @@ package object ATA8 {
   object Configuration {
     def default(): Configuration = {
       Configuration(
-        4069, // bufferSize
-        2,    // bufferReadPorts
+        1024, // scratchpadSize
+        3,    // bufferReadPorts
         2,    // bufferWritePorts
         8,    // grainDim
         1,    // sysDim
-        128,  // grainFIFOSize
-        128,  // grainACCUSize
+        64,  // grainFIFOSize
+        64,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        8,    // exTagCount
-        8,    // loadTagCount
-        16,   // issueQueueSize
-        16,   // resStationSize
+        16,    // tagCount
         16,   // addrWidth
         4,    // dmaCount
         4,    // issueWidth
@@ -63,7 +57,7 @@ package object ATA8 {
     }
     def test(): Configuration = {
       Configuration(
-        64, // bufferSize
+        64, // scratchpadSize
         1,    // bufferReadPorts
         1,    // bufferWritePorts
         8,     // grainDim
@@ -72,10 +66,7 @@ package object ATA8 {
         128,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        8,    // exTagCount
-        8,    // loadTagCount
-        8,   // issueQueueSize
-        8,   // resStationSize
+        8,    // tagCount
         16,    // addrWidth
 				1,    // dmaCount
         1,    // issueWidth
@@ -86,7 +77,7 @@ package object ATA8 {
     }
     def test16(): Configuration = {
       Configuration(
-        128, // bufferSize
+        128, // scratchpadSize
         1,    // bufferReadPorts
         1,    // bufferWritePorts
         16,   // grainDim
@@ -95,10 +86,7 @@ package object ATA8 {
         128,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        8,    // exTagCount
-        8,    // loadTagCount
-        16,   // issueQueueSize
-        16,   // resStationSize
+        8,    // tagCount
         16,    // addrWidth
 				4,    // dmaCount
         4,    // issueWidth
@@ -109,7 +97,7 @@ package object ATA8 {
     }
     def buftest(): Configuration = {
       Configuration(
-        128, // bufferSize
+        128, // scratchpadSize
         1,    // bufferReadPorts
         2,    // bufferWritePorts
         8,   // grainDim
@@ -118,10 +106,7 @@ package object ATA8 {
         128,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        8,    // exTagCount
-        8,    // loadTagCount
-        16,    // issueQueueSize
-        16,   // resStationSize
+        8,    // tagCount
         16,    // addrWidth
 				4,    // dmaCount
         4,    // issueWidth

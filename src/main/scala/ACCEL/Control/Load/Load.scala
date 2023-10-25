@@ -9,11 +9,11 @@ class Load(config: Configuration) extends Module {
 
   val io = IO(new Bundle {
     val instructionStream = Flipped(Decoupled(new LoadInstIssue))
-    val event = Valid(new Event())
     //val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
     val scratchOut = new WriteportScratch
     //val readAddr = Vec(2 /*FIXME: magic fucking number*/ ,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
+    val event = Valid(new Event())
   })
 
   val queue = Module(new BufferFIFO(16,new LoadInstIssue))

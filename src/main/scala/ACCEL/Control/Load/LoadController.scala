@@ -90,7 +90,7 @@ class LoadController(implicit c: Configuration) extends Module {
         io.AXIST.tready := true.B
 
         when(io.AXIST.tvalid){
-          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,8))
+          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,c.arithDataWidth)) // big fucking problem here 
           io.writeport.data.bits.strb := io.AXIST.tstrb.asBools
           io.writeport.data.valid := true.B
 

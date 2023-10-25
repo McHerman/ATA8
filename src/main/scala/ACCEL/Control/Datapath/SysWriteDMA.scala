@@ -57,7 +57,9 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
         io.readPort.request.valid := true.B
 
         io.scratchOut.data.bits.writeData := io.readPort.response.bits.readData
-        io.scratchOut.data.bits.strb := "hff".U.asBools
+        //io.scratchOut.data.bits.strb := "hff".U.asBools
+        io.scratchOut.data.bits.strb.foreach(element => element := true.B)
+
 
         when(io.readPort.response.valid){
           io.scratchOut.data.valid := true.B

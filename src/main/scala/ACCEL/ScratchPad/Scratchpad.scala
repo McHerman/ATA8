@@ -12,7 +12,7 @@ class Scratchpad(implicit c: Configuration) extends Module {
   })
 
   val ReadDelay = Reg(Vec(c.bufferReadPorts, UInt(1.W)))
-  val mem = SyncReadMem(c.bufferSize, Vec(c.grainDim,UInt(c.arithDataWidth.W)))
+  val mem = SyncReadMem(c.scratchpadSize, Vec(c.grainDim,UInt(c.arithDataWidth.W)))
 
   // ReadPorts
 

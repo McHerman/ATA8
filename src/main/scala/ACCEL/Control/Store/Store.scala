@@ -9,9 +9,9 @@ class Store(config: Configuration) extends Module {
 
   val io = IO(new Bundle {
     val instructionStream = Flipped(Decoupled(new StoreInstIssue))
-    val tagDealloc = Decoupled(UInt(c.tagWidth.W))
+    //val tagDealloc = Decoupled(UInt(c.tagWidth.W))
     val AXIST = new AXIST_2(64,2,1,1,1)
-    val readport = new ReadportScratch
+    val readPort = new ReadportScratch
 		//val tagRead = new TagRead
 		val event = Vec(2,Flipped(Valid(new Event())))
   })
@@ -35,9 +35,9 @@ class Store(config: Configuration) extends Module {
 	//StoreController.io.event <> io.event
 	//StoreController.io.tagRead <> io.tagRead
 	
-	io.tagDealloc <> StoreController.io.tagDealloc
+	//io.tagDealloc <> StoreController.io.tagDealloc
 
-  io.readport <> StoreController.io.readport 
+  io.readPort <> StoreController.io.readport 
 }
 
 object Store extends App {
