@@ -6,7 +6,9 @@ import chisel3.util._
 
 
 //class ResStation(implicit c: Configuration) extends Module {
-class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configuration) extends Module {
+//class ROB(tagCount: Int, readports: Int)(implicit c: Configuration) extends Module {
+class ROB(tagCount: Int, readports: Int)(config: Configuration) extends Module {
+  implicit val c = config
 
   def vecSearch(reg: Vec[mapping], search: UInt): (UInt, Bool, Bool) = {
     val tag = WireDefault (0.U)
@@ -47,7 +49,8 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
     val Writeport = Flipped(new TagWrite())
     // val Writeport = Vec(c.tagProducers,Flipped(Decoupled(new Bundle {val addr = Output(UInt(c.addrWidth.W)); val tag = Input(UInt(c.tagWidth.W))})))
     val ReadData = Vec(readports,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
-    val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
+    //val ReadData = Flipped(new TagRead())
+    //val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val event = Vec(2,Flipped(Valid(new Event())))
     val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
   })
@@ -65,8 +68,9 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
   io.ReadData.foreach{case (element) => element.response.valid := false.B; element.response.bits := DontCare}
   io.readAddr.foreach{case (element) => element.request.ready := false.B; element.response.valid := false.B; element.response.bits := DontCare}
 
-  io.tagDealloc.ready := !empty
+  //io.tagDealloc.ready := !empty
 
+  io.Writeport.addr.ready := false.B
 	io.Writeport.tag.valid := false.B
 	io.Writeport.tag.bits := DontCare
 
@@ -101,7 +105,7 @@ class ROB(tagCount: Int, readports: Int, val offset: Int)(implicit c: Configurat
     }
   }
 
-  //io.Writeport.addr.ready := !full
+  io.Writeport.addr.ready := !full
 
 	when(io.Writeport.addr.valid && !full){
     Map(Head).addr := io.Writeport.addr.bits.addr

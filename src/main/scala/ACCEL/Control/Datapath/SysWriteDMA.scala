@@ -66,6 +66,7 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
             burstCNT := burstCNT + 1.U
           }.otherwise{
             io.scratchOut.data.bits.last := true.B
+            burstCNT := 0.U
             StateReg := 3.U
           }
         }

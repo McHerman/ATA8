@@ -267,7 +267,240 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
 
+  it should "allocate multible instructions" in {
+    test(new Execute(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+      dut.io.instructionStream.ready.expect(true.B)
+      dut.io.instructionStream.valid.poke(true.B)
 
+      dut.io.instructionStream.bits.op.poke(0.U)
+      dut.io.instructionStream.bits.mode.poke(0.U)
+      dut.io.instructionStream.bits.grainSize.poke(0.U)
+
+      dut.io.instructionStream.bits.addrs(0).addr.poke(0.U)
+      dut.io.instructionStream.bits.addrs(0).depend.tag.poke(1.U)
+      dut.io.instructionStream.bits.addrs(0).depend.ready.poke(false.B)
+
+      dut.io.instructionStream.bits.addrs(1).addr.poke(8.U)
+      dut.io.instructionStream.bits.addrs(1).depend.tag.poke(2.U)
+      dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
+
+      dut.io.instructionStream.bits.addrd.addr.poke(32.U)
+      dut.io.instructionStream.bits.addrd.tag.poke(5.U)
+
+
+      dut.io.instructionStream.bits.size.poke(8.U)
+
+      dut.clock.step(1)
+
+      dut.io.instructionStream.ready.expect(true.B)
+      dut.io.instructionStream.valid.poke(true.B)
+
+      dut.io.instructionStream.bits.op.poke(0.U)
+      dut.io.instructionStream.bits.mode.poke(0.U)
+      dut.io.instructionStream.bits.grainSize.poke(0.U)
+
+      dut.io.instructionStream.bits.addrs(0).addr.poke(16.U)
+      dut.io.instructionStream.bits.addrs(0).depend.tag.poke(3.U)
+      dut.io.instructionStream.bits.addrs(0).depend.ready.poke(false.B)
+
+      dut.io.instructionStream.bits.addrs(1).addr.poke(24.U)
+      dut.io.instructionStream.bits.addrs(1).depend.tag.poke(4.U)
+      dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
+
+      dut.io.instructionStream.bits.addrd.addr.poke(40.U)
+      dut.io.instructionStream.bits.addrd.tag.poke(6.U)
+
+      dut.io.instructionStream.bits.size.poke(8.U)
+
+      dut.clock.step(1)
+
+      //dut.io.in.ready.expect(false.B)
+      //dut.io.in.valid.poke(false.B)
+
+      dut.io.instructionStream.ready.expect(true.B)
+      dut.io.instructionStream.valid.poke(false.B)
+
+      dut.clock.step(10)
+
+      dut.io.eventIn.valid.poke(true.B)
+      dut.io.eventIn.bits.tag.poke(3.U)
+
+      dut.clock.step(1)
+
+      dut.io.eventIn.valid.poke(true.B)
+      dut.io.eventIn.bits.tag.poke(4.U)
+
+      dut.clock.step(1)
+
+      dut.io.eventIn.valid.poke(true.B)
+      dut.io.eventIn.bits.tag.poke(1.U)
+
+      dut.clock.step(1)
+
+      dut.io.eventIn.valid.poke(true.B)
+      dut.io.eventIn.bits.tag.poke(2.U)
+
+      dut.clock.step(1)
+
+      dut.io.scratchIn(0).request.ready.poke(true.B)
+      dut.io.scratchIn(1).request.ready.poke(true.B)
+
+      while (dut.io.scratchIn(0).request.valid.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      dut.io.scratchIn(0).request.bits.addr.expect(0.U)
+      dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+
+      dut.io.scratchIn(1).request.bits.addr.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+
+      dut.clock.step(1)
+
+      dut.io.scratchIn(0).data.ready.expect(true.B)
+      dut.io.scratchIn(1).data.ready.expect(true.B)
+
+      dut.io.scratchIn(0).data.valid.poke(true.B)
+      dut.io.scratchIn(1).data.valid.poke(true.B)
+
+      for(i <- 0 until n){
+
+        /* for(k <- 0 until n){
+          dut.io.Memport(0).bits.writeData(k).poke(matrix(i)(k).U(n.W))
+        } */
+
+        for(k <- 0 until n){
+          dut.io.scratchIn(0).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
+          dut.io.scratchIn(1).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
+        }
+
+        dut.clock.step()
+      }
+
+      dut.io.scratchIn(0).data.valid.poke(false.B)
+      dut.io.scratchIn(1).data.valid.poke(false.B)
+
+      dut.io.scratchIn(0).request.ready.poke(false.B)
+      dut.io.scratchIn(1).request.ready.poke(false.B)
+
+      dut.io.scratchOut.request.ready.poke(true.B)
+
+      while (dut.io.scratchOut.request.valid.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      val expectedResult = matrixDotProduct(matrix3, matrix3)
+
+      dut.io.scratchOut.request.bits.addr.expect(32.U)
+      dut.io.scratchOut.request.bits.burst.expect(8.U)
+
+      dut.io.scratchOut.data.ready.poke(true.B)
+
+      dut.clock.step()
+
+      dut.io.scratchOut.data.valid.expect(true.B)
+
+      for (row <- 0 until n) {
+        for (col <- 0 until n) {
+          dut.io.scratchOut.data.bits.writeData(col).expect(expectedResult(row)(col).U(8.W))
+        }
+        
+        if (row == n - 1) {
+          dut.io.scratchOut.data.bits.last.expect(true.B)
+        } else {
+          dut.io.scratchOut.data.bits.last.expect(false.B)
+        }
+
+        dut.clock.step()
+      }
+
+      dut.io.scratchOut.request.ready.poke(false.B)
+      dut.io.scratchOut.data.ready.poke(false.B)
+
+      dut.io.eventOut.valid.expect(true.B)
+      dut.io.eventOut.bits.tag.expect(5.U)
+
+      // Second instruction 
+
+      dut.io.scratchIn(0).request.ready.poke(true.B)
+      dut.io.scratchIn(1).request.ready.poke(true.B)
+
+      while (dut.io.scratchIn(0).request.valid.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      dut.io.scratchIn(0).request.bits.addr.expect(16.U)
+      dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+
+      dut.io.scratchIn(1).request.bits.addr.expect(24.U)
+      dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+
+      dut.clock.step(1)
+
+      dut.io.scratchIn(0).data.ready.expect(true.B)
+      dut.io.scratchIn(1).data.ready.expect(true.B)
+
+      dut.io.scratchIn(0).data.valid.poke(true.B)
+      dut.io.scratchIn(1).data.valid.poke(true.B)
+
+      for(i <- 0 until n){
+
+        /* for(k <- 0 until n){
+          dut.io.Memport(0).bits.writeData(k).poke(matrix(i)(k).U(n.W))
+        } */
+
+        for(k <- 0 until n){
+          dut.io.scratchIn(0).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
+          dut.io.scratchIn(1).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
+        }
+
+        dut.clock.step()
+      }
+
+      dut.io.scratchIn(0).data.valid.poke(false.B)
+      dut.io.scratchIn(1).data.valid.poke(false.B)
+
+      dut.io.scratchIn(0).request.ready.poke(false.B)
+      dut.io.scratchIn(1).request.ready.poke(false.B)
+
+      dut.io.scratchOut.request.ready.poke(true.B)
+
+      while (dut.io.scratchOut.request.valid.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      val expectedResult2 = matrixDotProduct(matrix3, matrix3)
+
+      dut.io.scratchOut.request.bits.addr.expect(40.U)
+      dut.io.scratchOut.request.bits.burst.expect(8.U)
+
+      dut.io.scratchOut.data.ready.poke(true.B)
+
+      dut.clock.step()
+
+      dut.io.scratchOut.data.valid.expect(true.B)
+
+      for (row <- 0 until n) {
+        for (col <- 0 until n) {
+          dut.io.scratchOut.data.bits.writeData(col).expect(expectedResult2(row)(col).U(8.W))
+        }
+        
+        if (row == n - 1) {
+          dut.io.scratchOut.data.bits.last.expect(true.B)
+        } else {
+          dut.io.scratchOut.data.bits.last.expect(false.B)
+        }
+
+        dut.clock.step()
+      }
+
+      dut.io.eventOut.valid.expect(true.B)
+      dut.io.eventOut.bits.tag.expect(6.U)
+
+      
+
+    }
+  }
 
 
   
