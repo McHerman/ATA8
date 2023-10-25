@@ -125,7 +125,7 @@ class Decoder(config: Configuration) extends Module {
           when(io.tagRegister.tag.valid){
             loadIssueReg.addr.tag := io.tagRegister.tag.bits
             loadIssueReg.addr.addr := loadFile.addr
-            loadIssueReg.addr.ready := true.B 
+            //loadIssueReg.addr.ready := true.B 
             loadValid := true.B
           }.otherwise{
             stall := true.B

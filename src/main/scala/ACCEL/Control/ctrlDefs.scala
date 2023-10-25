@@ -59,7 +59,7 @@ class LoadInstIssue(implicit c: Configuration) extends Bundle {
   val mode = UInt(1.W)
   
   val size = UInt(8.W)
-  val addr = new Bundle {val ready = Bool(); val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)}
+  val addr = new Bundle {val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)}
 } 
 
 class StoreInstIssue(implicit c: Configuration) extends Bundle with HasAddrsField {

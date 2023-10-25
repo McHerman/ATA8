@@ -43,15 +43,17 @@ class LoadController(implicit c: Configuration) extends Module {
 
   switch(StateReg){
 		is(0.U){
-			io.instructionStream.request.valid := true.B
+      when(io.instructionStream.request.ready){
+        io.instructionStream.request.valid := true.B
 
-			when(io.instructionStream.response.valid){
-				reg := io.instructionStream.response.bits.readData
-        StateReg := 1.U
-			}
+        when(io.instructionStream.response.valid){
+          reg := io.instructionStream.response.bits.readData
+          StateReg := 1.U
+        }
+      }
 		}
 		is(1.U){
-			io.AXIST.tready := true.B
+			/* io.AXIST.tready := true.B
 
       when (io.AXIST.tvalid) {
         when (io.AXIST.tlast) {
@@ -72,9 +74,40 @@ class LoadController(implicit c: Configuration) extends Module {
             io.writeport.data.valid := true.B
 					}
 				}
-      }
+      } */
+
+
+      when(io.writeport.request.ready){ // Assuming that the line remains open.
+				io.writeport.request.valid := true.B
+        io.writeport.request.bits.addr := reg.addr.addr
+				io.writeport.request.bits.burst := reg.size
+
+        StateReg := 2.U
+			}
 		}
-		is(2.U){
+    is(2.U){
+      when(io.writeport.data.ready){
+        io.AXIST.tready := true.B
+
+        when(io.AXIST.tvalid){
+          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,8))
+          io.writeport.data.bits.strb := io.AXIST.tstrb.asBools
+          io.writeport.data.valid := true.B
+
+          when(burstAddrReg < reg.size){
+            burstAddrReg := burstAddrReg + 1.U
+          }.elsewhen(io.AXIST.tlast){
+            StateReg := 3.U
+            burstAddrReg := 0.U
+            io.writeport.data.bits.last := true.B
+          }.otherwise{
+            //return an error of some kind 
+            StateReg := 0.U
+          }
+        }
+			}
+		}
+		is(3.U){
       /* when(io.tagRegister.addr.ready){
         io.tagRegister.addr.bits.addr := reg.addr
         io.tagRegister.addr.bits.ready := true.B
