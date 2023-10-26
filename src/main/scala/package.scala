@@ -37,7 +37,7 @@ package object ATA8 {
   object Configuration {
     def default(): Configuration = {
       Configuration(
-        1024, // scratchpadSize
+        512, // scratchpadSize
         3,    // bufferReadPorts
         2,    // bufferWritePorts
         8,    // grainDim
