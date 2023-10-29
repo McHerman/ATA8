@@ -27,6 +27,7 @@ class LoadController(implicit c: Configuration) extends Module {
 
   io.writeport.request.bits := DontCare
   io.writeport.data.bits := DontCare
+  io.writeport.data.bits.last := false.B
 
 	io.AXIST.tready := false.B
 
@@ -94,7 +95,7 @@ class LoadController(implicit c: Configuration) extends Module {
           io.writeport.data.bits.strb := io.AXIST.tstrb.asBools
           io.writeport.data.valid := true.B
 
-          when(burstAddrReg < reg.size){
+          when(burstAddrReg < (reg.size - 1.U)){
             burstAddrReg := burstAddrReg + 1.U
           }.elsewhen(io.AXIST.tlast){
             StateReg := 3.U

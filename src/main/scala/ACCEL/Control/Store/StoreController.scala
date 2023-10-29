@@ -33,14 +33,6 @@ class StoreController(implicit c: Configuration) extends Module {
 
 	io.readport.data.ready := false.B
 
-	/* io.tagRead.request.valid := false.B
-	io.tagRead.request.bits := DontCare */
-
-	//io.tagRead.response.ready := false.B
-
-	/* io.tagDealloc.valid := false.B
-	io.tagDealloc.bits := DontCare */
-
 	val burstAddrReg = RegInit(0.U(32.W))
   val addrTemp = RegInit(0.U(32.W))
   val idReg = RegInit(0.U(2.W))
@@ -70,21 +62,16 @@ class StoreController(implicit c: Configuration) extends Module {
 				io.readport.data.ready := true.B
 
 				when(io.readport.data.valid){
+          
+          io.AXIST.tdata := io.readport.data.bits.readData.reverse.reduce((a, b) => Cat(a, b))
+					io.AXIST.tkeep := "h11".U
+					io.AXIST.tstrb := "h11".U
+          io.AXIST.tvalid := true.B
+
 					when(burstAddrReg < (reg.size-1.U)){
-						//io.AXIST.tdata := io.readport.data.bits.readData
-						io.AXIST.tdata := io.readport.data.bits.readData.reverse.reduce((a, b) => Cat(a, b))
-						io.AXIST.tkeep := "h11".U
-						io.AXIST.tstrb := "h11".U
-
 						burstAddrReg := burstAddrReg + 1.U
-					}.otherwise{
-						//io.AXIST.tdata := io.readport.data.bits.readData
-						io.AXIST.tdata := io.readport.data.bits.readData.reverse.reduce((a, b) => Cat(a, b))
-						io.AXIST.tkeep := "h11".U
-						io.AXIST.tstrb := "h11".U
-
+					}.elsewhen(io.readport.data.bits.last){
 						io.AXIST.tlast := true.B
-						//StateReg := 4.U
             StateReg := 0.U
 					}			
 				}

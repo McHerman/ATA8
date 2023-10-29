@@ -14,9 +14,19 @@ class ScratchpadWrapper(implicit c: Configuration) extends Module {
   val Arbiter = Module(new ScratchArbiter(c.bufferWritePorts))
   val Scratchpad = Module(new Scratchpad(1)) 
 
-  Arbiter.io.inPorts <> io.Writeport
-  Arbiter.io.outPort <> Scratchpad.io.Writeport(0)
+  val ReadBurstHandlerVec = Seq.fill(c.bufferReadPorts)(Module(new ReadBurstHandler))
+  val WriteBurstHandlerVec = Seq.fill(1)(Module(new WriteBurstHandler))
 
-  Scratchpad.io.Readport <> io.Readport
+  Arbiter.io.inPorts <> io.Writeport
+  //Arbiter.io.outPort <> Scratchpad.io.Writeport(0)
+
+  //Arbiter.io.outPort.zipWithIndex.foreach{case (port,i) => port <> WriteBurstHandlerVec(i).io.scratchWriteport; Scratchpad.io.writePort(i) <> WriteBurstHandlerVec(i).io.writePort}
+  
+  Arbiter.io.outPort <> WriteBurstHandlerVec(0).io.scratchWriteport
+  Scratchpad.io.Writeport(0) <> WriteBurstHandlerVec(0).io.writePort
+  
+  io.Readport.zipWithIndex.foreach{case (port,i) => port <> ReadBurstHandlerVec(i).io.scratchReadport; Scratchpad.io.Readport(i) <> ReadBurstHandlerVec(i).io.readPort} 
+
+  //Scratchpad.io.Readport <> io.Readport
 
 }

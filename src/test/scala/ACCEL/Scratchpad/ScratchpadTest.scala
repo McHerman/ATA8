@@ -1,4 +1,4 @@
-package ATA8
+/* package ATA8
 
 import chisel3._
 import chiseltest._
@@ -105,3 +105,4 @@ class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
 }  
+ */

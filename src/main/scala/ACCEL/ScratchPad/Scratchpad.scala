@@ -7,8 +7,8 @@ class Scratchpad(writeports: Int)(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
   	//val Readport = Vec(c.bufferReadPorts, Flipped(new ReadportBuf(c.arithDataWidth,10)))
   	//val Writeport = Vec(c.bufferWritePorts, Flipped(new WriteportBuf(c.arithDataWidth,10)))
-  	val Writeport = Vec(writeports, Flipped(new WriteportScratch()))
-    val Readport = Vec(c.bufferReadPorts, Flipped(new ReadportScratch()))
+  	val Writeport = Vec(writeports, Flipped(Decoupled(new Writeport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),16))))
+    val Readport = Vec(c.bufferReadPorts, Flipped(new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),16)))
   })
 
   val ReadDelay = Reg(Vec(c.bufferReadPorts, UInt(1.W)))
@@ -20,22 +20,27 @@ class Scratchpad(writeports: Int)(implicit c: Configuration) extends Module {
     element.request.ready := true.B
 
     val rdPort = mem(io.Readport(i).request.bits.addr)
-    element.data.bits.readData := rdPort
+    element.response.bits.readData := rdPort
 
     ReadDelay(i) := element.request.valid 
-    element.data.valid := ReadDelay(i)  
+    element.response.valid := ReadDelay(i)  
   }
 
   // WritePorts
-
+  
   io.Writeport.zipWithIndex.foreach{ case(element,i) =>
-    element.request.ready := true.B
-    element.data.ready := true.B
+    //element.request.ready := true.B
+    //element.data.ready := true.B
 
-    val wrPort = mem(element.request.bits.addr)
+    element.ready := true.B
 
-    when(element.data.valid && element.request.valid){
-      wrPort := element.data.bits.writeData
+    //val wrPort = mem(element.request.bits.addr)
+    val wrPort = mem(element.bits.addr)
+
+    when(element.valid){
+      wrPort := element.bits.data
     }    
-  }
+  } 
+
+
 }

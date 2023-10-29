@@ -85,9 +85,9 @@ class ReadportScratch(implicit c: Configuration) extends Bundle {
   })
   val data = Flipped(Decoupled(new Bundle { //TODO: Change this to comply with the naming scheme of other readports
     val readData = Vec(c.grainDim,UInt(c.arithDataWidth.W))
+    val last = Bool()
   }))
 }
-
 
 class Writeport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
   val addr  = Output(UInt(addrWidth.W))

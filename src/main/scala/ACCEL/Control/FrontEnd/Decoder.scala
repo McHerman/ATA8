@@ -56,35 +56,84 @@ class Decoder(config: Configuration) extends Module {
   //io.instructionStream.ready := !stall
 
 	when(io.instructionStream.request.ready){
-    io.instructionStream.request.valid := !stall
+    when(!stall){
+      io.instructionStream.request.valid := true.B
 
-		switch(io.instructionStream.response.bits.readData.instruction(3,0)){ // TODO: Add a valid check here 
-      is(0.U){
-        selReg := 0.U
+      when(io.instructionStream.response.valid){
+        switch(io.instructionStream.response.bits.readData.instruction(3,0)){ // TODO: Add a valid check here 
+          is(0.U){
+            selReg := 0.U
+          }
+          is(1.U){
+            exeFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new ExeInstDecode)
+            selReg := 1.U
+          }
+          is(2.U){
+            loadFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new LoadInstDecode)
+            selReg := 2.U
+          }
+          is(3.U){
+            storeFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new StoreInstDecode)
+            selReg := 3.U
+          }
+        }
       }
-			is(1.U){
-				exeFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new ExeInstDecode)
-				selReg := 1.U
-			}
-			is(2.U){
-				loadFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new LoadInstDecode)
-				selReg := 2.U
-			}
-			is(3.U){
-				storeFile := io.instructionStream.response.bits.readData.instruction.asTypeOf(new StoreInstDecode)
-				selReg := 3.U
-			}
-		}
-	}
+    }
+  }.elsewhen(!stall){
+    selReg := 0.U
+  }
 
 
   val exeValid = RegInit(false.B)
   val loadValid = RegInit(false.B)
   val storeValid = RegInit(false.B)
 
-  exeValid := false.B
+  /* exeValid := false.B
   loadValid := false.B
   storeValid := false.B
+ */
+
+
+  when(io.exeStream.ready && exeValid){
+    io.exeStream.valid := true.B
+    io.exeStream.bits := exeIssueReg
+
+    io.event.foreach{case (event) => // Event fowarding
+      exeIssueReg.addrs.zipWithIndex.foreach{case (addr,i) => 
+        when(event.valid && event.bits.tag === addr.depend.tag){
+				  io.exeStream.bits.addrs(i).depend.ready := true.B
+        }
+      }
+		}
+
+    exeValid := false.B
+  }
+
+  when(io.loadStream.ready && loadValid){
+    io.loadStream.valid := true.B
+    io.loadStream.bits := loadIssueReg
+
+    loadValid := false.B
+  }
+
+  when(io.storeStream.ready && storeValid){
+    io.storeStream.valid := true.B
+    io.storeStream.bits := storeIssueReg
+
+    io.event.foreach{case (event) => // Event fowarding
+      /* storeIssueReg.addrs.foreach{case (addr,i) => 
+        when(event.valid && event.bits.tag === addr.depend.tag){
+				  io.exeStream.bits.addrs(i).depend.ready := true.B
+        }
+      } */
+
+      when(event.valid && event.bits.tag === storeIssueReg.addrs(0).depend.tag){
+				io.storeStream.bits.addrs(0).depend.ready := true.B
+      }
+		}
+
+    storeValid := false.B
+  }
 
   switch(selReg){
 		is(1.U){ // Execute
@@ -118,6 +167,10 @@ class Decoder(config: Configuration) extends Module {
         }.otherwise{
           stall := true.B
         }
+
+        exeIssueReg.size := exeFile.size
+        exeIssueReg.mode := exeFile.mode
+
       }.otherwise{
         stall := true.B
       }
@@ -140,6 +193,12 @@ class Decoder(config: Configuration) extends Module {
         }.otherwise{
           stall := true.B
         }
+
+
+        loadIssueReg.size := loadFile.size
+        loadIssueReg.op := loadFile.op
+        loadIssueReg.mode := loadFile.mode
+
       }.otherwise{
         stall := true.B
       }
@@ -160,59 +219,15 @@ class Decoder(config: Configuration) extends Module {
         }
 
         storeValid := true.B
+
+        storeIssueReg.size := storeFile.size
+        storeIssueReg.op := storeFile.op
+
       }.otherwise{
         stall := true.B
       }
 		}
 	}
-
-  when(io.exeStream.ready && exeValid){
-    io.exeStream.valid := true.B
-    io.exeStream.bits := exeIssueReg
-
-    io.event.foreach{case (event) => // Event fowarding
-      exeIssueReg.addrs.zipWithIndex.foreach{case (addr,i) => 
-        when(event.valid && event.bits.tag === addr.depend.tag){
-				  io.exeStream.bits.addrs(i).depend.ready := true.B
-        }
-      }
-		}
-
-    exeValid := false.B
-  }.elsewhen(exeValid){
-    exeValid := true.B
-  }
-
-  when(io.loadStream.ready && loadValid){
-    io.loadStream.valid := true.B
-    io.loadStream.bits := loadIssueReg
-
-    loadValid := false.B
-  }.elsewhen(loadValid){
-    loadValid := true.B
-  }
-
-
-  when(io.storeStream.ready && storeValid){
-    io.storeStream.valid := true.B
-    io.storeStream.bits := storeIssueReg
-
-    io.event.foreach{case (event) => // Event fowarding
-      /* storeIssueReg.addrs.foreach{case (addr,i) => 
-        when(event.valid && event.bits.tag === addr.depend.tag){
-				  io.exeStream.bits.addrs(i).depend.ready := true.B
-        }
-      } */
-
-      when(event.valid && event.bits.tag === storeIssueReg.addrs(0).depend.tag){
-				io.storeStream.bits.addrs(0).depend.ready := true.B
-      }
-		}
-
-    storeValid := false.B
-  }.elsewhen(storeValid){
-    storeValid := true.B
-  }
 }
 
 

@@ -40,22 +40,22 @@ class DecodeTest extends AnyFlatSpec with ChiselScalatestTester {
 		"0000 0000 0000 0011",
 		"0000 0000 0000 0010",
 		"0000 0000 0000 0001", 
-		"0000 0111",
+		"0000 1000",
 		"1", "0", "01","0001"
 	)
 
 	val loadInst = assembleInstruction(
 		"0000 0000 0000 0000 0000 0000 0000 0100",
-		"0000 0100",
+		"0000 1000",
 		"0000 1000 0000 0000 00", //fill 18
 		"0", "1","0010"
 	)
 
 	val storeInst = assembleInstruction(
 		"0000 0000 0000 0000 0000 0000 0000 0000",
-		"0000 0100",
+		"0000 1000",
 		"0000 1000 0000 0000 000", //fill 19
-		"1","11","0011"
+		"1","0011"
 	)
 
 
@@ -69,11 +69,18 @@ class DecodeTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new Decoder(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 			dut.clock.step(1)
 
-			dut.io.instructionStream.ready.expect(true.B)
+			/* dut.io.instructionStream.ready.expect(true.B)
 			dut.io.instructionStream.valid.poke(true.B)
-			dut.io.instructionStream.bits.instruction.poke(exeInst.U)
-			
+			dut.io.instructionStream.bits.instruction.poke(exeInst.U) */
+
+			dut.io.instructionStream.request.ready.poke(true.B)
+			dut.io.instructionStream.request.valid.expect(true.B)
+			dut.io.instructionStream.response.bits.readData.instruction.poke(exeInst.U)
+			dut.io.instructionStream.response.valid.poke(true.B)
+
 			dut.clock.step(1)
+
+			dut.io.instructionStream.response.valid.poke(false.B)
 
 			dut.io.exeStream.ready.poke(true.B)
 
@@ -95,17 +102,30 @@ class DecodeTest extends AnyFlatSpec with ChiselScalatestTester {
 
 			//////////////// - ////////////////
 
-			dut.io.instructionStream.ready.expect(true.B)
+			/* dut.io.instructionStream.ready.expect(true.B)
 			dut.io.instructionStream.valid.poke(true.B)
-			dut.io.instructionStream.bits.instruction.poke(loadInst.U)
+			dut.io.instructionStream.bits.instruction.poke(loadInst.U) */
+
+			dut.io.instructionStream.request.ready.poke(true.B)
+			dut.io.instructionStream.request.valid.expect(true.B)
+			dut.io.instructionStream.response.bits.readData.instruction.poke(loadInst.U)
+			dut.io.instructionStream.response.valid.poke(true.B)
 
 			dut.clock.step(1)
 
+			dut.io.instructionStream.response.valid.poke(false.B)
+
 			dut.io.loadStream.ready.poke(true.B)
 
-			dut.io.instructionStream.ready.expect(true.B)
+			/* dut.io.instructionStream.ready.expect(true.B)
 			dut.io.instructionStream.valid.poke(true.B)
-			dut.io.instructionStream.bits.instruction.poke(storeInst.U)
+			dut.io.instructionStream.bits.instruction.poke(storeInst.U) */
+
+			dut.io.instructionStream.request.ready.poke(true.B)
+			dut.io.instructionStream.request.valid.expect(true.B)
+			dut.io.instructionStream.response.bits.readData.instruction.poke(storeInst.U)
+			dut.io.instructionStream.response.valid.poke(true.B)
+
 			
 			//////////////// ROB STUFF ////////////////
 
@@ -121,7 +141,11 @@ class DecodeTest extends AnyFlatSpec with ChiselScalatestTester {
 			dut.io.exeStream.ready.poke(true.B)
 			dut.io.exeStream.valid.expect(true.B)
 
+			dut.io.exeStream.bits.size.expect(8.U)
+
 			dut.clock.step(1)
+
+			dut.io.instructionStream.response.valid.poke(false.B)
 
 			dut.io.storeStream.ready.poke(true.B)
 
@@ -138,12 +162,18 @@ class DecodeTest extends AnyFlatSpec with ChiselScalatestTester {
 			dut.io.loadStream.ready.poke(true.B)
 			dut.io.loadStream.valid.expect(true.B)
 			
+			dut.io.loadStream.bits.size.expect(8.U)
+
+			
 			dut.clock.step(1)
 
 			//////////////// OUTPUT STUFF ////////////////
 
 			dut.io.storeStream.ready.poke(true.B)
 			dut.io.storeStream.valid.expect(true.B)
+
+			dut.io.storeStream.bits.size.expect(8.U)
+
 			
 
 

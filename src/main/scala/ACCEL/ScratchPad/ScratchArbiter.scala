@@ -24,42 +24,24 @@ class ScratchArbiter(numPorts: Int)(implicit c: Configuration) extends Module {
     roundRobin := roundRobin + 1.U
   }
 
-  when(io.outPort.request.ready && !isLocked) {
-    isLocked := io.inPorts(roundRobin).request.valid
-    io.outPort <> io.inPorts(roundRobin)
-
-    when(isLocked) {
-      activePort := roundRobin
+  io.inPorts.zipWithIndex.foreach { case (port, index) =>
+    when((index.U === roundRobin) && !isLocked){
+      port <> io.outPort
     }
   }
 
-  io.inPorts.zipWithIndex.foreach { case (port, index) =>
-    port.request.ready := (index.U === roundRobin) && !isLocked
-  }
-
-  when(io.outPort.data.fire() && io.outPort.data.bits.last) {
-    isLocked := false.B
+  when(io.outPort.request.ready && !isLocked) {
+    when(io.inPorts(roundRobin).request.valid) {
+      isLocked := true.B
+      activePort := roundRobin
+    }
   }
 
   when(isLocked) {
     io.outPort <> io.inPorts(activePort)
   }
 
-
-  /* // Wire up requests
-  io.outPort.request.valid := io.inPorts(activePort).request.valid && isLocked
-  io.outPort.request.bits := io.inPorts(activePort).request.bits
-  
- 
-  // Wire up data
-  io.outPort.data.valid := io.inPorts(activePort).data.valid && isLocked
-  io.outPort.data.bits := io.inPorts(activePort).data.bits
-  io.inPorts.foreach { port =>
-    port.data.ready := (activePort === roundRobin) && !isLocked
+  when(isLocked && io.outPort.data.fire() && io.inPorts(activePort).data.bits.last) {
+    isLocked := false.B
   }
- */
-
-
-
-
 }

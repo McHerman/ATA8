@@ -497,7 +497,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.eventOut.valid.expect(true.B)
       dut.io.eventOut.bits.tag.expect(6.U)
 
-      
+      println(expectedResult2)
 
     }
   }

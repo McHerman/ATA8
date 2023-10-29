@@ -134,7 +134,7 @@ class LoadTest extends AnyFlatSpec with ChiselScalatestTester {
 				dut.clock.step(1)
 			}
 
-      dut.clock.step(1)
+      //dut.clock.step(1)
 
       dut.io.event.valid.expect(true.B)
       dut.io.event.bits.tag.expect(1.U)
