@@ -9,8 +9,9 @@ class Decoder(config: Configuration) extends Module {
 
   val io = IO(new Bundle {
     //val instructionStream = Flipped(Decoupled(new InstructionPackage))
-    val instructionStream = new Readport(new InstructionPackage,0)
-    
+    //val instructionStream = new Readport(new InstructionPackage,0)
+    val instructionStream = Flipped(Decoupled(new Bundle{val data = UInt(64.W); val strb = UInt(8.W); val last = Bool()}))
+
     val exeStream = Decoupled(new ExecuteInstIssue)
     val loadStream = Decoupled(new LoadInstIssue)
     val storeStream = Decoupled(new StoreInstIssue)
@@ -19,8 +20,10 @@ class Decoder(config: Configuration) extends Module {
     val event = Vec(2,Flipped(Valid(new Event)))
   })
   
-  io.instructionStream.request.valid := false.B
-  io.instructionStream.request.bits := DontCare
+  //io.instructionStream.request.valid := false.B
+  //io.instructionStream.request.bits := DontCare
+
+  io.instructionStream.ready := false.B
 
   io.exeStream.valid := false.B
   io.exeStream.bits := DontCare
@@ -55,7 +58,7 @@ class Decoder(config: Configuration) extends Module {
 
   //io.instructionStream.ready := !stall
 
-	when(io.instructionStream.request.ready){
+	/* when(io.instructionStream.request.ready){
     when(!stall){
       io.instructionStream.request.valid := true.B
 
@@ -81,7 +84,36 @@ class Decoder(config: Configuration) extends Module {
     }
   }.elsewhen(!stall){
     selReg := 0.U
+  } */
+
+  when(!stall){
+    io.instructionStream.ready := true.B
+
+    when(io.instructionStream.valid){
+      switch(io.instructionStream.bits.data(3,0)){ // TODO: Add a valid check here 
+        is(0.U){
+          selReg := 0.U
+        }
+        is(1.U){
+          exeFile := io.instructionStream.bits.data.asTypeOf(new ExeInstDecode)
+          selReg := 1.U
+        }
+        is(2.U){
+          loadFile := io.instructionStream.bits.data.asTypeOf(new LoadInstDecode)
+          selReg := 2.U
+        }
+        is(3.U){
+          storeFile := io.instructionStream.bits.data.asTypeOf(new StoreInstDecode)
+          selReg := 3.U
+        }
+      }
+    }.otherwise{
+      selReg := 0.U
+    }
   }
+
+
+
 
 
   val exeValid = RegInit(false.B)
