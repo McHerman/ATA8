@@ -14,7 +14,8 @@ class LoadController(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     //val instructionStream = Flipped(Decoupled(new LoadInst))
     val instructionStream = new Readport(new LoadInstIssue,0)
-    val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
+    //val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
+    val AXIData = Flipped(Decoupled(new Bundle{val data = UInt(64.W); val strb = UInt(8.W); val last = Bool()}))
     val writeport = new WriteportScratch
     val event = Valid(new Event)
   })
@@ -29,7 +30,8 @@ class LoadController(implicit c: Configuration) extends Module {
   io.writeport.data.bits := DontCare
   io.writeport.data.bits.last := false.B
 
-	io.AXIST.tready := false.B
+	//io.AXIST.tready := false.B
+  io.AXIData.ready := false.B
 
   io.event.valid := false.B
   io.event.bits := DontCare
@@ -88,16 +90,21 @@ class LoadController(implicit c: Configuration) extends Module {
 		}
     is(2.U){
       when(io.writeport.data.ready){
-        io.AXIST.tready := true.B
+        //io.AXIST.tready := true.B
+        io.AXIData.ready := true.B
 
-        when(io.AXIST.tvalid){
-          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,c.arithDataWidth)) // big fucking problem here 
-          io.writeport.data.bits.strb := io.AXIST.tstrb.asBools
+        //when(io.AXIST.tvalid){
+        when(io.AXIData.valid){
+          //io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,c.arithDataWidth)) // big fucking problem here 
+          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIData.bits.data,64,c.arithDataWidth)) // big fucking problem here 
+          //io.writeport.data.bits.strb := io.AXIST.tstrb.asBools
+          io.writeport.data.bits.strb := io.AXIData.bits.strb.asBools
           io.writeport.data.valid := true.B
 
           when(burstAddrReg < (reg.size - 1.U)){
             burstAddrReg := burstAddrReg + 1.U
-          }.elsewhen(io.AXIST.tlast){
+          //}.elsewhen(io.AXIST.tlast){
+          }.elsewhen(io.AXIData.bits.last){
             StateReg := 3.U
             burstAddrReg := 0.U
             io.writeport.data.bits.last := true.B

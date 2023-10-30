@@ -1,54 +1,56 @@
-import java.io.{BufferedWriter, FileWriter, PrintWriter}
-import scala.io.Source
+import java.io.{BufferedReader, FileReader, FileWriter, PrintWriter}
 
 object Assembler {
-
-  // Helper to pad zeros to reach the required bit length
-  def padZeros(value: String, length: Int): String = {
-    "0" * (length - value.length) + value
-  }
-
-  // Convert decimal integer to binary string with padding
-  def decToBinary(value: Int, length: Int): String = {
-    padZeros(value.toBinaryString, length)
-  }
-
   def main(args: Array[String]): Unit = {
-    val source = Source.fromFile("/home/karlhk/PCIE/ATA8/src/main/scala/Assembler/testProgram.txt")
-    val out = new PrintWriter(new BufferedWriter(new FileWriter("output.txt")))
-    
-    for (line <- source.getLines()) {
-      val tokens = line.split(" ").map(_.replace(",", ""))
-      val op = tokens(0)   
-      val binaryInstruction = op.toLowerCase match {
-        case "gemm" =>
-          val size = decToBinary(tokens(1).toInt, 8)
-          val addrs1 = decToBinary(tokens(2).toInt, 16)
-          val addrs2 = decToBinary(tokens(3).toInt, 16)
-          val addrd = decToBinary(tokens(4).toInt, 16)
-          val func = decToBinary(1, 4) // func is 1 for execute
-          addrd + addrs2 + addrs1 + size + padZeros("0", 1) + padZeros("0", 2) + padZeros("0", 1) + func
-        
-        case "load" =>
-          val size = decToBinary(tokens(1).toInt, 8)
-          val addr = decToBinary(tokens(2).toInt, 32)
-          val func = decToBinary(2, 4) // func is 2 for load
-          addr + size + padZeros("0", 18) + padZeros("0", 1) + padZeros("0", 1) + func
-        
-        case "store" =>
-          val size = decToBinary(tokens(1).toInt, 8)
-          val addr = decToBinary(tokens(2).toInt, 32)
-          val func = decToBinary(3, 4) // func is 3 for store
-          addr + size + padZeros("0", 19) + padZeros("0", 1) + func
+    val reader = new BufferedReader(new FileReader("testProgram.txt"))
+    val binaryStringWriter = new PrintWriter(new FileWriter("binaryStringOutput.txt"))
+    val int64Writer = new PrintWriter(new FileWriter("int64Output.txt"))
 
-        case _ =>
-          println(s"Unknown instruction: $op")
-          ""
-      }
-      out.println(binaryInstruction)
+    var line = ""
+    while ({line = reader.readLine(); line != null}) {
+      val tokens = line.split(" ")
+      val op = tokens(0)
+      val binaryInstruction = encodeInstruction(op, tokens.slice(1, tokens.length))
+
+      binaryStringWriter.println(binaryInstruction)
+      val int64Instruction = java.lang.Long.parseLong(binaryInstruction, 2)
+      int64Writer.println(int64Instruction)
     }
 
-    source.close()
-    out.close()
+    reader.close()
+    binaryStringWriter.close()
+    int64Writer.close()
+  }
+
+  def encodeInstruction(op: String, tokens: Array[String]): String = {
+    def decToBinary(dec: Int, bits: Int): String = String.format(s"%${bits}s", dec.toBinaryString).replace(' ', '0')
+
+    val binaryInstruction = op.toLowerCase match {
+      case "gemm" =>
+        val addrd = decToBinary(tokens(3).toInt, 16)
+        val addrs2 = decToBinary(tokens(2).toInt, 16)
+        val addrs1 = decToBinary(tokens(1).toInt, 16)
+        val size = decToBinary(tokens(0).toInt, 8)
+        val func = decToBinary(1, 4)
+        addrd + addrs2 + addrs1 + size + "0" + "0" + "00" + func
+
+      case "load" =>
+        val addr = decToBinary(tokens(1).toInt, 32)
+        val size = decToBinary(tokens(0).toInt, 8)
+        val func = decToBinary(2, 4)
+        addr + size + "000000000000000000" + "0" + "0" + func
+
+      case "store" =>
+        val addr = decToBinary(tokens(1).toInt, 32)
+        val size = decToBinary(tokens(0).toInt, 8)
+        val func = decToBinary(3, 4)
+        addr + size + "0000000000000000000" + "0" + func
+
+      case _ =>
+        println(s"Unknown instruction: $op")
+        ""
+    }
+
+    binaryInstruction
   }
 }
