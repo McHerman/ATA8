@@ -26,18 +26,20 @@ class ATA8(config: Configuration) extends Module {
 
   AXIDataBuffer.io.enq_clk := axi_aclk
   AXIDataBuffer.io.enq_rst := axi_arst
-  //AXIDataBuffer.io.deq_clk := sysClk
-  //AXIDataBuffer.io.deq_rst := sysRst
+  AXIDataBuffer.io.deq_clk := clock
+  AXIDataBuffer.io.deq_rst := reset
 
   val AXIInstBuffer = Module(new AXI_in())
 
   AXIInstBuffer.io.enq_clk := axi_aclk
   AXIInstBuffer.io.enq_rst := axi_arst
-  //AXIInstBuffer.io.deq_clk := sysClk
-  //AXIInstBuffer.io.deq_rst := sysRst
+  AXIInstBuffer.io.deq_clk := clock
+  AXIInstBuffer.io.deq_rst := reset
 
   val AXIDataOutBuffer = Module(new AXI_out())
 
+  AXIDataOutBuffer.io.enq_clk := clock
+  AXIDataOutBuffer.io.enq_rst := reset
   AXIDataOutBuffer.io.deq_clk := axi_aclk
   AXIDataOutBuffer.io.deq_rst := axi_arst
 
