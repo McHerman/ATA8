@@ -14,7 +14,14 @@ class AXI_out extends Module {
     val deq_rst = Input(Bool())
   })
 
-  val myQueue = Module(new AsyncQueue(new Bundle{val data = UInt(64.W); val keep = UInt(8.W); val strb = UInt(8.W); val last = Bool()}))
+  val myParams = AsyncQueueParams(
+    depth = 8,   // Your desired depth
+    sync = 3,     // Your desired sync
+    safe = false,  // Your desired safe value
+    narrow = false // Your desired narrow value
+  )
+
+  val myQueue = Module(new AsyncQueue(new Bundle{val data = UInt(64.W); val keep = UInt(8.W); val strb = UInt(8.W); val last = Bool()},myParams))
 
   // Main clock domain (Dequeue Side)
   myQueue.io.enq <> io.enq_in
