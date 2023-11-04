@@ -3,6 +3,8 @@ package ATA8
 import chisel3._
 import chisel3.experimental._
 import chisel3.util._
+import chisel3.util.experimental.BoringUtils
+
 
 class StoreController(implicit c: Configuration) extends Module {          
   def splitInt(input: UInt, totalWidth: Int, subWidth: Int): Seq[UInt] = {
@@ -18,6 +20,7 @@ class StoreController(implicit c: Configuration) extends Module {
 		//val tagRead = new TagRead
 		//val tagDealloc = Decoupled(UInt(c.tagWidth.W))
 		//val event = Flipped(Valid(new Event()))
+    //val debug = new StoreDebug
   })
 
 	io.instructionStream.request.valid := false.B
@@ -32,6 +35,10 @@ class StoreController(implicit c: Configuration) extends Module {
   io.readport.request.bits := DontCare
 
 	io.readport.data.ready := false.B
+
+  /// DEBUG ///
+
+  //io.debug.state := StateReg
 
 	val burstAddrReg = RegInit(0.U(32.W))
   val addrTemp = RegInit(0.U(32.W))
@@ -64,8 +71,8 @@ class StoreController(implicit c: Configuration) extends Module {
 				when(io.readport.data.valid){
           
           io.AXIST.tdata := io.readport.data.bits.readData.reverse.reduce((a, b) => Cat(a, b))
-					io.AXIST.tkeep := "h11".U
-					io.AXIST.tstrb := "h11".U
+					io.AXIST.tkeep := "hff".U
+					io.AXIST.tstrb := "hff".U
           io.AXIST.tvalid := true.B
 
 					when(burstAddrReg < (reg.size-1.U)){
@@ -83,4 +90,7 @@ class StoreController(implicit c: Configuration) extends Module {
 			StateReg := 0.U
 		} */
   }
+
+  BoringUtils.addSource(StateReg, "storecontrollerstate")
+
 }

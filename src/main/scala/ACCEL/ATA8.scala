@@ -11,6 +11,7 @@ class ATA8(config: Configuration) extends Module {
     val AXIST_out = new AXIST_2(64,2,1,1,1) 
     val AXIST_inData = Flipped(new AXIST_2(64,2,1,1,1))
     val AXIST_inInst = Flipped(new AXIST_2(64,2,1,1,1))
+    val axi_s0 = Flipped(new CustomAXI4Lite(32, 32))
   })
 
   val FrontEnd = Module(new FrontEnd)
@@ -21,6 +22,8 @@ class ATA8(config: Configuration) extends Module {
 
   //val Scratchpad = Module(new Scratchpad)
   val Scratchpad = Module(new ScratchpadWrapper)
+
+  val Config = Module(new Config())
 
   //// FRONTEND ////
 
@@ -50,7 +53,11 @@ class ATA8(config: Configuration) extends Module {
   Store.io.readPort <> Scratchpad.io.Readport(2)
   Store.io.event(0) := Load.io.event
   Store.io.event(1) := Execute.io.eventOut
-  
+
+  /// DEBUG /// 
+
+  Config.io.axi_s0 <> io.axi_s0
+
 
   
   

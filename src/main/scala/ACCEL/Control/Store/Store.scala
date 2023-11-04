@@ -14,6 +14,7 @@ class Store(config: Configuration) extends Module {
     val readPort = new ReadportScratch
 		//val tagRead = new TagRead
 		val event = Vec(2,Flipped(Valid(new Event())))
+    //val debug = new StoreDebug
   })
 
   //val queue = Module(new BufferFIFO(16,new StoreInstIssue))
@@ -38,6 +39,11 @@ class Store(config: Configuration) extends Module {
 	//io.tagDealloc <> StoreController.io.tagDealloc
 
   io.readPort <> StoreController.io.readport 
+
+  /// DEBUG ///
+
+  //StoreController.io.debug <> io.debug
+  
 }
 
 object Store extends App {
