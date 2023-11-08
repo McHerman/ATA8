@@ -3,7 +3,7 @@ package ATA8
 import chisel3._
 import chisel3.experimental._
 import chisel3.util._
-import chisel3.util.experimental.BoringUtils
+//import chisel3.util.experimental.BoringUtils
 
 
 class LoadController(implicit c: Configuration) extends Module {          
@@ -19,7 +19,7 @@ class LoadController(implicit c: Configuration) extends Module {
     val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
     val writeport = new WriteportScratch
     val event = Valid(new Event)
-    //val debug = new LoadDebug
+    val debug = new LoadDebug
   })
 
 	io.instructionStream.request.valid := false.B
@@ -37,10 +37,6 @@ class LoadController(implicit c: Configuration) extends Module {
   io.event.valid := false.B
   io.event.bits := DontCare
 
-  /// DEBUG ///
-
-  //io.debug.state := StateReg
-
 	val burstAddrReg = RegInit(0.U(32.W))
   val addrTemp = RegInit(0.U(32.W))
   val idReg = RegInit(0.U(2.W))
@@ -48,6 +44,10 @@ class LoadController(implicit c: Configuration) extends Module {
   val reg = Reg(new LoadInstIssue)
 
   val StateReg = RegInit(0.U(4.W))
+
+  /// DEBUG ///
+
+  io.debug.state := StateReg
 
   switch(StateReg){
 		is(0.U){
@@ -134,6 +134,6 @@ class LoadController(implicit c: Configuration) extends Module {
 		}
   }
 
-  BoringUtils.addSource(StateReg, "loadcontrollerstate")
+  //BoringUtils.addSource(StateReg, "loadcontrollerstate")
   
 }

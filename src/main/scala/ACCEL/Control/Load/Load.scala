@@ -14,7 +14,7 @@ class Load(config: Configuration) extends Module {
     val scratchOut = new WriteportScratch
     //val readAddr = Vec(2 /*FIXME: magic fucking number*/ ,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
     val event = Valid(new Event())
-    //val debug = new LoadDebug
+    val debug = new LoadDebug
   })
 
   val queue = Module(new BufferFIFO(16,new LoadInstIssue))
@@ -30,7 +30,7 @@ class Load(config: Configuration) extends Module {
 
   /// DEBUG /// 
 
-  //LoadController.io.debug <> io.debug
+  LoadController.io.debug <> io.debug
 
 }
 

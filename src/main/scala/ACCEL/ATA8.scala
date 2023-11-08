@@ -57,10 +57,13 @@ class ATA8(config: Configuration) extends Module {
   /// DEBUG /// 
 
   Config.io.axi_s0 <> io.axi_s0
-
-
-  
-  
+  Config.io.loadDebug <> Load.io.debug
+  Config.io.storeDebug <> Store.io.debug
+  Config.io.exeDebug <> Execute.io.debug
+  Config.io.frontendDebug <> FrontEnd.io.debug
+  Config.io.event(0) := Load.io.event
+  Config.io.event(1) := Execute.io.eventOut
+  Config.io.robDebug := FrontEnd.io.robDebug
 }
 
 object ATA8 extends App {

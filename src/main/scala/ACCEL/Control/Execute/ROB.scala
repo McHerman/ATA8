@@ -3,7 +3,11 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-
+class mapping(implicit c: Configuration) extends Bundle {
+  val addr = UInt(c.addrWidth.W)
+  val ready = Bool()
+  val valid = Bool()
+} 
 
 //class ResStation(implicit c: Configuration) extends Module {
 //class ROB(tagCount: Int, readports: Int)(implicit c: Configuration) extends Module {
@@ -35,13 +39,6 @@ class ROB(tagCount: Int, readports: Int)(config: Configuration) extends Module {
   
     (full)
   }
-  
-
-  class mapping(implicit c: Configuration) extends Bundle {
-    val addr = UInt(c.addrWidth.W)
-    val ready = Bool()
-    val valid = Bool()
-  } 
 
   var pointerwidth = log2Ceil(c.grainFIFOSize - 1)
 
@@ -53,6 +50,7 @@ class ROB(tagCount: Int, readports: Int)(config: Configuration) extends Module {
     //val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val event = Vec(2,Flipped(Valid(new Event())))
     val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
+    val debug = Output(Vec(tagCount,new mapping()))
   })
 
   val Head = RegInit(0.U(c.tagWidth.W))
@@ -75,6 +73,8 @@ class ROB(tagCount: Int, readports: Int)(config: Configuration) extends Module {
 	io.Writeport.tag.bits := DontCare
 
   val Map = Reg(Vec(tagCount,new mapping()))
+
+  io.debug := Map
 
   io.ReadData.foreach { case (element) => 
     when(element.request.valid){

@@ -43,6 +43,11 @@ trait HasAddrsField extends Bundle {
   }]
 }
 
+class Depend(implicit c: Configuration) extends Bundle {
+  val ready = Bool()
+  val tag = UInt(c.tagWidth.W)
+}
+
 class ExecuteInstIssue(implicit c: Configuration) extends Bundle with HasAddrsField {
   val op = UInt(1.W) // TODO: magic number
   val mode = UInt(1.W)
@@ -68,13 +73,13 @@ class StoreInstIssue(implicit c: Configuration) extends Bundle with HasAddrsFiel
   val addrs = Vec(1,new Bundle {val addr = UInt(16.W); val depend = new Depend})
 } 
 
-class IssuePackage(implicit c: Configuration) extends Bundle {
+/* class IssuePackage(implicit c: Configuration) extends Bundle {
   val mode = UInt(c.modeWidth.W)
   val elementOffset = UInt(c.sysWidth.W)
   val ids = Vec(2, UInt(c.tagWidth.W))
   val idd = UInt(c.tagWidth.W) // Dest Address
   val syncId = UInt(c.syncIdWidth.W)          // Tag used to syncronize between different grains
-} 
+}  */
 
 object EventType extends ChiselEnum {
   val CompletionWithValue, Completion, Branch, Jump, Exception = Value
@@ -128,8 +133,3 @@ class SysOP(implicit c: Configuration) extends Bundle {
   val size = UInt(8.W)
   val tag = UInt(c.tagWidth.W)
 } 
-
-class Depend(implicit c: Configuration) extends Bundle {
-  val ready = Bool()
-  val tag = UInt(c.tagWidth.W)
-}

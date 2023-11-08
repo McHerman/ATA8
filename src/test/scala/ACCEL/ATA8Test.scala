@@ -113,7 +113,9 @@ class ATA8Test extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.AXIST_out.tvalid.expect(false.B)
 
       for (instruction <- source.getLines()) {
-        dut.clock.step(1)
+        dut.clock.step(Random.nextInt(10))
+        
+        dut.io.AXIST_inInst.tready.expect(true.B)
 
         val instBigInt = BigInt(instruction, 2)
 
@@ -124,7 +126,12 @@ class ATA8Test extends AnyFlatSpec with ChiselScalatestTester {
         dut.io.AXIST_inInst.tdata.poke(instBigInt.U(64.W))
         //c.io.instruction.poke(instBigInt.U(64.W))
 
+        dut.clock.step(1)
+
+        dut.io.AXIST_inInst.tvalid.poke(false.B)
       }
+
+      println("instructions written")
 
       dut.io.AXIST_inInst.tlast.poke(true.B)
       

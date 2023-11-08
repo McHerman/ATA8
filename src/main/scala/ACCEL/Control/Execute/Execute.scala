@@ -15,7 +15,7 @@ class Execute(config: Configuration) extends Module {
     //val event = Vec(2,Flipped(Valid(new Event())))
     val eventIn = Flipped(Valid(new Event()))
     val eventOut = Valid(new Event)
-    //val debug = new ExeDebug
+    val debug = new ExeDebug
   })
 
   //val queue = Module(new BufferFIFO(16,new StoreInstIssue))
@@ -37,7 +37,7 @@ class Execute(config: Configuration) extends Module {
 
   /// DEBUG /// 
 
-  //SysWrapper.io.debug <> io.debug
+  SysWrapper.io.debug <> io.debug
 }
 
 object Execute extends App {

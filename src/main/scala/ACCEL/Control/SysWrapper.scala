@@ -13,7 +13,7 @@ class SysWrapper(config: Configuration) extends Module {
     val scratchOut = new WriteportScratch
     val scratchIn = Vec(2,new ReadportScratch)
     val event = Valid(new Event)
-    //val debug = new ExeDebug
+    val debug = new ExeDebug
   })
 
   val SysController = Module(new SysController())
@@ -33,7 +33,7 @@ class SysWrapper(config: Configuration) extends Module {
 
   /// DEBUG /// 
 
-  //SysController.io.debug <> io.debug
+  SysController.io.debug <> io.debug
 }
 
 object SysWrapper extends App {

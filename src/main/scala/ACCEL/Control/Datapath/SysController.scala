@@ -2,7 +2,7 @@ package ATA8
 
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.BoringUtils
+//import chisel3.util.experimental.BoringUtils
 
   
 class SysController(implicit c: Configuration) extends Module {
@@ -19,7 +19,7 @@ class SysController(implicit c: Configuration) extends Module {
 		val out = Decoupled(new SysOP)
     val sysCompleted = Flipped(Valid(new Bundle{val tag = UInt(c.tagWidth.W)}))
     val event = Valid(new Event)
-    //val debug = new ExeDebug
+    val debug = new ExeDebug
   })
 
   val opbuffer = Module(new BufferFIFO(8,new SysOP)) // FIXME: Magic number
@@ -85,12 +85,13 @@ class SysController(implicit c: Configuration) extends Module {
 	readBuffer.io.ReadData.request.valid := false.B
   readBuffer.io.ReadData.request.bits := DontCare
 
-  /// DEBUG ///
-
-  //io.debug.state := StateReg
-
 	val reg = Reg(new ExecuteInstIssue)
   val StateReg = RegInit(0.U(4.W))
+
+  /// DEBUG ///
+
+  io.debug.state := StateReg
+
 	
 	//val transfercompleted = Reg(Vec(2,Bool()))
   val DMACompleted1 = RegInit(0.U(1.W))
@@ -179,6 +180,6 @@ class SysController(implicit c: Configuration) extends Module {
     io.out.bits <> opbuffer.io.ReadData.response.bits.readData
   }
 
-  BoringUtils.addSource(StateReg, "syscontrollerstate")
+  //BoringUtils.addSource(StateReg, "syscontrollerstate")
 
 }
