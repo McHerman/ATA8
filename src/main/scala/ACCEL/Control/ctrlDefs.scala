@@ -48,7 +48,8 @@ class Depend(implicit c: Configuration) extends Bundle {
   val tag = UInt(c.tagWidth.W)
 }
 
-class ExecuteInstIssue(implicit c: Configuration) extends Bundle with HasAddrsField {
+
+/* class ExecuteInstIssue(implicit c: Configuration) extends Bundle with HasAddrsField {
   val op = UInt(1.W) // TODO: magic number
   val mode = UInt(1.W)
   //val grainSize = UInt(c.sysWidth.W)
@@ -71,7 +72,91 @@ class StoreInstIssue(implicit c: Configuration) extends Bundle with HasAddrsFiel
   val op = UInt(1.W) // TODO: magic number
   val size = UInt(8.W)
   val addrs = Vec(1,new Bundle {val addr = UInt(16.W); val depend = new Depend})
+}  */
+
+
+/* trait InstructionIssue extends Bundle {
+  val op = UInt(1.W) // Still need to define what operations these correspond to.
+  val size = UInt(8.W) // Common size field.
+
+  // Define the vectors with a default parameterized size.
+  def addrsSize: Int
+  def addrdSize: Int
+
+  val addrs = Vec(addrsSize, new Bundle { val addr = UInt(16.W); /*val depend = new Depend */})
+  val addrd = Vec(addrdSize, new Bundle { val addr = UInt(16.W); /*val tag = UInt(c.tagWidth.W) */})
+}
+
+class ExecuteInstIssue(implicit c: Configuration) extends InstructionIssue with HasAddrsField {
+  val mode = UInt(1.W)
+  //val grainSize = UInt(c.sysWidth.W)
+  val grainSize = UInt(4.W)
+  
+  val addrsSize = 2
+  val addrdSize = 1
+
+  override val addrs = Vec(addrsSize, new Bundle {
+    val addr = UInt(16.W)
+    val depend = new Depend // 'Depend' picks up 'c' implicitly.
+  })
+  override val addrd = Vec(addrdSize, new Bundle {
+    val addr = UInt(16.W)
+    val tag = UInt(c.tagWidth.W)
+  })
 } 
+
+class LoadInstIssue(implicit c: Configuration) extends InstructionIssue {
+  val mode = UInt(1.W)
+  val addrsSize = 0
+  val addrdSize = 1
+
+  override val addrd = Vec(addrdSize, new Bundle {
+    val addr = UInt(16.W)
+    val tag = UInt(c.tagWidth.W)
+  })
+} 
+
+class StoreInstIssue(implicit c: Configuration) extends InstructionIssue with HasAddrsField {
+  val addrsSize = 1
+  val addrdSize = 0
+
+  override val addrs = Vec(addrsSize, new Bundle {
+    val addr = UInt(16.W)
+    val depend = new Depend // 'Depend' picks up 'c' implicitly.
+  })
+} */
+
+
+abstract class InstIssueBase(addrsSize: Int, addrdSize: Int)(implicit c: Configuration) extends Bundle with HasAddrsField{
+  val op = UInt(1.W)
+  val size = UInt(8.W)
+
+  // Initialize the Vec of AddrBundles using the constructor argument
+  val addrs = Vec(addrsSize, new Bundle{val addr = UInt(16.W); val depend = new Depend})
+  val addrd = Vec(addrdSize, new Bundle{val addr = UInt(16.W); val tag = UInt(c.tagWidth.W)})
+}
+
+class ExecuteInstIssue(implicit c: Configuration) extends InstIssueBase(2,1){
+  val mode = UInt(1.W)
+  val grainSize = UInt(4.W)
+}
+
+class LoadInstIssue(implicit c: Configuration) extends InstIssueBase(0,1){
+  val mode = UInt(1.W)
+}
+
+class StoreInstIssue(implicit c: Configuration) extends InstIssueBase(1,0){
+  val mode = UInt(1.W)
+}
+
+
+
+
+
+
+
+
+
 
 /* class IssuePackage(implicit c: Configuration) extends Bundle {
   val mode = UInt(c.modeWidth.W)

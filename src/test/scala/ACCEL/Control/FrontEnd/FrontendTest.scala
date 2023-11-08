@@ -103,8 +103,8 @@ class FrontendTest extends AnyFlatSpec with ChiselScalatestTester {
         dut.io.exeStream.bits.addrs(1).addr.expect(31.U)
         dut.io.exeStream.bits.addrs(1).depend.ready.expect(true.B)
 
-        dut.io.exeStream.bits.addrd.addr.expect(i.U)
-        dut.io.exeStream.bits.addrd.tag.expect(i.U)
+        dut.io.exeStream.bits.addrd(0).addr.expect(i.U)
+        dut.io.exeStream.bits.addrd(0).tag.expect(i.U)
 
         dut.clock.step(1)
       }

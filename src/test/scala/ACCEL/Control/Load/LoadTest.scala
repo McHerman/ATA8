@@ -63,8 +63,8 @@ class LoadTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.instructionStream.bits.size.poke(8.U)
 
-      dut.io.instructionStream.bits.addr.addr.poke(1.U)
-      dut.io.instructionStream.bits.addr.tag.poke(1.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(1.U)
+      dut.io.instructionStream.bits.addrd(0).tag.poke(1.U)
 
 			dut.clock.step(10)
 

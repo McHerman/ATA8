@@ -85,8 +85,8 @@ class ROBFetch(implicit c: Configuration) extends Module {
           io.tagRegister.addr.valid := true.B 
 
           when(io.tagRegister.tag.valid){
-            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrd.tag := io.tagRegister.tag.bits
-            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrd.addr := inReg.data(0).asInstanceOf[ExeInstDecode].addrd
+            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrd(0).tag := io.tagRegister.tag.bits
+            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrd(0).addr := inReg.data(0).asInstanceOf[ExeInstDecode].addrd
             issueReg.op := 1.U
             assignValid := true.B
           }.otherwise{
@@ -109,8 +109,8 @@ class ROBFetch(implicit c: Configuration) extends Module {
           io.tagRegister.addr.valid := true.B
           
           when(io.tagRegister.tag.valid){
-            issueReg.data(1).asInstanceOf[LoadInstIssue].addr.tag := io.tagRegister.tag.bits
-            issueReg.data(1).asInstanceOf[LoadInstIssue].addr.addr := inReg.data(1).asInstanceOf[LoadInstDecode].addr
+            issueReg.data(1).asInstanceOf[LoadInstIssue].addrd(0).tag := io.tagRegister.tag.bits
+            issueReg.data(1).asInstanceOf[LoadInstIssue].addrd(0).addr := inReg.data(1).asInstanceOf[LoadInstDecode].addr
 
             issueReg.data(1).asInstanceOf[LoadInstIssue].size := inReg.data(1).asInstanceOf[LoadInstDecode].size
             issueReg.data(1).asInstanceOf[LoadInstIssue].op := inReg.data(1).asInstanceOf[LoadInstDecode].op
@@ -171,6 +171,20 @@ class ROBFetch(implicit c: Configuration) extends Module {
       stall := true.B
     }
   } */
+
+  io.event.foreach{case (event) => // Event fowarding
+    /* when(event.valid && event.bits.tag === storeIssueReg.addrs(0).depend.tag){
+			io.storeStream.bits.addrs(0).depend.ready := true.B
+    } */
+
+    issueReg.data.foreach{element => 
+      element.addrs.foreach{addr => 
+        when(event.valid && event.bits.tag === addr.depend.tag){
+			    addr.depend.ready := true.B
+        }
+      }
+    }
+	}
 
   when(issueReg.op =/= 0.U){
     switch(issueReg.op){

@@ -130,7 +130,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.in.response.bits.readData.addrs(0).addr.poke(0.U)
       dut.io.in.response.bits.readData.addrs(1).addr.poke(8.U)
 
-      dut.io.in.response.bits.readData.addrd.addr.poke(16.U)
+      dut.io.in.response.bits.readData.addrd(0).addr.poke(16.U)
 
       dut.io.in.response.bits.readData.size.poke(8.U)
 
@@ -266,7 +266,7 @@ class SysWrapperTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.in.response.bits.readData.addrs(0).addr.poke(0.U)
       dut.io.in.response.bits.readData.addrs(1).addr.poke(8.U)
 
-      dut.io.in.response.bits.readData.addrd.addr.poke(16.U)
+      dut.io.in.response.bits.readData.addrd(0).addr.poke(16.U)
 
       dut.io.in.response.bits.readData.size.poke(8.U)
 

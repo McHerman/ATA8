@@ -71,7 +71,7 @@ class LoadController(implicit c: Configuration) extends Module {
           burstAddrReg := burstAddrReg + 1.U // Increase address by 4 bytes for next beat
         }
 
-        io.writeport.request.bits.addr := reg.addr.addr + burstAddrReg
+        io.writeport.request.bits.addr := reg.addrs(0).addr + burstAddrReg
 					
 				when(io.writeport.request.ready){ // Assuming that the line remains open.
 					io.writeport.request.valid := true.B
@@ -87,7 +87,7 @@ class LoadController(implicit c: Configuration) extends Module {
 
       when(io.writeport.request.ready){ // Assuming that the line remains open.
 				io.writeport.request.valid := true.B
-        io.writeport.request.bits.addr := reg.addr.addr
+        io.writeport.request.bits.addr := reg.addrd(0).addr
 				io.writeport.request.bits.burst := reg.size
 
         StateReg := 2.U
@@ -117,7 +117,7 @@ class LoadController(implicit c: Configuration) extends Module {
 		}
 		is(3.U){
       /* when(io.tagRegister.addr.ready){
-        io.tagRegister.addr.bits.addr := reg.addr
+        io.tagRegister.addr.bits.addr := reg.addrs(0)
         io.tagRegister.addr.bits.ready := true.B
 
         io.tagRegister.addr.valid := true.B 
@@ -128,7 +128,7 @@ class LoadController(implicit c: Configuration) extends Module {
       } */
 
       io.event.valid := true.B
-      io.event.bits.tag := reg.addr.tag
+      io.event.bits.tag := reg.addrd(0).tag
 
       StateReg := 0.U
 		}

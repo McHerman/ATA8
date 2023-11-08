@@ -57,7 +57,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.instructionStream.bits.addrs(1).depend.tag.poke(2.U)
       dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrd.addr.poke(16.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(16.U)
 
       dut.io.instructionStream.bits.size.poke(8.U)
 
@@ -169,7 +169,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.instructionStream.bits.addrs(1).depend.tag.poke(2.U)
       dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrd.addr.poke(16.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(16.U)
 
       dut.io.instructionStream.bits.size.poke(8.U)
 
@@ -284,8 +284,8 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.instructionStream.bits.addrs(1).depend.tag.poke(2.U)
       dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrd.addr.poke(32.U)
-      dut.io.instructionStream.bits.addrd.tag.poke(5.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(32.U)
+      dut.io.instructionStream.bits.addrd(0).tag.poke(5.U)
 
 
       dut.io.instructionStream.bits.size.poke(8.U)
@@ -307,8 +307,8 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.instructionStream.bits.addrs(1).depend.tag.poke(4.U)
       dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrd.addr.poke(40.U)
-      dut.io.instructionStream.bits.addrd.tag.poke(6.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(40.U)
+      dut.io.instructionStream.bits.addrd(0).tag.poke(6.U)
 
       dut.io.instructionStream.bits.size.poke(8.U)
 

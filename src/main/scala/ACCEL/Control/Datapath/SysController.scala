@@ -142,11 +142,11 @@ class SysController(implicit c: Configuration) extends Module {
 				opbuffer.io.WriteData.valid := true.B
 				opbuffer.io.WriteData.bits.mode := reg.mode
 				opbuffer.io.WriteData.bits.size := reg.size
-        opbuffer.io.WriteData.bits.tag := reg.addrd.tag
+        opbuffer.io.WriteData.bits.tag := reg.addrd(0).tag
 
         readBuffer.io.WriteData.valid := true.B
-				readBuffer.io.WriteData.bits.addr := reg.addrd.addr
-        readBuffer.io.WriteData.bits.tag := reg.addrd.tag
+				readBuffer.io.WriteData.bits.addr := reg.addrd(0).addr
+        readBuffer.io.WriteData.bits.tag := reg.addrd(0).tag
 				readBuffer.io.WriteData.bits.size := reg.size
 
 				StateReg := 0.U
