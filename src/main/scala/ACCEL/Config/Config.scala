@@ -55,10 +55,19 @@ class Config(implicit c: Configuration) extends Module {
   }
 
   when(io.event(0).valid){
-    regs(8) := io.event(0).bits.tag
-    regs(9) := regs(8)
-    regs(10) := regs(9)
-    regs(11) := regs(10)
+
+    when(io.event(1).valid){
+      regs(8) := io.event(1).bits.tag
+      regs(9) := io.event(0).bits.tag
+      regs(10) := regs(8)
+      regs(11) := regs(9)
+    }.otherwise{
+      regs(8) := io.event(0).bits.tag
+      regs(9) := regs(8)
+      regs(10) := regs(9)
+      regs(11) := regs(10)
+    }
+
   }.elsewhen(io.event(1).valid){
     regs(8) := io.event(1).bits.tag
     regs(9) := regs(8)

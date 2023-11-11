@@ -6,7 +6,7 @@ import chisel3.util.MixedVec._
 
 class DecodePackage(implicit c: Configuration) extends Bundle {
   val op = UInt(4.W)
-  val data = MixedVec(new ExeInstDecode, new LoadInstDecode, new StoreInstDecode)
+  val data = MixedVec(new ExecuteInst, new LoadInst, new StoreInst)
 }
 
 class IssuePackage(implicit c: Configuration) extends Bundle {
@@ -38,16 +38,11 @@ class ROBFetch(implicit c: Configuration) extends Module {
 
   io.issueStream.foreach{element => element.valid := false.B}
 
-
   val inReg = Reg(new DecodePackage)
 
   val stall = WireDefault(false.B)
   val inputStall = WireDefault(false.B)
   val assignValid = WireDefault(false.B)
-  //val stallReg = RegInit(false.B)
-  //val inputStall = WireDefault(false.B)
-
-  //io.issueStream.ready := !stall || !inputStall
 
   val issueReg = Reg(new IssuePackage)
 
@@ -62,121 +57,83 @@ class ROBFetch(implicit c: Configuration) extends Module {
     }
   }
 
-  when(!stall){
-    switch(inReg.op){
-      is(1.U){
-        val addrs = VecInit(inReg.data(0).asInstanceOf[ExeInstDecode].addrs1, inReg.data(0).asInstanceOf[ExeInstDecode].addrs2)
-        io.tagFetch.zipWithIndex.foreach { case (element,i) => element.request.valid := true.B; element.request.bits.addr := addrs(i); 
-          issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrs(i).addr := addrs(i)
-          
-          when(element.response.valid){
-            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrs(i).depend := element.response.bits
-            //issueReg.data(0).addrs(i).depend.tag := element.response.bits.tag
-            //issueReg.data(0).addrs(i).depend.ready := element.response.bits.ready
-          }.otherwise{
-            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrs(i).depend.tag := 0.U
-            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrs(i).depend.ready := true.B
-          }
-        }
-
-        when(io.tagRegister.addr.ready){
-          io.tagRegister.addr.bits.addr := inReg.data(0).asInstanceOf[ExeInstDecode].addrd
-          io.tagRegister.addr.bits.ready := false.B
-          io.tagRegister.addr.valid := true.B 
-
-          when(io.tagRegister.tag.valid){
-            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrd(0).tag := io.tagRegister.tag.bits
-            issueReg.data(0).asInstanceOf[ExecuteInstIssue].addrd(0).addr := inReg.data(0).asInstanceOf[ExeInstDecode].addrd
-            issueReg.op := 1.U
-            assignValid := true.B
-          }.otherwise{
-            inputStall := true.B
-            issueReg.op := 0.U
-          }
-        }.otherwise{
-          inputStall := true.B
-          issueReg.op := 0.U
-        }
-
-        issueReg.data(0).asInstanceOf[ExecuteInstIssue].size := inReg.data(0).asInstanceOf[ExeInstDecode].size
-        issueReg.data(0).asInstanceOf[ExecuteInstIssue].mode := inReg.data(0).asInstanceOf[ExeInstDecode].mode
-
+  def fetchAndRegister(inst: InstBase, issue: InstIssueBase): Unit = {
+    // Fetch IDs for all addresses in the addrs vector
+    inst.addrs.zipWithIndex.foreach { case (addrBundle, i) =>
+      io.tagFetch(i).request.valid := true.B
+      io.tagFetch(i).request.bits.addr := addrBundle.addr
+      when(io.tagFetch(i).response.valid) {
+        issue.addrs(i).depend := io.tagFetch(i).response.bits
+      }.otherwise {
+        issue.addrs(i).depend.tag := 0.U
+        issue.addrs(i).depend.ready := true.B
       }
-      is(2.U){
-        when(io.tagRegister.addr.ready){
-          io.tagRegister.addr.bits.addr := inReg.data(1).asInstanceOf[LoadInstDecode].addr
-          io.tagRegister.addr.bits.ready := false.B
-          io.tagRegister.addr.valid := true.B
-          
-          when(io.tagRegister.tag.valid){
-            issueReg.data(1).asInstanceOf[LoadInstIssue].addrd(0).tag := io.tagRegister.tag.bits
-            issueReg.data(1).asInstanceOf[LoadInstIssue].addrd(0).addr := inReg.data(1).asInstanceOf[LoadInstDecode].addr
 
-            issueReg.data(1).asInstanceOf[LoadInstIssue].size := inReg.data(1).asInstanceOf[LoadInstDecode].size
-            issueReg.data(1).asInstanceOf[LoadInstIssue].op := inReg.data(1).asInstanceOf[LoadInstDecode].op
-            issueReg.data(1).asInstanceOf[LoadInstIssue].mode := inReg.data(1).asInstanceOf[LoadInstDecode].mode
+      issue.addrs(i).addr := addrBundle.addr
+    }
 
-            issueReg.op := 2.U
-            assignValid := true.B
+    // Register addresses in the addrd vector
+    inst.addrd.zipWithIndex.foreach { case (addrBundle, i) =>
+      // Set up the tag register for writing
+      io.tagRegister.addr.valid := true.B
+      io.tagRegister.addr.bits.addr := addrBundle.addr
+      when(io.tagRegister.tag.valid) { 
+        issue.addrd(i).tag := io.tagRegister.tag.bits
+      }.otherwise {
+        inputStall := true.B
+      }
 
-            //issueReg.data(1).addr.ready := true.B 
-          }.otherwise{
-            inputStall := true.B
-            issueReg.op := 0.U
-          }
-        }.otherwise{
-          inputStall := true.B
-          issueReg.op := 0.U
+      issue.addrd(i).addr := addrBundle.addr
+    }
+  }
+
+  when(!stall) {
+    switch(inReg.op) {
+      is(1.U) { // ExecuteInst
+        fetchAndRegister(inReg.data(0).asInstanceOf[ExecuteInst], issueReg.data(0).asInstanceOf[ExecuteInstIssue])
+        issueReg.data(0).asInstanceOf[ExecuteInstIssue].op := inReg.data(0).asInstanceOf[ExecuteInst].op
+        issueReg.data(0).asInstanceOf[ExecuteInstIssue].size := inReg.data(0).asInstanceOf[ExecuteInst].size
+        issueReg.data(0).asInstanceOf[ExecuteInstIssue].mode := inReg.data(0).asInstanceOf[ExecuteInst].mode
+        
+        when(!inputStall){
+          issueReg.op := 1.U
+          assignValid := true.B
         }
 
       }
-      is(3.U){
-        io.tagFetch(0).request.valid := true.B
-        io.tagFetch(0).request.bits.addr := inReg.data(2).asInstanceOf[StoreInstDecode].addr
-
-        issueReg.data(2).asInstanceOf[StoreInstIssue].addrs(0).addr := inReg.data(2).asInstanceOf[StoreInstDecode].addr
-        when(io.tagFetch(0).response.valid){
-          issueReg.data(2).asInstanceOf[StoreInstIssue].addrs(0).depend := io.tagFetch(0).response.bits
-          //issueReg(2).data.addrs(0).depend.tag := io.tagFetch(0).response.bits.tag
-          //issueReg(2).data.addrs(0).depend.ready := io.tagFetch(0).response.bits.ready
-        }.otherwise{
-          issueReg.data(2).asInstanceOf[StoreInstIssue].addrs(0).depend.tag := 0.U
-          issueReg.data(2).asInstanceOf[StoreInstIssue].addrs(0).depend.ready := true.B
+      is(2.U) { // LoadInst
+        fetchAndRegister(inReg.data(1).asInstanceOf[LoadInst], issueReg.data(1).asInstanceOf[LoadInstIssue])
+        issueReg.data(1).asInstanceOf[LoadInstIssue].op := inReg.data(1).asInstanceOf[LoadInst].op
+        issueReg.data(1).asInstanceOf[LoadInstIssue].size := inReg.data(1).asInstanceOf[LoadInst].size
+        issueReg.data(1).asInstanceOf[LoadInstIssue].mode := inReg.data(1).asInstanceOf[LoadInst].mode
+        
+        when(!inputStall){
+          issueReg.op := 2.U
+          assignValid := true.B
         }
+      }
+      is(3.U) { // StoreInst
+        fetchAndRegister(inReg.data(2).asInstanceOf[StoreInst], issueReg.data(2).asInstanceOf[StoreInstIssue])
+        issueReg.data(2).asInstanceOf[StoreInstIssue].op := inReg.data(2).asInstanceOf[StoreInst].op
+        issueReg.data(2).asInstanceOf[StoreInstIssue].size := inReg.data(2).asInstanceOf[StoreInst].size
 
-        issueReg.data(2).asInstanceOf[StoreInstIssue].size := inReg.data(2).asInstanceOf[StoreInstDecode].size
-        issueReg.data(2).asInstanceOf[StoreInstIssue].op := inReg.data(2).asInstanceOf[StoreInstDecode].op
-
-        issueReg.op := 3.U
-        assignValid := true.B
-      } 
+        when(!inputStall){
+          issueReg.op := 3.U
+          assignValid := true.B
+        }
+      }
     }
   }.otherwise{
     inputStall := true.B
   }
 
-  //io.instructionStream.bits := issueReg.data
 
-  //io.instructionStream.zipWithIndex.foreach{case (element,i) => element.bits.asInstanceOf[element.cloneType] := issueReg.data(i)}
+  //TODO: Fix that garbage
 
-  io.issueStream(0).bits.asInstanceOf[ExecuteInstIssue] := issueReg.data(0).asInstanceOf[ExecuteInstIssue]
-  io.issueStream(1).bits.asInstanceOf[LoadInstIssue] := issueReg.data(1).asInstanceOf[LoadInstIssue]
-  io.issueStream(2).bits.asInstanceOf[StoreInstIssue] := issueReg.data(2).asInstanceOf[StoreInstIssue]
+  io.issueStream.zip(issueReg.data).foreach { case (issuePort, issueData) => issuePort.bits := issueData.asInstanceOf[issuePort.bits.type] }
 
 
-  /* when(issueReg.op =/= 0.U){
-    when(io.issueStream(issueReg.op).ready){
-      io.issueStream(issueReg.op).valid := true.B
-    }.otherwise{
-      stall := true.B
-    }
-  } */
-
-  io.event.foreach{case (event) => // Event fowarding
-    /* when(event.valid && event.bits.tag === storeIssueReg.addrs(0).depend.tag){
-			io.storeStream.bits.addrs(0).depend.ready := true.B
-    } */
-
+  io.event.foreach{case (event) => 
     issueReg.data.foreach{element => 
       element.addrs.foreach{addr => 
         when(event.valid && event.bits.tag === addr.depend.tag){
