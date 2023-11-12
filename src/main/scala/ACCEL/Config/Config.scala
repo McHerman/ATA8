@@ -16,9 +16,13 @@ class Config(implicit c: Configuration) extends Module {
     val loadDebug = Flipped(new LoadDebug)
     val exeDebug = Flipped(new ExeDebug)
     val storeDebug = Flipped(new StoreDebug)
-    val frontendDebug = Flipped(Valid(UInt(64.W)))
+    val receiverDebug = Flipped(Valid(UInt(64.W)))
+    val decodeDebug = Flipped(Valid(new LoadInst))
+    val decodeOutLoad = Flipped(Valid(new LoadInstIssue))
     val event = Vec(2,Flipped(Valid(new Event()))) 
     val robDebug = Input(Vec(c.tagCount,new mapping()))
+    val frontEndDebug = Input(new Bundle{val decodeReady = Bool(); val ROBFetchReady = Bool(); val exeOutReady = Bool(); val loadOutReady = Bool(); val storeOutReady = Bool()})
+    val AXIDebug = Input(new Bundle{val data_ready = Bool(); val data_valid = Bool(); val inst_ready = Bool(); val inst_valid = Bool(); val out_ready = Bool(); val out_valid = Bool()})
   })
 
   val regs = RegInit(VecInit(Seq.fill(registersCount)(0.U(32.W))))
@@ -45,41 +49,58 @@ class Config(implicit c: Configuration) extends Module {
   regs(0) := io.loadDebug.state
   regs(1) := io.exeDebug.state
   regs(2) := io.storeDebug.state
-  regs(3) := 16.U
+  regs(3) := io.AXIDebug.asUInt
 
-  when(io.frontendDebug.valid){
-    regs(4) := io.frontendDebug.bits
+  when(io.receiverDebug.valid){
+    regs(4) := io.receiverDebug.bits
     regs(5) := regs(4)
     regs(6) := regs(5)
     regs(7) := regs(6)
   }
 
-  when(io.event(0).valid){
-
-    when(io.event(1).valid){
-      regs(8) := io.event(1).bits.tag
-      regs(9) := io.event(0).bits.tag
-      regs(10) := regs(8)
-      regs(11) := regs(9)
-    }.otherwise{
-      regs(8) := io.event(0).bits.tag
-      regs(9) := regs(8)
-      regs(10) := regs(9)
-      regs(11) := regs(10)
-    }
-
-  }.elsewhen(io.event(1).valid){
-    regs(8) := io.event(1).bits.tag
+  when(io.decodeDebug.valid){
+    regs(8) := io.decodeDebug.bits.asUInt
     regs(9) := regs(8)
     regs(10) := regs(9)
     regs(11) := regs(10)
   }
 
-  io.robDebug.zipWithIndex.foreach{case (id,i) => 
-    regs(16+i) := Cat(id.valid, id.ready, id.addr)
+  when(io.decodeOutLoad.valid){
+    regs(12) := io.decodeOutLoad.bits.asUInt
+    regs(13) := regs(12)
+    regs(14) := regs(13)
+    regs(15) := regs(14)
   }
 
-  regs(32) := 31.U
+  when(io.event(0).valid){
+
+    when(io.event(1).valid){
+      regs(16) := Cat(io.event(1).bits.tag, 1.U(1.W))
+      regs(17) := Cat(io.event(0).bits.tag, 1.U(1.W))
+      regs(18) := regs(16)
+      regs(19) := regs(17)
+    }.otherwise{
+      regs(16) := Cat(io.event(0).bits.tag, 1.U(1.W))
+      regs(17) := regs(16)
+      regs(18) := regs(17)
+      regs(19) := regs(18)
+    }
+
+  }.elsewhen(io.event(1).valid){
+    regs(16) := Cat(io.event(1).bits.tag, 1.U(1.W))
+    regs(17) := regs(16)
+    regs(18) := regs(17)
+    regs(19) := regs(18)
+  }
+
+  io.robDebug.zipWithIndex.foreach{case (id,i) => 
+    regs(20+i) := Cat(id.valid, id.ready, id.addr)
+  }
+
+  regs(28) := io.frontEndDebug.asUInt
+
+
+
 
 
 

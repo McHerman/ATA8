@@ -18,7 +18,7 @@ class Store(config: Configuration) extends Module {
   })
 
   //val queue = Module(new BufferFIFO(16,new StoreInstIssue))
-  val queue = Module(new DependTrack(16,new StoreInstIssue,1)) 
+  val queue = Module(new DependTrack(32,new StoreInstIssue,1)) //TODO: add to config
 
   //val queue = Module(new DependTrack(16)) 
 

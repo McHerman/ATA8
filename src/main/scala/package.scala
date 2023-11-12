@@ -46,7 +46,7 @@ package object ATA8 {
         64,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
-        16,    // tagCount
+        8,    // tagCount
         16,   // addrWidth
         4,    // dmaCount
         4,    // issueWidth

@@ -60,10 +60,25 @@ class ATA8(config: Configuration) extends Module {
   Config.io.loadDebug <> Load.io.debug
   Config.io.storeDebug <> Store.io.debug
   Config.io.exeDebug <> Execute.io.debug
-  Config.io.frontendDebug <> FrontEnd.io.debug
+  Config.io.receiverDebug <> FrontEnd.io.receiverDebug
+  Config.io.decodeDebug <> FrontEnd.io.decodeDebug
   Config.io.event(0) := Load.io.event
   Config.io.event(1) := Execute.io.eventOut
   Config.io.robDebug := FrontEnd.io.robDebug
+
+  Config.io.decodeOutLoad.bits := FrontEnd.io.loadStream.bits
+  Config.io.decodeOutLoad.valid := FrontEnd.io.loadStream.fire
+
+  Config.io.AXIDebug.data_ready := Load.io.AXIST.tready
+  Config.io.AXIDebug.data_valid := io.AXIST_inData.tvalid
+
+  Config.io.AXIDebug.inst_ready := FrontEnd.io.AXIST.tready
+  Config.io.AXIDebug.inst_valid := io.AXIST_inInst.tvalid
+
+  Config.io.AXIDebug.out_ready := io.AXIST_out.tready
+  Config.io.AXIDebug.out_valid := Store.io.AXIST.tvalid
+
+  Config.io.frontEndDebug := FrontEnd.io.frontEndDebug
 }
 
 object ATA8 extends App {

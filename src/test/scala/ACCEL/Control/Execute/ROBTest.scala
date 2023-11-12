@@ -41,7 +41,7 @@ class ROBTest extends AnyFlatSpec with ChiselScalatestTester {
   //implicit val Config = Configuration.default().copy(issueQueueSize = n, simulation = true)
 
   it should "allocate n, fetch, and deallocate" in {
-    test(new ROB(8,1)(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+    test(new ROB(8,1,0)(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
       for(i <- 0 until n){
         dut.io.Writeport.addr.ready.expect(true.B)
 

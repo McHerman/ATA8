@@ -36,14 +36,16 @@ class Decoder(implicit c: Configuration) extends Module {
 //class Decoder(config: Configuration) extends Module {
 
   val io = IO(new Bundle {
-    //val instructionStream = Flipped(Decoupled(new InstructionPackage))
-    val instructionStream = new Readport(new InstructionPackage,0)
+    val instructionStream = Flipped(Decoupled(new InstructionPackage))
+    //val instructionStream = new Readport(new InstructionPackage,0) 
     //val issueStream = Decoupled(new Bundle{val op = UInt(2.W); val data = MixedVec(new ExeInstDecode, new LoadInstDecode, new StoreInstDecode)})
     val issueStream = Decoupled(new Bundle{val op = UInt(4.W); val data = MixedVec(new ExecuteInst, new LoadInst, new StoreInst)})    
   })
   
-  io.instructionStream.request.valid := false.B
-  io.instructionStream.request.bits := DontCare
+  //io.instructionStream.request.valid := false.B
+  //io.instructionStream.request.bits := DontCare
+
+  io.instructionStream.ready := false.B
 
   io.issueStream.valid := false.B
 
@@ -53,14 +55,24 @@ class Decoder(implicit c: Configuration) extends Module {
   val stall = WireDefault(false.B)
 
   when(!stall){
-    when(io.instructionStream.request.ready){
+    /* when(io.instructionStream.request.ready){
       io.instructionStream.request.valid := true.B
       when(io.instructionStream.response.valid){
         inReg := io.instructionStream.response.bits.readData
       }
     }.otherwise{
       inReg.instruction := 0.U
+    } */
+
+    io.instructionStream.ready := true.B
+
+    when(io.instructionStream.valid){
+      inReg := io.instructionStream.bits
+    }.otherwise{
+      inReg.instruction := 0.U
     }
+
+
   }
 
   val temp = Wire(MixedVec(new ExeInstDecode, new LoadInstDecode, new StoreInstDecode))

@@ -12,24 +12,35 @@ class FrontEnd(implicit c: Configuration) extends Module {
     val loadStream = Decoupled(new LoadInstIssue)
     val storeStream = Decoupled(new StoreInstIssue)
     val event = Vec(2,Flipped(Valid(new Event()))) 
-    val debug = Valid(UInt(64.W))
+    val receiverDebug = Valid(UInt(64.W))
+    val decodeDebug = Valid(new LoadInst)
+    //val fetchDebug = Valid(UInt(64.W))
+    val frontEndDebug = Output(new Bundle{val decodeReady = Bool(); val ROBFetchReady = Bool(); val exeOutReady = Bool(); val loadOutReady = Bool(); val storeOutReady = Bool()})
     val robDebug = Output(Vec(c.tagCount,new mapping()))
   })
 
   val Reciever = Module(new InstReciever)
-  val instQueue = Module(new BufferFIFO(16, new InstructionPackage)) //FIXME: non parameterized constant
+  //val instQueue = Module(new BufferFIFO(16, new InstructionPackage)) //FIXME: non parameterized constant
+  val instQueue = Module(new Queue(new InstructionPackage, 16))
   val Decoder = Module(new Decoder)
   val ROBFetch = Module(new ROBFetch)
-  val ROB = Module(new ROB(c.tagCount,2)(c))
+  val ROB = Module(new ROB(c.tagCount,2,0)(c))
 
-  io.debug.valid := Reciever.io.instructionStream.valid
-  io.debug.bits := Reciever.io.instructionStream.bits.instruction
+  io.receiverDebug.valid := Reciever.io.instructionStream.valid
+  io.receiverDebug.bits := Reciever.io.instructionStream.bits.instruction
   io.robDebug <> ROB.io.debug
 
   Reciever.io.AXIST <> io.AXIST
-  instQueue.io.WriteData <> Reciever.io.instructionStream
-  
-  Decoder.io.instructionStream <> instQueue.io.ReadData
+  //instQueue.io.WriteData <> Reciever.io.instructionStream
+  instQueue.io.enq <> Reciever.io.instructionStream
+
+  //Decoder.io.instructionStream <> instQueue.io.ReadData
+  Decoder.io.instructionStream <> instQueue.io.deq
+
+  io.decodeDebug.valid := Decoder.io.issueStream.valid
+  io.decodeDebug.bits := Decoder.io.issueStream.bits.data(1)
+
+
   //Decoder.io.tagFetch <> ROB.io.ReadData
   //Decoder.io.tagRegister <> ROB.io.Writeport
   //Decoder.io.event := io.event
@@ -40,11 +51,7 @@ class FrontEnd(implicit c: Configuration) extends Module {
   ROBFetch.io.event := io.event
 
   ROB.io.event := io.event
-  ROB.io.readAddr(0).request.valid := false.B
-  ROB.io.readAddr(0).request.bits := DontCare
-  ROB.io.readAddr(1).request.valid := false.B
-  ROB.io.readAddr(1).request.bits := DontCare
-
+  
   //io.exeStream <> Decoder.io.exeStream
   //io.loadStream <> Decoder.io.loadStream
   //io.storeStream <> Decoder.io.storeStream
@@ -52,5 +59,12 @@ class FrontEnd(implicit c: Configuration) extends Module {
   io.exeStream <> ROBFetch.io.issueStream(0)
   io.loadStream <> ROBFetch.io.issueStream(1)
   io.storeStream <> ROBFetch.io.issueStream(2)
+
+  //io.frontEndDebug.decodeReady := Decoder.io.instructionStream.request.ready
+  io.frontEndDebug.decodeReady := Decoder.io.instructionStream.ready
+  io.frontEndDebug.ROBFetchReady := ROBFetch.io.instructionStream.ready 
+  io.frontEndDebug.exeOutReady := io.exeStream.ready
+  io.frontEndDebug.loadOutReady := io.loadStream.ready
+  io.frontEndDebug.storeOutReady := io.storeStream.ready
 
 }

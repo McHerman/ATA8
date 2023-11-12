@@ -19,7 +19,7 @@ class Execute(config: Configuration) extends Module {
   })
 
   //val queue = Module(new BufferFIFO(16,new StoreInstIssue))
-  val queue = Module(new DependTrack(16,new ExecuteInstIssue,2)) 
+  val queue = Module(new DependTrack(32,new ExecuteInstIssue,2)) // TODO: add to config
 
   val SysWrapper = Module(new SysWrapper(c))
 

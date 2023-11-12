@@ -17,7 +17,7 @@ class Load(config: Configuration) extends Module {
     val debug = new LoadDebug
   })
 
-  val queue = Module(new BufferFIFO(16,new LoadInstIssue))
+  val queue = Module(new BufferFIFO(32,new LoadInstIssue)) //TODO: Add to config
   val LoadController = Module(new LoadController)
 
   queue.io.WriteData <> io.instructionStream

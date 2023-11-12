@@ -61,30 +61,6 @@ class LoadController(implicit c: Configuration) extends Module {
       }
 		}
 		is(1.U){
-			/* io.AXIST.tready := true.B
-
-      when (io.AXIST.tvalid) {
-        when (io.AXIST.tlast) {
-          StateReg := 2.U
-          idReg:= io.AXIST.tid
-        }.otherwise {
-          burstAddrReg := burstAddrReg + 1.U // Increase address by 4 bytes for next beat
-        }
-
-        io.writeport.request.bits.addr := reg.addrs(0).addr + burstAddrReg
-					
-				when(io.writeport.request.ready){ // Assuming that the line remains open.
-					io.writeport.request.valid := true.B
-					when(io.writeport.data.ready){
-            io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,8))
-            
-            io.writeport.data.bits.strb := io.AXIST.tstrb.asBools
-            io.writeport.data.valid := true.B
-					}
-				}
-      } */
-
-
       when(io.writeport.request.ready){ // Assuming that the line remains open.
 				io.writeport.request.valid := true.B
         io.writeport.request.bits.addr := reg.addrd(0).addr

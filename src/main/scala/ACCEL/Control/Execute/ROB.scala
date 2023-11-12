@@ -10,8 +10,8 @@ class mapping(implicit c: Configuration) extends Bundle {
 } 
 
 //class ResStation(implicit c: Configuration) extends Module {
-//class ROB(tagCount: Int, readports: Int)(implicit c: Configuration) extends Module {
-class ROB(tagCount: Int, readports: Int)(config: Configuration) extends Module {
+//class ROB(tagCount: Int, tagReadPorts: Int)(implicit c: Configuration) extends Module {
+class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuration) extends Module {
   implicit val c = config
 
   def vecSearch(reg: Vec[mapping], search: UInt): (UInt, Bool, Bool) = {
@@ -45,11 +45,11 @@ class ROB(tagCount: Int, readports: Int)(config: Configuration) extends Module {
   val io = IO(new Bundle {
     val Writeport = Flipped(new TagWrite())
     // val Writeport = Vec(c.tagProducers,Flipped(Decoupled(new Bundle {val addr = Output(UInt(c.addrWidth.W)); val tag = Input(UInt(c.tagWidth.W))})))
-    val ReadData = Vec(readports,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
+    val ReadData = Vec(tagReadPorts,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
     //val ReadData = Flipped(new TagRead())
     //val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
     val event = Vec(2,Flipped(Valid(new Event())))
-    val readAddr = Vec(2/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
+    val readAddr = Vec(readPorts/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
     val debug = Output(Vec(tagCount,new mapping()))
   })
 
