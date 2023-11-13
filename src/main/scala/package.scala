@@ -15,11 +15,7 @@ package object ATA8 {
     modeWidth: Int,
     tagCount: Int,
     addrWidth: Int,
-    dmaCount: Int,
-    issueWidth: Int,
-    tagProducers: Int,
-    tagRecievers: Int,
-    multibleDMA: Boolean/* ,
+    dataBusSize: Int/* ,
     initialStateMap: Seq[Int],
     simulation: Boolean = false */
   ){
@@ -28,10 +24,6 @@ package object ATA8 {
     val sysWidth = log2Ceil(2)
     //val sysWidth = log2Ceil(sysDim*sysDim) //Gives 0 
     val grainSizeWidth = log2Ceil(grainDim)
-
-    /* val physRegisterIdWidth = log2Ceil(reorderBufferSize).W
-    val memIdWidth = log2Ceil(memQueueSize).W
-    val snapshotIdWidth = log2Ceil(numOfSnapshots).W */
   }
 
   object Configuration {
@@ -48,11 +40,7 @@ package object ATA8 {
         1,    // modeWidth
         8,    // tagCount
         16,   // addrWidth
-        4,    // dmaCount
-        4,    // issueWidth
-        2,    // tagProducers
-        3,    // tagRecievers
-        false
+        8     // dataBusSize
       )
     }
     def test(): Configuration = {
@@ -67,52 +55,8 @@ package object ATA8 {
         8,    // arithDataWidth
         1,    // modeWidth
         8,    // tagCount
-        16,    // addrWidth
-				1,    // dmaCount
-        1,    // issueWidth
-        2,    // tagProducers
-        3,    // tagRecievers
-        false
-      )
-    }
-    def test16(): Configuration = {
-      Configuration(
-        128, // scratchpadSize
-        1,    // bufferReadPorts
-        1,    // bufferWritePorts
-        16,   // grainDim
-        1,    // sysDim
-        128,  // grainFIFOSize
-        128,  // grainACCUSize
-        8,    // arithDataWidth
-        1,    // modeWidth
-        8,    // tagCount
-        16,    // addrWidth
-				4,    // dmaCount
-        4,    // issueWidth
-        2,    // tagProducers
-        3,    // tagRecievers
-        false
-      )
-    }
-    def buftest(): Configuration = {
-      Configuration(
-        128, // scratchpadSize
-        1,    // bufferReadPorts
-        2,    // bufferWritePorts
-        8,   // grainDim
-        1,    // sysDim
-        128,  // grainFIFOSize
-        128,  // grainACCUSize
-        8,    // arithDataWidth
-        1,    // modeWidth
-        8,    // tagCount
-        16,    // addrWidth
-				4,    // dmaCount
-        4,    // issueWidth
-        2,    // tagProducers
-        3,    // tagRecievers
-        false
+        16,   // addrWidth
+        8     // dataBusSize
       )
     }
   }

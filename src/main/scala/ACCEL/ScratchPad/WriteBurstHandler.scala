@@ -6,7 +6,8 @@ import chisel3.util._
 class WriteBurstHandler(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val scratchWriteport = Flipped(new WriteportScratch)
-    val writePort = Decoupled(new Writeport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),16))
+    //val writePort = Decoupled(new Writeport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),16))
+    val writePort = Decoupled(new Writeport(new Bundle{val writeData = Vec(c.dataBusSize,UInt(8.W)); val strb = Vec(c.dataBusSize, Bool())},16))
   })
 
   // Set default values
@@ -33,10 +34,11 @@ class WriteBurstHandler(implicit c: Configuration) extends Module {
       io.scratchWriteport.data.ready := io.writePort.ready
       io.writePort.valid := io.scratchWriteport.data.valid
       io.writePort.bits.addr := activeAddr
-      io.writePort.bits.data := io.scratchWriteport.data.bits.writeData
+      io.writePort.bits.data.writeData := io.scratchWriteport.data.bits.writeData
+      io.writePort.bits.data.strb := io.scratchWriteport.data.bits.strb
       io.scratchWriteport.data.ready := true.B
 
-      when(io.writePort.fire()) {
+      when(io.writePort.fire) {
         activeAddr := activeAddr + 1.U
         burstCounter := burstCounter - 1.U
       }

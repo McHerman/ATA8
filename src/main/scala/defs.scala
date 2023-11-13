@@ -68,6 +68,12 @@ class Readport[T <: Data](private val dataType: T, val addrWidth: Int) extends B
   }))
 }
 
+class Writeport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
+  val addr  = Output(UInt(addrWidth.W))
+  //val data = Output(dataType)
+  val data = Output(dataType.cloneType)
+}
+
 
 class Readport_V2(val dataWidth: Int,val addrWidth: Int) extends Bundle {
   val request = Decoupled(new Bundle {
@@ -83,27 +89,29 @@ class ReadportScratch(implicit c: Configuration) extends Bundle {
     val addr = UInt(16.W)
     val burst = UInt(8.W)
   })
-  val data = Flipped(Decoupled(new Bundle { //TODO: Change this to comply with the naming scheme of other readports
+  /* val data = Flipped(Decoupled(new Bundle { //TODO: Change this to comply with the naming scheme of other readports
     val readData = Vec(c.grainDim,UInt(c.arithDataWidth.W))
+    val last = Bool()
+  })) */
+  val data = Flipped(Decoupled(new Bundle { //TODO: Change this to comply with the naming scheme of other readports
+    val readData = Vec(c.dataBusSize,UInt(8.W))
     val last = Bool()
   }))
 }
-
-class Writeport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
-  val addr  = Output(UInt(addrWidth.W))
-  //val data = Output(dataType)
-  val data = Output(dataType.cloneType)
-}
-
 
 class WriteportScratch(implicit c: Configuration) extends Bundle { // TODO: Might be a good idea to introduce a "locking" feature where a continued transaction is insured even with intermitten interuptions 
   val request = Decoupled(new Bundle {
     val addr = UInt(16.W) // TODO find non arbitry value for this 
     val burst = UInt(8.W)
   })
-  val data = Decoupled(new Bundle {
+  /* val data = Decoupled(new Bundle {
     val strb = Vec(c.grainDim,Bool())
     val writeData = Vec(c.grainDim,UInt(c.arithDataWidth.W))
+    val last = Bool()
+  }) */
+  val data = Decoupled(new Bundle {
+    val writeData = Vec(c.dataBusSize,UInt(8.W))
+    val strb = Vec(c.dataBusSize,Bool())
     val last = Bool()
   })
 }
