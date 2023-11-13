@@ -2,8 +2,12 @@ package ATA8
 
 import chisel3._
 import chisel3.util._
-  
+
 class SysWriteDMA(implicit c: Configuration) extends Module {  
+  def uintToBoolVec(uint: UInt, n: Int): Vec[Bool] = {
+    VecInit((0 until n).map(i => uint > i.U))
+  }
+
   val io = IO(new Bundle {
     val in = Flipped(Decoupled(new Bundle{val addr = UInt(16.W); val size = UInt(8.W); val tag = UInt(c.tagWidth.W)}))
     val scratchOut = new WriteportScratch
@@ -58,7 +62,7 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
 
         io.scratchOut.data.bits.writeData := io.readPort.response.bits.readData
         //io.scratchOut.data.bits.strb := "hff".U.asBools
-        io.scratchOut.data.bits.strb.foreach(element => element := true.B)
+        io.scratchOut.data.bits.strb := uintToBoolVec(reg.size, c.dataBusSize)
 
 
         when(io.readPort.response.valid){

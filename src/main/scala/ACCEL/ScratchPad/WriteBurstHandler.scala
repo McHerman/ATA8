@@ -17,6 +17,7 @@ class WriteBurstHandler(implicit c: Configuration) extends Module {
   io.scratchWriteport.data.ready := false.B
 
   val burstCounter = RegInit(0.U(8.W))
+  val burstSize = RegInit(0.U(8.W))
   val activeAddr = RegInit(0.U(16.W))
   val isLocked = RegInit(false.B)
 
@@ -25,6 +26,7 @@ class WriteBurstHandler(implicit c: Configuration) extends Module {
   when(io.scratchWriteport.request.fire()) {
     isLocked := true.B
     activeAddr := io.scratchWriteport.request.bits.addr
+    burstSize := io.scratchWriteport.request.bits.burst
     burstCounter := io.scratchWriteport.request.bits.burst
     //io.scratchWriteport.request.ready := true.B
   }
@@ -39,7 +41,7 @@ class WriteBurstHandler(implicit c: Configuration) extends Module {
       io.scratchWriteport.data.ready := true.B
 
       when(io.writePort.fire) {
-        activeAddr := activeAddr + 1.U
+        activeAddr := activeAddr + burstSize
         burstCounter := burstCounter - 1.U
       }
     }

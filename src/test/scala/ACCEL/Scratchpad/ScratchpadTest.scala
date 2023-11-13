@@ -1,4 +1,4 @@
-/* package ATA8
+package ATA8
 
 import chisel3._
 import chiseltest._
@@ -10,9 +10,23 @@ import scala.io.Source
 
 class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
 
-  behavior of "Scratchpad"
+  behavior of "ScratchpadWrapper"
   
 	val n = 8
+
+
+  val matrix: Seq[UInt] = Seq(
+		"h0102030401020304".U(64.W),
+		"h0102030401020304".U(64.W),
+		"h0102030401020304".U(64.W),
+		"h0102030401020304".U(64.W),
+		"h0102030401020304".U(64.W),
+		"h0102030401020304".U(64.W),
+		"h0102030401020304".U(64.W),
+		"h0102030401020304".U(64.W)
+
+		// ... add the rest of the rows
+	)
 
   val WMatrix: Array[Array[Int]] = Array(
     Array(1, 2, 3, 4, 1, 2, 3, 4),
@@ -25,84 +39,92 @@ class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
     Array(1, 2, 3, 4, 1, 2, 3, 4)
   )
 
-  implicit val Config = Configuration.default()
+  //implicit val Config = Configuration.default()
 
 	
   "ScratchpadTest " should "pass" in {
+
+
+    implicit val c = Configuration.test()
     //test(new Grain(n,n,8)).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
-    test(new Scratchpad()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+    test(new ScratchpadWrapper()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 
-      for (i <- 0 until n) {
-        dut.io.Writeport(0).request.valid.poke(true.B)
-        dut.io.Writeport(0).request.bits.addr.poke(n.U)
+      dut.io.Writeport(0).request.ready.expect(true.B)
 
+      dut.io.Writeport(0).request.bits.addr.poke(0.U)
+      dut.io.Writeport(0).request.bits.burst.poke(n.U)
 
-        dut.io.Writeport(0).data.valid.poke(true.B)
+      dut.io.Writeport(0).request.valid.poke(true.B)
 
-        for(k <- 0 until n){
-          dut.io.Writeport(0).data.bits.writeData(k).poke(WMatrix(i)(k).U)
-          dut.io.Writeport(0).data.bits.strb(k).poke(true.B)
-        }
-        
-      
-        dut.clock.step()
-      }
+      dut.clock.step(1)
 
       dut.io.Writeport(0).request.valid.poke(false.B)
-      dut.io.Writeport(0).data.valid.poke(false.B)
 
-      for (i <- 0 until n) {
-        dut.io.Readport(0).request.valid.poke(true.B)
-        dut.io.Readport(0).request.bits.addr.poke(n.U)
-      
-        dut.clock.step()
-      }
-
-    }
-  }
-
-  "BufTest2 " should "pass" in {
-    //test(new Grain(n,n,8)).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
-    test(new Scratchpad()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
-
-      for (i <- 0 until n) {
-        dut.io.Writeport(0).request.valid.poke(true.B)
-        dut.io.Writeport(0).request.bits.addr.poke(i.U)
-
-
-        dut.io.Writeport(0).data.valid.poke(true.B)
+      for(i <- 0 until n){
+        dut.io.Writeport(0).data.ready.expect(true.B)
 
         for(k <- 0 until n){
           dut.io.Writeport(0).data.bits.writeData(k).poke(WMatrix(i)(k).U)
           dut.io.Writeport(0).data.bits.strb(k).poke(true.B)
         }
 
-        dut.io.Writeport(1).request.valid.poke(true.B)
-        dut.io.Writeport(1).request.bits.addr.poke((n+i).U)
+        dut.io.Writeport(0).data.valid.poke(true.B)
 
-
-        dut.io.Writeport(1).data.valid.poke(true.B)
-
-        for(k <- 0 until n){
-          dut.io.Writeport(1).data.bits.writeData(k).poke(WMatrix(k)(i).U)
-          dut.io.Writeport(1).data.bits.strb(k).poke(true.B)
+        if(i == (n-1)){
+          dut.io.Writeport(0).data.bits.last.poke(true.B)
         }
-        
-        
-        dut.clock.step()
+
+        dut.clock.step(1)
       }
 
-      dut.io.Writeport(0).request.valid.poke(false.B)
       dut.io.Writeport(0).data.valid.poke(false.B)
 
-      for (i <- 0 until 2*n) {
-        dut.io.Readport(0).request.valid.poke(true.B)
-        dut.io.Readport(0).request.bits.addr.poke(i.U)
-      
+      dut.clock.step(1)
+
+      dut.io.Readport(0).request.ready.expect(true.B)
+
+      dut.io.Readport(0).request.bits.addr.poke(0.U)
+      dut.io.Readport(0).request.bits.burst.poke(n.U)
+
+      dut.io.Readport(0).request.valid.poke(true.B)
+
+      dut.clock.step(1)
+
+      dut.io.Readport(0).data.ready.poke(true.B)
+
+
+      while (dut.io.Readport(0).data.valid.peek().litToBoolean == false) {
         dut.clock.step()
+      } 
+
+      dut.io.Readport(0).data.valid.expect(true.B)
+
+      for(i <- 0 until n){
+
+        for(k <- 0 until n){
+          dut.io.Readport(0).data.bits.readData(k).expect(WMatrix(i)(k).U)
+          //dut.io.Writeport(0).data.bits.strb(k).poke(true.B)
+        }
+
+        //dut.io.Writeport(0).data.valid.poke(true.B)
+
+        if(i == (n-1)){
+          dut.io.Readport(0).data.bits.last.expect(true.B)
+        }
+
+        dut.clock.step(1)
       }
+
+
+      
+      
+
+
+
+
+
+
 
     }
   }
 }  
- */

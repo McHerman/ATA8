@@ -1,0 +1,4 @@
+load 8, 0 
+load 8, 64 
+gemm 8, 0, 64, 128
+store 8, 128

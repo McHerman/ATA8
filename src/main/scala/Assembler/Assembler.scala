@@ -14,7 +14,7 @@ object Assembler {
   }
 
   def main(args: Array[String]): Unit = {
-    val source = Source.fromFile("/home/karlhk/PCIE/ATA8/src/main/scala/Assembler/testProgram.txt")
+    val source = Source.fromFile("testProgram.txt")
     val out = new PrintWriter(new BufferedWriter(new FileWriter("output.txt")))
     
     for (line <- source.getLines()) {

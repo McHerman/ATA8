@@ -45,9 +45,9 @@ package object ATA8 {
     }
     def test(): Configuration = {
       Configuration(
-        64, // scratchpadSize
-        1,    // bufferReadPorts
-        1,    // bufferWritePorts
+        4096, // scratchpadSize
+        2,    // bufferReadPorts
+        2,    // bufferWritePorts
         8,     // grainDim
         1,    // sysDim
         128,  // grainFIFOSize
