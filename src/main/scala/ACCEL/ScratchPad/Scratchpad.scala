@@ -13,84 +13,72 @@ class Scratchpad(writeports: Int)(implicit c: Configuration) extends Module {
     val Readport = Vec(c.bufferReadPorts, Flipped(new Readport(Vec(c.dataBusSize,UInt(8.W)),16)))
   })
 
-  /* val ReadDelay = Reg(Vec(c.bufferReadPorts, UInt(1.W)))
-  val mem = SyncReadMem(c.scratchpadSize, Vec(c.grainDim,UInt(c.arithDataWidth.W)))
+  val memBanks = Seq.fill(c.dataBusSize)(SyncReadMem(c.scratchpadSize, UInt(8.W)))
 
-  // ReadPorts
+  io.Writeport.foreach { port =>
+    port.ready := true.B
+    val writePorts = Wire(Vec(c.dataBusSize, new Writeport(new Bundle{val writeData = UInt(8.W); val en = Bool()}, c.addrWidth - log2Ceil(c.dataBusSize))))
 
-  io.Readport.zipWithIndex.foreach{ case(element,i) =>
-    element.request.ready := true.B
-
-    val rdPort = mem(io.Readport(i).request.bits.addr)
-    element.response.bits.readData := rdPort
-
-    ReadDelay(i) := element.request.valid 
-    element.response.valid := ReadDelay(i)  
-  }
-
-  // WritePorts
-  
-  io.Writeport.zipWithIndex.foreach{ case(element,i) =>
-    //element.request.ready := true.B
-    //element.data.ready := true.B
-
-    element.ready := true.B
-
-    //val wrPort = mem(element.request.bits.addr)
-    val wrPort = mem(element.bits.addr)
-
-    when(element.valid){
-      wrPort := element.bits.data
-    }    
-  }  */
-
-  val mem = SyncReadMem(c.scratchpadSize, UInt(8.W))
-
-  // ReadPorts
-  io.Readport.foreach{case (port) =>
-    port.request.ready := true.B
-
-    val rdAddr = port.request.bits.addr
-
-    //port.response.bits.readData := (0 until c.dataBusSize).map(i => mem.read(rdAddr + i.U))
-
-    port.response.bits.readData.zipWithIndex.foreach{case (readData,i) =>
-      val rdPort = mem(rdAddr + i.U)
-      readData := rdPort
+    writePorts.foreach { wp =>
+      wp.addr := 0.U // Replace with a sensible default if necessary
+      wp.data.writeData := 0.U
+      wp.data.en := false.B // Writes disabled by default
     }
 
-    port.response.valid := RegNext(port.request.fire, init = false.B) // Register the valid signal to delay by one cycle
-  }
-
-  // WritePorts
-  io.Writeport.foreach{case (port) =>
-    port.ready := true.B
-
-    /* when(port.fire) {
-      val wrAddr = port.bits.addr
-      val wrData = port.bits.data.data
-      val mask = port.bits.data.strb.asBools
-
-      wrData.zipWithIndex.foreach{case (data,i) => 
-        when(mask(i)) {
-          mem.write(wrAddr + i.U, data)
-        }
-      } 
-    } */
+    writePorts.zip(memBanks).foreach { case (port, mem) =>
+      when(port.data.en) {
+        mem.write(port.addr, port.data.writeData)
+      }
+    }
 
     val wrAddr = port.bits.addr
     val wrData = port.bits.data.writeData
     val mask = port.bits.data.strb
 
-    wrData.zipWithIndex.foreach{case (data,i) => 
+    // Bank addressing logic
+    val bankAddr = wrAddr(c.addrWidth - 1, log2Ceil(c.dataBusSize))
+    val bankIdxOffset = wrAddr(log2Ceil(c.dataBusSize) - 1, 0)
 
-      val wrPort = mem(wrAddr + i.U)
+    wrData.zipWithIndex.foreach { case (data, i) =>
+      val bankIdx = (bankIdxOffset + i.U)(log2Ceil(c.dataBusSize) - 1, 0)
+      val isWrapAround = (bankIdxOffset + i.U) >= c.dataBusSize.U
+      val effectiveBankAddr = bankAddr + isWrapAround.asUInt
 
-      when(mask(i) && port.fire) {
-        wrPort := data
-      }
-    } 
+      writePorts(bankIdx).addr := effectiveBankAddr
+      writePorts(bankIdx).data.writeData := data
+
+      writePorts(bankIdx).data.en := mask(i) && port.fire
+    }
   }
 
+  // Read logic
+  io.Readport.foreach { port =>
+    port.request.ready := true.B
 
+    val readPorts = Wire(Vec(c.dataBusSize, new ReadportSimple(UInt(8.W),c.addrWidth - log2Ceil(c.dataBusSize))))
+    readPorts.foreach { rp =>
+      rp.addr := 0.U // Replace with a sensible default if necessary
+    }
+
+    readPorts.zip(memBanks).foreach { case (port, mem) =>
+      port.readData := mem.read(port.addr, true.B) // Always enabled for simplicity
+    }
+
+    val rdAddr = port.request.bits.addr
+    val rdData = port.response.bits.readData
+
+    val bankAddr = rdAddr(c.addrWidth - 1, log2Ceil(c.dataBusSize))
+    val bankIdxOffset = rdAddr(log2Ceil(c.dataBusSize) - 1, 0)
+
+    rdData.zipWithIndex.foreach {case (data,i) =>
+      val bankIdx = (bankIdxOffset + i.U)(log2Ceil(c.dataBusSize) - 1, 0)
+      val isWrapAround = (bankIdxOffset + i.U) >= c.dataBusSize.U
+      val effectiveBankAddr = bankAddr + isWrapAround.asUInt
+      
+      readPorts(bankIdx).addr := effectiveBankAddr
+      data := readPorts(bankIdx).readData
+
+      port.response.valid := RegNext(port.request.valid)
+    }
+  }
 }

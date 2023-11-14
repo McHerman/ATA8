@@ -58,6 +58,10 @@ class ST2PointDMA(val addr_width: Int, val id_width: Int) extends Bundle {
   val id      = UInt(id_width.W)
 }
 
+class ReadportSimple[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
+  val addr = Output(UInt(addrWidth.W))
+  val readData = Input(dataType.cloneType)
+}
 
 class Readport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
   val request = Decoupled(new Bundle {

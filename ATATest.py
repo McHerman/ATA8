@@ -36,7 +36,9 @@ def main():
     read_all_states(DEBUG_READ, 'config.json')
 
     # Generate instructions as bytes
-    instructions = struct.pack('<Q', 134217730) + struct.pack('<Q', 34493956098) + struct.pack('<Q', 4503633987110913) + struct.pack('<Q',68853694467)
+    #instructions = struct.pack('<Q', 134217730) + struct.pack('<Q', 34493956098) + struct.pack('<Q', 4503633987110913) + struct.pack('<Q',68853694467)
+    instructions = struct.pack('<Q', 134217730) + struct.pack('<Q', 275012124674) + struct.pack('<Q', 36029071896872961) + struct.pack('<Q',549890031619)
+
     write_to_device(INST_WRITE, instructions)
     print("Instructions written")
 
