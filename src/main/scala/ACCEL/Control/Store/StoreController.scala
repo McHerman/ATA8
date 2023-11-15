@@ -106,8 +106,11 @@ class StoreController(implicit c: Configuration) extends Module {
     */
     is(1.U){
       io.readport.request.bits.addr := reg.addrs(0).addr
-			io.readport.request.bits.burst := reg.size
-      
+			//io.readport.request.bits.burst := reg.size
+      io.readport.request.bits.burstSize := reg.size
+      io.readport.request.bits.burstCnt := reg.size
+
+
       when(io.readport.request.ready){
         io.readport.request.valid := true.B
         StateReg := 2.U

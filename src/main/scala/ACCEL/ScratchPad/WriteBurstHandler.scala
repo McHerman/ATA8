@@ -20,19 +20,20 @@ class WriteBurstHandler(implicit c: Configuration) extends Module {
   val burstSize = RegInit(0.U(8.W))
   val activeAddr = RegInit(0.U(16.W))
   val isLocked = RegInit(false.B)
+  val burstMode = RegInit(false.B)
 
   io.scratchWriteport.request.ready := !isLocked
 
   when(io.scratchWriteport.request.fire()) {
     isLocked := true.B
     activeAddr := io.scratchWriteport.request.bits.addr
-    burstSize := io.scratchWriteport.request.bits.burst
-    burstCounter := io.scratchWriteport.request.bits.burst
-    //io.scratchWriteport.request.ready := true.B
+    burstSize := io.scratchWriteport.request.bits.burstSize
+    burstCounter := io.scratchWriteport.request.bits.burstCnt - 1.U //FIXME: Might not be great to subtract here, maybe just change definition
+    burstMode := io.scratchWriteport.request.bits.burstMode
   }
 
   when(isLocked) {
-    when(io.writePort.ready && burstCounter =/= 0.U) {
+    when(io.writePort.ready) {
       io.scratchWriteport.data.ready := io.writePort.ready
       io.writePort.valid := io.scratchWriteport.data.valid
       io.writePort.bits.addr := activeAddr
@@ -42,12 +43,23 @@ class WriteBurstHandler(implicit c: Configuration) extends Module {
 
       when(io.writePort.fire) {
         activeAddr := activeAddr + burstSize
-        burstCounter := burstCounter - 1.U
+
+        when(!burstMode){
+          burstCounter := burstCounter - 1.U
+        }
       }
     }
 
-    when(burstCounter === 0.U) {
-      isLocked := false.B
+    // in streaming mode, the burst when exit out then the master asserts last
+
+    when(!burstMode){
+      when(burstCounter === 0.U && io.scratchWriteport.data.bits.last) { //FIXME: Not brilliant, fix
+        isLocked := false.B
+      }
+    }.otherwise{
+      when(io.scratchWriteport.data.bits.last) {
+        isLocked := false.B
+      }
     }
   }
 }

@@ -64,7 +64,10 @@ class LoadController(implicit c: Configuration) extends Module {
       when(io.writeport.request.ready){ // Assuming that the line remains open.
 				io.writeport.request.valid := true.B
         io.writeport.request.bits.addr := reg.addrd(0).addr
-				io.writeport.request.bits.burst := reg.size
+				//io.writeport.request.bits.burst := reg.size
+        io.writeport.request.bits.burstMode := true.B // Streaming mode
+        io.writeport.request.bits.burstSize := reg.size
+        io.writeport.request.bits.burstCnt := 0.U
 
         StateReg := 2.U
 			}

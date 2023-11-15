@@ -84,10 +84,14 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       } 
 
       dut.io.scratchIn(0).request.bits.addr.expect(0.U)
-      dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      //dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstSize.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstCnt.expect(8.U)
 
       dut.io.scratchIn(1).request.bits.addr.expect(8.U)
-      dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      //dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burstSize.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burstCnt.expect(8.U)
 
       dut.clock.step(1)
 
@@ -123,7 +127,9 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
       dut.io.scratchOut.request.bits.addr.expect(16.U)
-      dut.io.scratchOut.request.bits.burst.expect(8.U)
+      //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
 
       dut.io.scratchOut.data.ready.poke(true.B)
 
@@ -201,10 +207,15 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       } 
 
       dut.io.scratchIn(0).request.bits.addr.expect(0.U)
-      dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      //dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstSize.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstCnt.expect(8.U)
+
 
       dut.io.scratchIn(1).request.bits.addr.expect(8.U)
-      dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      //dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burstSize.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burstCnt.expect(8.U)
 
       dut.clock.step(1)
 
@@ -240,7 +251,10 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
       dut.io.scratchOut.request.bits.addr.expect(16.U)
-      dut.io.scratchOut.request.bits.burst.expect(8.U)
+      //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
+
 
       dut.io.scratchOut.data.ready.poke(true.B)
 
@@ -350,10 +364,14 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       } 
 
       dut.io.scratchIn(0).request.bits.addr.expect(0.U)
-      dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      //dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstSize.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstCnt.expect(8.U)
 
       dut.io.scratchIn(1).request.bits.addr.expect(8.U)
-      dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      //dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burstSize.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burstCnt.expect(8.U)
 
       dut.clock.step(1)
 
@@ -392,7 +410,9 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
       dut.io.scratchOut.request.bits.addr.expect(32.U)
-      dut.io.scratchOut.request.bits.burst.expect(8.U)
+      //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
 
       dut.io.scratchOut.data.ready.poke(true.B)
 
@@ -430,10 +450,14 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       } 
 
       dut.io.scratchIn(0).request.bits.addr.expect(16.U)
-      dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      //dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstSize.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstCnt.expect(8.U)
 
       dut.io.scratchIn(1).request.bits.addr.expect(24.U)
-      dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      //dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burstSize.expect(8.U)
+      dut.io.scratchIn(1).request.bits.burstCnt.expect(8.U)
 
       dut.clock.step(1)
 
@@ -472,7 +496,9 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       val expectedResult2 = matrixDotProduct(matrix3, matrix3)
 
       dut.io.scratchOut.request.bits.addr.expect(40.U)
-      dut.io.scratchOut.request.bits.burst.expect(8.U)
+      //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
 
       dut.io.scratchOut.data.ready.poke(true.B)
 

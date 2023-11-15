@@ -28,13 +28,18 @@ class ReadBurstHandler(implicit c: Configuration) extends Module {
 
   when(io.scratchReadport.request.fire()) {
     isLocked := true.B
-    activeAddr := io.scratchReadport.request.bits.addr
+    /* activeAddr := io.scratchReadport.request.bits.addr
     burstSize := io.scratchReadport.request.bits.burst
-    burstCounter := io.scratchReadport.request.bits.burst
+    burstCounter := io.scratchReadport.request.bits.burst */
+
+    activeAddr := io.scratchReadport.request.bits.addr
+    burstSize := io.scratchReadport.request.bits.burstSize
+    burstCounter := io.scratchReadport.request.bits.burstCnt - 1.U //FIXME: Might not be great to subtract here, maybe just change definition
+    //burstMode := io.scratchReadport.request.bits.burstMode
   }
 
   when(isLocked) {
-    when(io.readPort.request.ready && burstCounter =/= 0.U) {
+    when(io.readPort.request.ready) {
       io.readPort.request.valid := true.B
       io.readPort.request.bits.addr := activeAddr
       //io.scratchReadport.data.valid := io.readPort.response.valid
@@ -48,7 +53,7 @@ class ReadBurstHandler(implicit c: Configuration) extends Module {
         burstCounter := burstCounter - 1.U
         io.scratchReadport.data.valid := true.B
 
-        when(burstCounter === 1.U){
+        when(burstCounter === 0.U){
           io.scratchReadport.data.bits.last := true.B
         }
       }

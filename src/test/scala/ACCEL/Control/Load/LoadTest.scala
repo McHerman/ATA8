@@ -110,7 +110,10 @@ class LoadTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.scratchOut.request.valid.expect(true.B)
 
       dut.io.scratchOut.request.bits.addr.expect(1.U)
-      dut.io.scratchOut.request.bits.burst.expect(8.U)
+      //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.burstMode.expect(true.B)
+      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut.request.bits.burstCnt.expect(0.U)
 
       dut.clock.step(1)
 

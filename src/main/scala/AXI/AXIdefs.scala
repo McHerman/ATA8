@@ -3,63 +3,6 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-// Bundle for Write Address channel
-
-/*
-class AXI4WriteAddress(val addrWidth: Int, val idWidth: Int) extends Bundle {
-  val awaddr   = UInt(addrWidth.W)
-  val awid     = UInt(idWidth.W)
-  val awlen    = UInt(8.W)
-  val awsize   = UInt(3.W)
-  val awburst  = UInt(2.W)
-  val awlock   = Bool()
-  val awcache  = UInt(4.W)
-  val awprot   = UInt(3.W)
-}
-
-// Bundle for Write Data channel
-class AXI4WriteData(val dataWidth: Int) extends Bundle {
-  val wdata   = UInt(dataWidth.W)
-  val wstrb   = UInt((dataWidth / 8).W)
-  val wlast   = Bool()
-  //val wvalid  = Bool()
-  //val wready  = Bool()
-}
-
-// Bundle for Write Response channel
-class AXI4WriteResp(val idWidth: Int) extends Bundle {
-  val bid     = UInt(idWidth.W)
-  val bresp   = UInt(2.W)
-  //val bvalid  = Bool()
-  //val bready  = Bool()
-}
-
-// Bundle for Read Address channel
-class AXI4ReadAddress(val addrWidth: Int, val idWidth: Int) extends Bundle {
-  val araddr  = UInt(addrWidth.W)
-  val arid    = UInt(idWidth.W)
-  val arlen   = UInt(8.W)
-  val arsize  = UInt(3.W)
-  val arburst = UInt(2.W)
-  val arlock  = Bool()
-  val arcache = UInt(4.W)
-  val arprot  = UInt(3.W)
-}
-
-// Bundle for Read Data channel
-class AXI4ReadData(val dataWidth: Int, val idWidth: Int) extends Bundle {
-  val rdata   = UInt(dataWidth.W)
-  val rresp   = UInt(2.W)
-  val rlast   = Bool()
-  val rid     = UInt(idWidth.W)
-}
-
-*/
-
-
-// Extend the Bundle to add default initialization 
-
-
 class AXI4WriteAddress(val addrWidth: Int, val idWidth: Int) extends Bundle {
   val awaddr   = Output(UInt(addrWidth.W))
   val awid     = Output(UInt(idWidth.W))
@@ -72,22 +15,6 @@ class AXI4WriteAddress(val addrWidth: Int, val idWidth: Int) extends Bundle {
 
   val awvalid  = Output(Bool())
   val awready  = Input(Bool())
-
-  /*
-  def initializeToZero() = {
-    awaddr   := 0.U
-    awid     := 0.U
-    awlen    := 0.U
-    awsize   := 0.U
-    awburst  := 0.U 
-    awlock   := 0.U
-    awcache  := 0.U
-    awprot   := 0.U
-
-    awvalid  := false.B
-    awready  := false.B
-  }
-  */
 }
 
 // Bundle for Write Data channel
@@ -99,17 +26,6 @@ class AXI4WriteData(val dataWidth: Int, val idWidth: Int) extends Bundle {
   
   val wvalid  = Output(Bool())
   val wready  = Input(Bool())
-
-  /*
-  def initializeToZero() = {
-    wdata    := 0.U
-    wstrb    := 0.U
-    wlast    := 0.U
-    
-    wvalid  := false.B
-    wready  := false.B
-  }
-  */
 }
 
 // Bundle for Write Response channel
@@ -119,16 +35,6 @@ class AXI4WriteResp(val idWidth: Int) extends Bundle {
   
   val bvalid  = Output(Bool())
   val bready  = Input(Bool())
-
-  /*
-  def initializeToZero() = {
-    bid      := 0.U
-    bresp    := 0.U
-    
-    bvalid  := false.B
-    bready  := false.B
-  }
-  */
 }
 
 // Bundle for Read Address channel
@@ -144,22 +50,6 @@ class AXI4ReadAddress(val addrWidth: Int, val idWidth: Int) extends Bundle {
 
   val arvalid  = Output(Bool())
   val arready  = Input(Bool())
-
-  /*
-  def initializeToZero() = {
-    araddr     := 0.U
-    arid       := 0.U
-    arlen      := 0.U
-    arsize     := 0.U
-    arburst    := 0.U
-    arlock     := false.B
-    arcache    := 0.U
-    arprot     := 0.U
-    
-    arvalid  := false.B
-    arready  := false.B
-  }
-  */
 }
 
 // Bundle for Read Data channel
@@ -171,18 +61,6 @@ class AXI4ReadData(val dataWidth: Int, val idWidth: Int) extends Bundle {
 
   val rvalid  = Output(Bool())
   val rready  = Input(Bool())
-
-  /*
-  def initializeToZero() = {
-    rdata       := 0.U 
-    rresp       := 0.U
-    rlast       := 0.U
-    rid         := 0.U
-
-    rvalid      := false.B
-    rready      := false.B
-  }
-  */
 }
 
 

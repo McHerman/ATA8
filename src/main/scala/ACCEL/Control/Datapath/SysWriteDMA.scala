@@ -47,8 +47,11 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
     }
     is(1.U){
       io.scratchOut.request.bits.addr := reg.addr
-      io.scratchOut.request.bits.burst := reg.size
-      
+      //io.scratchOut.request.bits.burst := reg.size
+      io.scratchOut.request.bits.burstMode := false.B //TODO: make this a string
+      io.scratchOut.request.bits.burstCnt := reg.size
+      io.scratchOut.request.bits.burstSize := reg.size
+
       when(io.scratchOut.request.ready){
         io.scratchOut.request.valid := true.B
         StateReg := 2.U
@@ -61,9 +64,7 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
         io.readPort.request.valid := true.B
 
         io.scratchOut.data.bits.writeData := io.readPort.response.bits.readData
-        //io.scratchOut.data.bits.strb := "hff".U.asBools
         io.scratchOut.data.bits.strb := uintToBoolVec(reg.size, c.dataBusSize)
-
 
         when(io.readPort.response.valid){
           io.scratchOut.data.valid := true.B

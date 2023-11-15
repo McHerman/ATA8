@@ -40,7 +40,9 @@ class SysDMA(implicit c: Configuration) extends Module {
     }
     is(1.U){
       io.scratchIn.request.bits.addr := reg.addr
-      io.scratchIn.request.bits.burst := reg.size
+      //io.scratchIn.request.bits.burst := reg.size
+      io.scratchIn.request.bits.burstSize := reg.size
+      io.scratchIn.request.bits.burstCnt := reg.size
       
       when(io.scratchIn.request.ready){
         io.scratchIn.request.valid := true.B

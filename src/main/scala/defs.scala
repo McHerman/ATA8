@@ -3,15 +3,6 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-/* class Memport(val dataWidth: Int,val addrWidth: Int) extends Bundle {
-  val araddr  = Output(UInt(addrWidth.W))
-  //val enable  = Output(Bool())
-  val wenable = Output(Bool())
-  val readData = Input(UInt(dataWidth.W))
-  val writeData = Output(UInt(dataWidth.W))
-  val strb = Output(UInt((dataWidth/8).W)) // Add strobe signal here
-} */
-
 class Memport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
   val addr  = Output(UInt(addrWidth.W))
   //val enable  = Output(Bool())
@@ -20,8 +11,6 @@ class Memport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bu
   val writeData = Output(dataType.cloneType)
   //val strb = Output(UInt((dataWidth/8).W)) // Add strobe signal here
 }
-
-
 
 class Memport_V2(val dataWidth: Int,val addrWidth: Int) extends Bundle {
   val addr  = Output(UInt(addrWidth.W))
@@ -74,10 +63,8 @@ class Readport[T <: Data](private val dataType: T, val addrWidth: Int) extends B
 
 class Writeport[T <: Data](private val dataType: T, val addrWidth: Int) extends Bundle {
   val addr  = Output(UInt(addrWidth.W))
-  //val data = Output(dataType)
   val data = Output(dataType.cloneType)
 }
-
 
 class Readport_V2(val dataWidth: Int,val addrWidth: Int) extends Bundle {
   val request = Decoupled(new Bundle {
@@ -91,12 +78,9 @@ class Readport_V2(val dataWidth: Int,val addrWidth: Int) extends Bundle {
 class ReadportScratch(implicit c: Configuration) extends Bundle {
   val request = Decoupled(new Bundle {
     val addr = UInt(16.W)
-    val burst = UInt(8.W)
+    val burstCnt = UInt(8.W)
+    val burstSize = UInt(5.W) // Limited to max size of 128 bit (16 byte) //TODO: change burstsize convenntion so 0 equals 1 byte
   })
-  /* val data = Flipped(Decoupled(new Bundle { //TODO: Change this to comply with the naming scheme of other readports
-    val readData = Vec(c.grainDim,UInt(c.arithDataWidth.W))
-    val last = Bool()
-  })) */
   val data = Flipped(Decoupled(new Bundle { //TODO: Change this to comply with the naming scheme of other readports
     val readData = Vec(c.dataBusSize,UInt(8.W))
     val last = Bool()
@@ -106,13 +90,10 @@ class ReadportScratch(implicit c: Configuration) extends Bundle {
 class WriteportScratch(implicit c: Configuration) extends Bundle { // TODO: Might be a good idea to introduce a "locking" feature where a continued transaction is insured even with intermitten interuptions 
   val request = Decoupled(new Bundle {
     val addr = UInt(16.W) // TODO find non arbitry value for this 
-    val burst = UInt(8.W)
+    val burstMode = Bool() // false: sized burst, true: streamed burst (pretty unsafe)
+    val burstCnt = UInt(8.W)
+    val burstSize = UInt(5.W)
   })
-  /* val data = Decoupled(new Bundle {
-    val strb = Vec(c.grainDim,Bool())
-    val writeData = Vec(c.grainDim,UInt(c.arithDataWidth.W))
-    val last = Bool()
-  }) */
   val data = Decoupled(new Bundle {
     val writeData = Vec(c.dataBusSize,UInt(8.W))
     val strb = Vec(c.dataBusSize,Bool())
