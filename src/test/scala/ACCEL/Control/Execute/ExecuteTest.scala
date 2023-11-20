@@ -53,11 +53,11 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.instructionStream.bits.addrs(0).depend.tag.poke(1.U)
       dut.io.instructionStream.bits.addrs(0).depend.ready.poke(true.B)
 
-      dut.io.instructionStream.bits.addrs(1).addr.poke(8.U)
+      dut.io.instructionStream.bits.addrs(1).addr.poke(64.U)
       dut.io.instructionStream.bits.addrs(1).depend.tag.poke(2.U)
       dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrd(0).addr.poke(16.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(128.U)
 
       dut.io.instructionStream.bits.size.poke(8.U)
 
@@ -84,12 +84,12 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       } 
 
       dut.io.scratchIn(0).request.bits.addr.expect(0.U)
-      //dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchIn(0).request.bits.burstSize.expect(8.U)
       dut.io.scratchIn(0).request.bits.burstCnt.expect(8.U)
 
-      dut.io.scratchIn(1).request.bits.addr.expect(8.U)
-      //dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(1).request.bits.addr.expect(64.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchIn(1).request.bits.burstSize.expect(8.U)
       dut.io.scratchIn(1).request.bits.burstCnt.expect(8.U)
 
@@ -112,6 +112,11 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
           dut.io.scratchIn(1).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
         }
 
+        if(i == n - 1){
+          dut.io.scratchIn(0).data.bits.last.poke(true.B)
+          dut.io.scratchIn(1).data.bits.last.poke(true.B)
+        }
+
         dut.clock.step()
       }
 
@@ -126,8 +131,8 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
-      dut.io.scratchOut.request.bits.addr.expect(16.U)
-      //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.addr.expect(128.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchOut.request.bits.burstSize.expect(8.U)
       dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
 
@@ -171,11 +176,11 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.instructionStream.bits.addrs(0).depend.tag.poke(1.U)
       dut.io.instructionStream.bits.addrs(0).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrs(1).addr.poke(8.U)
+      dut.io.instructionStream.bits.addrs(1).addr.poke(64.U)
       dut.io.instructionStream.bits.addrs(1).depend.tag.poke(2.U)
       dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrd(0).addr.poke(16.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(128.U)
 
       dut.io.instructionStream.bits.size.poke(8.U)
 
@@ -208,12 +213,14 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.scratchIn(0).request.bits.addr.expect(0.U)
       //dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchIn(0).request.bits.burstSize.expect(8.U)
       dut.io.scratchIn(0).request.bits.burstCnt.expect(8.U)
 
 
-      dut.io.scratchIn(1).request.bits.addr.expect(8.U)
+      dut.io.scratchIn(1).request.bits.addr.expect(64.U)
       //dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchIn(1).request.bits.burstSize.expect(8.U)
       dut.io.scratchIn(1).request.bits.burstCnt.expect(8.U)
 
@@ -236,6 +243,11 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
           dut.io.scratchIn(1).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
         }
 
+        if(i == n - 1){
+          dut.io.scratchIn(0).data.bits.last.poke(true.B)
+          dut.io.scratchIn(1).data.bits.last.poke(true.B)
+        }
+
         dut.clock.step()
       }
 
@@ -250,8 +262,9 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
-      dut.io.scratchOut.request.bits.addr.expect(16.U)
+      dut.io.scratchOut.request.bits.addr.expect(128.U)
       //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.burstStride.expect(8.U)
       dut.io.scratchOut.request.bits.burstSize.expect(8.U)
       dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
 
@@ -294,13 +307,12 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.instructionStream.bits.addrs(0).depend.tag.poke(1.U)
       dut.io.instructionStream.bits.addrs(0).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrs(1).addr.poke(8.U)
+      dut.io.instructionStream.bits.addrs(1).addr.poke(64.U)
       dut.io.instructionStream.bits.addrs(1).depend.tag.poke(2.U)
       dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrd(0).addr.poke(32.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(256.U)
       dut.io.instructionStream.bits.addrd(0).tag.poke(5.U)
-
 
       dut.io.instructionStream.bits.size.poke(8.U)
 
@@ -313,15 +325,15 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.instructionStream.bits.mode.poke(0.U)
       dut.io.instructionStream.bits.grainSize.poke(0.U)
 
-      dut.io.instructionStream.bits.addrs(0).addr.poke(16.U)
+      dut.io.instructionStream.bits.addrs(0).addr.poke(128.U)
       dut.io.instructionStream.bits.addrs(0).depend.tag.poke(3.U)
       dut.io.instructionStream.bits.addrs(0).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrs(1).addr.poke(24.U)
+      dut.io.instructionStream.bits.addrs(1).addr.poke(192.U)
       dut.io.instructionStream.bits.addrs(1).depend.tag.poke(4.U)
       dut.io.instructionStream.bits.addrs(1).depend.ready.poke(false.B)
 
-      dut.io.instructionStream.bits.addrd(0).addr.poke(40.U)
+      dut.io.instructionStream.bits.addrd(0).addr.poke(320.U)
       dut.io.instructionStream.bits.addrd(0).tag.poke(6.U)
 
       dut.io.instructionStream.bits.size.poke(8.U)
@@ -364,12 +376,12 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       } 
 
       dut.io.scratchIn(0).request.bits.addr.expect(0.U)
-      //dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchIn(0).request.bits.burstSize.expect(8.U)
       dut.io.scratchIn(0).request.bits.burstCnt.expect(8.U)
 
-      dut.io.scratchIn(1).request.bits.addr.expect(8.U)
-      //dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(1).request.bits.addr.expect(64.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchIn(1).request.bits.burstSize.expect(8.U)
       dut.io.scratchIn(1).request.bits.burstCnt.expect(8.U)
 
@@ -392,11 +404,19 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
           dut.io.scratchIn(1).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
         }
 
+        if(i == n - 1){
+          dut.io.scratchIn(0).data.bits.last.poke(true.B)
+          dut.io.scratchIn(1).data.bits.last.poke(true.B)
+        }
+
         dut.clock.step()
       }
 
       dut.io.scratchIn(0).data.valid.poke(false.B)
       dut.io.scratchIn(1).data.valid.poke(false.B)
+
+      dut.io.scratchIn(0).data.bits.last.poke(false.B)
+      dut.io.scratchIn(1).data.bits.last.poke(false.B)
 
       dut.io.scratchIn(0).request.ready.poke(false.B)
       dut.io.scratchIn(1).request.ready.poke(false.B)
@@ -409,8 +429,8 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
-      dut.io.scratchOut.request.bits.addr.expect(32.U)
-      //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.addr.expect(256.U)
+      dut.io.scratchOut.request.bits.burstStride.expect(8.U)
       dut.io.scratchOut.request.bits.burstSize.expect(8.U)
       dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
 
@@ -449,13 +469,13 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
         dut.clock.step()
       } 
 
-      dut.io.scratchIn(0).request.bits.addr.expect(16.U)
-      //dut.io.scratchIn(0).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(0).request.bits.addr.expect(128.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchIn(0).request.bits.burstSize.expect(8.U)
       dut.io.scratchIn(0).request.bits.burstCnt.expect(8.U)
 
-      dut.io.scratchIn(1).request.bits.addr.expect(24.U)
-      //dut.io.scratchIn(1).request.bits.burst.expect(8.U)
+      dut.io.scratchIn(1).request.bits.addr.expect(192.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchIn(1).request.bits.burstSize.expect(8.U)
       dut.io.scratchIn(1).request.bits.burstCnt.expect(8.U)
 
@@ -478,11 +498,19 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
           dut.io.scratchIn(1).data.bits.readData(k).poke(matrix3(i)(k).U(8.W))
         }
 
+        if(i == n - 1){
+          dut.io.scratchIn(0).data.bits.last.poke(true.B)
+          dut.io.scratchIn(1).data.bits.last.poke(true.B)
+        }
+
         dut.clock.step()
       }
 
       dut.io.scratchIn(0).data.valid.poke(false.B)
       dut.io.scratchIn(1).data.valid.poke(false.B)
+
+      dut.io.scratchIn(0).data.bits.last.poke(false.B)
+      dut.io.scratchIn(1).data.bits.last.poke(false.B)
 
       dut.io.scratchIn(0).request.ready.poke(false.B)
       dut.io.scratchIn(1).request.ready.poke(false.B)
@@ -495,8 +523,8 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
       val expectedResult2 = matrixDotProduct(matrix3, matrix3)
 
-      dut.io.scratchOut.request.bits.addr.expect(40.U)
-      //dut.io.scratchOut.request.bits.burst.expect(8.U)
+      dut.io.scratchOut.request.bits.addr.expect(320.U)
+      dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
       dut.io.scratchOut.request.bits.burstSize.expect(8.U)
       dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
 

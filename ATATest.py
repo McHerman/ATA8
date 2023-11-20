@@ -33,7 +33,7 @@ def main():
     fd_c2h = os.open("/dev/xdma0_c2h_0", os.O_RDONLY)
 
     # Read all states from the debug interface
-    read_all_states(DEBUG_READ, 'config.json')
+    #read_all_states(DEBUG_READ, 'config.json')
 
     # Generate instructions as bytes
     #instructions = struct.pack('<Q', 134217730) + struct.pack('<Q', 34493956098) + struct.pack('<Q', 4503633987110913) + struct.pack('<Q',68853694467)
@@ -42,20 +42,20 @@ def main():
     write_to_device(INST_WRITE, instructions)
     print("Instructions written")
 
-    read_all_states(DEBUG_READ, 'config.json')
+    #read_all_states(DEBUG_READ, 'config.json')
 
     # Generate 8x8 matrices as bytes and send them
     matrix1 = struct.pack('<Q', 0x0102030401020304) * 8
     write_to_device(DATA_WRITE, matrix1)
     print("Data1 written")
 
-    read_all_states(DEBUG_READ, 'config.json')
+    #read_all_states(DEBUG_READ, 'config.json')
 
     matrix2 = struct.pack('<Q', 0x0102030401020304) * 8
     write_to_device(DATA_WRITE, matrix2)
     print("Data2 written")
 
-    read_all_states(DEBUG_READ, 'config.json')
+    #read_all_states(DEBUG_READ, 'config.json')
 
     # Read 8 separate 64-bit integers from FPGA
     read_data = read_from_device(fd_c2h)

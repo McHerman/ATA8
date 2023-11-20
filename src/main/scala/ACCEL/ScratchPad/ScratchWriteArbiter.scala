@@ -3,7 +3,7 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-class ScratchArbiter(numPorts: Int)(implicit c: Configuration) extends Module {
+class ScratchWriteArbiter(numPorts: Int)(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val inPorts = Vec(numPorts, Flipped(new WriteportScratch))
     val outPort = new WriteportScratch

@@ -79,6 +79,7 @@ class ReadportScratch(implicit c: Configuration) extends Bundle {
   val request = Decoupled(new Bundle {
     val addr = UInt(16.W)
     val burstCnt = UInt(8.W)
+    val burstStride = UInt(5.W) // Limited to max size of 128 bit (16 byte) //TODO: change burstsize convenntion so 0 equals 1 byte
     val burstSize = UInt(5.W) // Limited to max size of 128 bit (16 byte) //TODO: change burstsize convenntion so 0 equals 1 byte
   })
   val data = Flipped(Decoupled(new Bundle { //TODO: Change this to comply with the naming scheme of other readports
@@ -92,6 +93,7 @@ class WriteportScratch(implicit c: Configuration) extends Bundle { // TODO: Migh
     val addr = UInt(16.W) // TODO find non arbitry value for this 
     val burstMode = Bool() // false: sized burst, true: streamed burst (pretty unsafe)
     val burstCnt = UInt(8.W)
+    val burstStride = UInt(5.W)
     val burstSize = UInt(5.W)
   })
   val data = Decoupled(new Bundle {

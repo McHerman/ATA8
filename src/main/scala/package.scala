@@ -7,7 +7,7 @@ package object ATA8 {
     scratchpadSize: Int,
     bufferReadPorts: Int,
     bufferWritePorts: Int,
-    grainDim: Int,
+    grainDim: Int, // Multiplum of dataBusSize
     sysDim: Int,
     grainFIFOSize: Int,
     grainACCUSize: Int,
@@ -32,7 +32,7 @@ package object ATA8 {
         4096, // scratchpadSize
         3,    // bufferReadPorts
         2,    // bufferWritePorts
-        8,    // grainDim
+        1,    // grainDim
         1,    // sysDim
         64,  // grainFIFOSize
         64,  // grainACCUSize
@@ -45,13 +45,13 @@ package object ATA8 {
     }
     def test(): Configuration = {
       Configuration(
-        512, // scratchpadSize
-        2,    // bufferReadPorts
+        4096, // scratchpadSize
+        3,    // bufferReadPorts
         2,    // bufferWritePorts
-        8,     // grainDim
+        1,    // grainDim
         1,    // sysDim
-        128,  // grainFIFOSize
-        128,  // grainACCUSize
+        64,  // grainFIFOSize
+        64,  // grainACCUSize
         8,    // arithDataWidth
         1,    // modeWidth
         8,    // tagCount

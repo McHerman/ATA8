@@ -3,32 +3,29 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-
 class YFile(implicit c: Configuration) extends Module {
   var addr_width = log2Ceil(c.grainFIFOSize)
   val io = IO(new Bundle {
-    val Out = Output(Vec(c.grainDim, new PEY(c.arithDataWidth,1)))
+    val Out = Output(Vec(c.dataBusSize, new PEY(c.arithDataWidth,1))) // TODO: change dis shit
     val Activate = Input(Bool())
+    val ActivateOut = Output(Bool())
     val Enable = Input(Bool())
+    val EnableOut = Output(Bool())
     val Shift = Input(Bool())
-    val Memport = Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)), addr_width)))
+    //val Memport = Flipped(Decoupled(new Memport(Vec(c.dataBusSize,UInt(c.arithDataWidth.W)), addr_width)))
+    val Memport = Flipped(Decoupled(Vec(c.dataBusSize,UInt(8.W)))) //TODO: change name 
     val State = Input(UInt(1.W))
   })
 
-  io.Memport.ready := true.B
-  io.Memport.bits.readData := DontCare
+  //io.Memport.ready := true.B
+  //io.Memport.bits.readData := DontCare
  
+  val moduleArray = Seq.fill(c.dataBusSize)(Module(new BufferFIFO(c.grainFIFOSize, UInt(8.W))))
 
-  val moduleArray = Seq.fill(c.grainDim)(Module(new BufferFIFO(c.grainFIFOSize, UInt(c.arithDataWidth.W))))
-
-  val YACT = Reg(Vec(c.grainDim,UInt(1.W)))
-  val YEn = Reg(Vec(c.grainDim,UInt(1.W)))
-
-  val EnDelayReg = RegInit(0.U(1.W))
-
-  //EnDelayReg := io.Enable
+  val YACT = Reg(Vec(c.dataBusSize,UInt(1.W)))
+  val YEn = Reg(Vec(c.dataBusSize,UInt(1.W)))
   
-  for(i <- 0 until c.grainDim){
+  for(i <- 0 until c.dataBusSize){
     if(i == 0){
       YACT(0) := io.Activate
       //YEn(0) := EnDelayReg
@@ -49,7 +46,7 @@ class YFile(implicit c: Configuration) extends Module {
       io.Out(i).Y := 0.U
     }
 
-    moduleArray(i).io.WriteData.valid := false.B
+    /* moduleArray(i).io.WriteData.valid := false.B
     moduleArray(i).io.WriteData.bits := 0.U
 
     when(io.Memport.valid){
@@ -57,7 +54,10 @@ class YFile(implicit c: Configuration) extends Module {
         moduleArray(i).io.WriteData.valid := true.B
         moduleArray(i).io.WriteData.bits := io.Memport.bits.writeData(i)
       }
-    }
+    } */
+
+    moduleArray(i).io.WriteData.valid := io.Memport.valid
+    moduleArray(i).io.WriteData.bits := io.Memport.bits(i)
 
     moduleArray(i).io.ReadData.request.valid := false.B
     moduleArray(i).io.ReadData.request.bits := DontCare
@@ -79,4 +79,14 @@ class YFile(implicit c: Configuration) extends Module {
       }
     }
   }
+
+  //io.ActivateOut := YACT(c.dataBusSize - 1)
+  //io.EnableOut := YEn(c.dataBusSize - 1)
+
+  io.ActivateOut := YACT.last
+  io.EnableOut := YEn.last
+
+  io.Memport.ready := VecInit(moduleArray.map(_.io.WriteData.ready)).reduceTree(_ && _)
+
+
 }

@@ -3,75 +3,123 @@ package ATA8
 import chisel3._
 import chisel3.util._
   
-class Grain(config: Configuration) extends Module {
-
-  implicit val c = config
-  
+class Grain(implicit c: Configuration) extends Module {  
   val io = IO(new Bundle {
     //val State = Input(UInt(1.W))
     //val Size = Input(UInt(8.W))
     val in = Flipped(Decoupled(new SysOP)) 
     //val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10))) // Add actual memport
-    val Memport = Vec(2,Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10))))
-    val Readport = Flipped(new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)) // TODO: change to consistant port naming
+    //val Memport = Vec(2,Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10))))
+    val writePort = Vec(2,Vec(c.grainDim,Flipped(Decoupled(Vec(c.dataBusSize,UInt(8.W))))))
+    //val readPort = Flipped(new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)) 
+    val readPort = Vec(c.grainDim,Flipped(new Readport(Vec(c.dataBusSize,UInt(c.arithDataWidth.W)),0)))
     val completed = Valid(new Bundle{val tag = UInt(c.tagWidth.W)})
   })
 
-  val XFile = Module(new XFile())
+  /* val XFile = Module(new XFile())
   val YFile = Module(new YFile())
-  val ACCUFile = Module(new ACCUFile())
+  val ACCUFile = Module(new ACCUFile()) */
+
+  val xFiles = Seq.fill(c.grainDim)(Module(new XFile())) 
+  val yFiles = Seq.fill(c.grainDim)(Module(new YFile())) 
+  //val ACCUFile = Seq.fill(c.grainDim)(Module(new ACCUFile())) 
+  //val accuFiles = Seq.tabulate(c.grainDim)(i => Module(new ACCUFile(i == 0))) // First module has a delay on the input on activate  
+  val accuFiles = Seq.fill(c.grainDim)(Module(new ACCUFile(false))) 
+
+
   val SysCtrl = Module(new SysCtrl())
+
+  val array = Seq.fill(c.grainDim, c.grainDim)(Module(new PEArray(c.dataBusSize))) 
 
   SysCtrl.io.in <> io.in
   io.completed := SysCtrl.io.completed
 
-  XFile.io.Memport <> io.Memport(0)
-  YFile.io.Memport <> io.Memport(1)
+  //TODO: Replace all this with map statements
 
-  ACCUFile.io.Readport <> io.Readport
-  ACCUFile.io.Readport.request.valid := false.B
-  ACCUFile.io.Readport.request.bits := DontCare
+  (xFiles zip io.writePort(0)).foreach{case (file, port) => 
+    file.io.Memport <> port
+  }
 
-  XFile.io.Activate := SysCtrl.io.Activate
-  YFile.io.Activate := SysCtrl.io.Activate
-  YFile.io.Enable := SysCtrl.io.Enable
+  (yFiles zip io.writePort(1)).foreach{case (file, port) => 
+    file.io.Memport <> port
+  }
+
+  (accuFiles zip io.readPort).foreach{case (file,port) => 
+    file.io.Readport <> port
+  }
+
+  /// CARRY SIGNALS ///
+
+  xFiles.head.io.Activate := SysCtrl.io.Activate
+  accuFiles.head.io.Activate := xFiles.last.io.ActivateOut
+
+  yFiles.head.io.Activate := SysCtrl.io.Activate
+  yFiles.head.io.Enable := SysCtrl.io.Enable
+
+  if(c.grainDim != 1){
+    xFiles.sliding(2).foreach{case Seq(producer, reciever) => 
+      reciever.io.Activate := producer.io.ActivateOut
+    }
+
+    accuFiles.sliding(2).foreach{case Seq(producer, reciever) => 
+      reciever.io.Activate := producer.io.ActivateOut
+    }
+
+    yFiles.sliding(2).foreach{case Seq(producer, reciever) => 
+      reciever.io.Activate := producer.io.ActivateOut
+      reciever.io.Enable := producer.io.EnableOut
+    }
+  }
+  /// GLOBAL SIGNALS ///
+
+  yFiles.foreach{file => 
+    file.io.State := SysCtrl.io.Mode
+    file.io.Shift := SysCtrl.io.Shift
+  }
+
+  accuFiles.foreach{file => 
+    file.io.State := SysCtrl.io.Mode
+    file.io.Shift := SysCtrl.io.Shift
+  }
   
-  ACCUFile.io.Activate := XFile.io.ActivateOut
-
-  YFile.io.State :=  SysCtrl.io.Mode // FIXME: kinda poopy, add another bit
-  ACCUFile.io.State :=  SysCtrl.io.Mode
+  //YFile.io.State :=  SysCtrl.io.Mode // FIXME: kinda poopy, add another bit
+  //ACCUFile.io.State :=  SysCtrl.io.Mode
   
-  YFile.io.Shift := SysCtrl.io.Shift
-  ACCUFile.io.Shift := SysCtrl.io.Shift
+  //YFile.io.Shift := SysCtrl.io.Shift
+  //ACCUFile.io.Shift := SysCtrl.io.Shift
 
-  val peArray = Seq.fill(c.grainDim, c.grainDim)(Module(new PE())) // Create a 2D array of PE modules
+  /* (array zip xFiles).foreach{case (row,file) =>
+    row.head.io.x := file.io.Out
+  } */
 
-  for(i <- 0 until c.grainDim){ //TODO: Make this a little more functional 
-    for(k <- 0 until c.grainDim){
-      if(i != c.grainDim-1){
-        peArray(i)(k).io.X_OUT <> peArray(i+1)(k).io.X_IN
+  (array.head zip xFiles).foreach{case (row,file) =>
+    row.io.x := file.io.Out
+  }
+
+  /* (array.transpose zip yFiles zip accuFiles).foreach{case ((collum,yFile),accuFile) =>
+    collum.head.io.y := yFile.io.Out
+    accuFile.io.In := collum.last.io.yOut
+  } */
+
+  (array.transpose.head zip yFiles).foreach{case (collum,yFile) =>
+    collum.io.y := yFile.io.Out
+  }
+
+  (array.transpose.last zip accuFiles).foreach{case (collum,accuFile) =>
+    accuFile.io.In := collum.io.yOut
+  }
+
+
+
+  array.zipWithIndex.foreach { case (row, i) =>
+    row.zipWithIndex.foreach { case (pe, k) =>
+      if (i != c.grainDim - 1) {
+        pe.io.xOut <> array(i + 1)(k).io.x
       }
-
-      if(k != c.grainDim-1){
-        peArray(i)(k).io.Y_OUT <> peArray(i)(k+1).io.Y_IN
-      }else{ 
-        ACCUFile.io.In(i) <> peArray(i)(k).io.Y_OUT
+      if (k != c.grainDim - 1) {
+        pe.io.yOut <> array(i)(k + 1).io.y
       }
-    }  
+    }
   }
-
-  for(i <- 0 until c.grainDim){
-    peArray(0)(i).io.X_IN <> XFile.io.Out(i)
-  }
-
-  for(i <- 0 until c.grainDim){
-    peArray(i)(0).io.Y_IN <> YFile.io.Out(i)
-    //ACCUFile.io.In(i) <> peArray(i)(grainWidth-1).io.Y_OUT
-  }
-  
-
 }
 
-object Grain extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Grain(Configuration.default()))
-}

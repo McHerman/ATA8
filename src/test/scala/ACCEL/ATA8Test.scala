@@ -159,8 +159,8 @@ class ATA8Test extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.AXIST_inData.tready.expect(false.B)
 
-      dut.io.AXIST_inInst.tvalid.poke(false.B)
-      dut.io.AXIST_inInst.tlast.poke(false.B)
+      dut.io.AXIST_inData.tvalid.poke(false.B)
+      dut.io.AXIST_inData.tlast.poke(false.B)
 
       while (dut.io.AXIST_inData.tready.peek().litToBoolean == false) {
         dut.clock.step()

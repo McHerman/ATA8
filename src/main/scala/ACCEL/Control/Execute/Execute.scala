@@ -28,11 +28,32 @@ class Execute(config: Configuration) extends Module {
   queue.dependio.event(0) := io.eventIn
   queue.dependio.event(1) := SysWrapper.io.event
 
-  SysWrapper.io.scratchOut <> io.scratchOut
-  SysWrapper.io.scratchIn <> io.scratchIn
+  //SysWrapper.io.scratchOut <> io.scratchOut
+  //SysWrapper.io.scratchIn <> io.scratchIn
 
   SysWrapper.io.in <> queue.io.ReadData
 
+  /// SCRATCHPAD CONNECTIONS /// 
+
+  if(c.grainDim != 1){
+    val WriteArbiter = Module(new ScratchWriteArbiter(c.grainDim))
+    val ReadArbiter = Seq.fill(2)(Module(new ScratchReadArbiter(c.grainDim)))  
+
+    WriteArbiter.io.inPorts <> SysWrapper.io.scratchOut
+    io.scratchOut <> WriteArbiter.io.outPort
+
+    ReadArbiter(0).io.inPorts <> SysWrapper.io.scratchIn(0) //FIXME: A bit verbose
+    ReadArbiter(1).io.inPorts <> SysWrapper.io.scratchIn(1)
+
+    io.scratchIn(0) <> ReadArbiter(0).io.outPort
+    io.scratchIn(1) <> ReadArbiter(1).io.outPort
+  }else{
+    SysWrapper.io.scratchOut(0) <> io.scratchOut
+
+    SysWrapper.io.scratchIn(0)(0) <> io.scratchIn(0)
+    SysWrapper.io.scratchIn(1)(0) <> io.scratchIn(1)
+  }
+ 
   io.eventOut := SysWrapper.io.event
 
   /// DEBUG /// 

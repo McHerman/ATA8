@@ -40,7 +40,7 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
   )
  */
 
-  val WMatrix: Array[Array[Int]] = Array(
+  val matrix: Array[Array[Int]] = Array(
     Array(1, 2, 3, 4, 1, 2, 3, 4),
     Array(1, 2, 3, 4, 1, 2, 3, 4),
     Array(1, 2, 3, 4, 1, 2, 3, 4),
@@ -51,32 +51,28 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
     Array(1, 2, 3, 4, 1, 2, 3, 4)
   )
 
-  val AMatrix: Array[Array[Int]] = Array(
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4)
-  )
+  def matrixDotProduct(A: Array[Array[Int]], B: Array[Array[Int]]): Array[Array[Int]] = {
+      val n = A.length
+      Array.tabulate(n, n) { (i, j) =>
+          (0 until n).map(k => A(i)(k) * B(k)(j)).sum
+      }
+  }
 
   "Test " should "pass" in {
     //val n = 2 + Random.nextInt(30)
     //val n = 16
 
-    
+    implicit val c = Configuration.test()
 
-    test(new Grain(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+    test(new Grain()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 
       for (i <- 0 until 8) {
-        dut.io.Memport(1).valid.poke(true.B)
-        //dut.io.Memport.bits.addr.poke(2.U)
-        dut.io.Memport(1).bits.wenable.poke(true.B)
+
+        dut.io.writePort(1)(0).ready.expect(true.B)
+        dut.io.writePort(1)(0).valid.poke(true.B)
 
         for(k <- 0 until 8){
-          dut.io.Memport(1).bits.writeData(k).poke(WMatrix(7-i)(k).U(8.W))
+          dut.io.writePort(1)(0).bits(k).poke(matrix(i)(k).U(8.W))
         }
 
 
@@ -88,21 +84,18 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
         dut.io.in.bits.mode.poke(0.U)
         dut.io.in.bits.size.poke(8.U)
 
-        dut.io.Readport.request.valid.poke(false.B)
-
         dut.clock.step()
       }
 
-      dut.io.Memport(1).valid.poke(false.B)
+      dut.io.writePort(1)(0).valid.poke(false.B)
 
       for (i <- 0 until 8) {
-        dut.io.Memport(0).valid.poke(true.B)
-        //dut.io.Memport.bits.addr.poke(1.U)
-        dut.io.Memport(0).bits.wenable.poke(true.B)
+        dut.io.writePort(0)(0).ready.expect(true.B)
+        dut.io.writePort(0)(0).valid.poke(true.B)
 
 
         for(k <- 0 until 8){
-          dut.io.Memport(0).bits.writeData(k).poke(AMatrix(i)(k).U(8.W))
+          dut.io.writePort(0)(0).bits(k).poke(matrix(i)(k).U(8.W))
         }
    
         /* dut.io.State.poke(0.U)
@@ -112,15 +105,11 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
         dut.io.in.valid.poke(false.B)
         dut.io.in.bits.mode.poke(0.U)
         dut.io.in.bits.size.poke(8.U)
-
-        dut.io.Readport.request.valid.poke(false.B)
   
         dut.clock.step()
       }
 
-      dut.io.Memport(0).valid.poke(false.B)
-
-
+      dut.io.writePort(0)(0).valid.poke(false.B)
 
       dut.clock.step(10) 
 
@@ -133,27 +122,27 @@ class SysArrayTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.clock.step()
 
+      dut.io.in.valid.poke(false.B)
+
+
       //dut.io.Trigger.poke(false.B)
 
       dut.clock.step(80)
       
-      dut.io.Readport.request.valid.poke(true.B)
-      dut.io.Readport.request.bits.addr.poke(0.U)
+      val expectedResult = matrixDotProduct(matrix, matrix)
 
-      dut.clock.step(8)
+      dut.io.readPort(0).request.ready.expect(true.B)
+      dut.io.readPort(0).request.valid.poke(true.B)
 
-      dut.io.Readport.request.valid.poke(false.B)
+      for (row <- 0 until n) {
+        dut.io.readPort(0).response.valid.expect(true.B)
 
-
-
-
-
-      dut.clock.step(30)
-
-
-
-
-
+        for (col <- 0 until n) {
+          dut.io.readPort(0).response.bits.readData(col).expect(expectedResult(row)(col).U(8.W))
+        }
+        
+        dut.clock.step()
+      }
     }
   }
 }  

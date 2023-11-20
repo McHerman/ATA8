@@ -64,9 +64,9 @@ class LoadController(implicit c: Configuration) extends Module {
       when(io.writeport.request.ready){ // Assuming that the line remains open.
 				io.writeport.request.valid := true.B
         io.writeport.request.bits.addr := reg.addrd(0).addr
-				//io.writeport.request.bits.burst := reg.size
+				io.writeport.request.bits.burstStride := c.dataBusSize.U
         io.writeport.request.bits.burstMode := true.B // Streaming mode
-        io.writeport.request.bits.burstSize := reg.size
+        io.writeport.request.bits.burstSize := c.dataBusSize.U
         io.writeport.request.bits.burstCnt := 0.U
 
         StateReg := 2.U
@@ -77,11 +77,11 @@ class LoadController(implicit c: Configuration) extends Module {
         io.AXIST.tready := true.B
 
         when(io.AXIST.tvalid){
-          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,c.arithDataWidth)) // big fucking problem here 
+          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,8)) //FIXME: big fucking problem here 
           io.writeport.data.bits.strb := io.AXIST.tstrb.asBools
           io.writeport.data.valid := true.B
 
-          when(burstAddrReg < (reg.size - 1.U)){
+          /* when(burstAddrReg < (reg.size - 1.U)){
             burstAddrReg := burstAddrReg + 1.U
           }.elsewhen(io.AXIST.tlast){
             StateReg := 3.U
@@ -90,6 +90,11 @@ class LoadController(implicit c: Configuration) extends Module {
           }.otherwise{
             //return an error of some kind 
             StateReg := 0.U
+          } */
+
+          when(io.AXIST.tlast){
+            StateReg := 3.U
+            io.writeport.data.bits.last := true.B
           }
         }
 			}

@@ -16,44 +16,47 @@ class WriteBurstHandler(implicit c: Configuration) extends Module {
   io.scratchWriteport.request.ready := false.B
   io.scratchWriteport.data.ready := false.B
 
-  val burstCounter = RegInit(0.U(8.W))
+  /* val burstCounter = RegInit(0.U(8.W)) //TODO: cleanup
   val burstSize = RegInit(0.U(8.W))
-  val activeAddr = RegInit(0.U(16.W))
+  val activeAddr = RegInit(0.U(16.W)) */
   val isLocked = RegInit(false.B)
-  val burstMode = RegInit(false.B)
+  //val burstMode = RegInit(false.B)
+
+  val reg = Reg(io.scratchWriteport.request.bits.cloneType)
 
   io.scratchWriteport.request.ready := !isLocked
 
   when(io.scratchWriteport.request.fire()) {
     isLocked := true.B
-    activeAddr := io.scratchWriteport.request.bits.addr
-    burstSize := io.scratchWriteport.request.bits.burstSize
-    burstCounter := io.scratchWriteport.request.bits.burstCnt - 1.U //FIXME: Might not be great to subtract here, maybe just change definition
-    burstMode := io.scratchWriteport.request.bits.burstMode
+
+    reg.addr := io.scratchWriteport.request.bits.addr
+    reg.burstSize := io.scratchWriteport.request.bits.burstSize
+    reg.burstStride := io.scratchWriteport.request.bits.burstStride
+    reg.burstCnt := io.scratchWriteport.request.bits.burstCnt - 1.U
+    reg.burstMode := io.scratchWriteport.request.bits.burstMode
   }
 
   when(isLocked) {
     when(io.writePort.ready) {
-      io.scratchWriteport.data.ready := io.writePort.ready
+      io.scratchWriteport.data.ready := true.B
       io.writePort.valid := io.scratchWriteport.data.valid
-      io.writePort.bits.addr := activeAddr
+      io.writePort.bits.addr := reg.addr
       io.writePort.bits.data.writeData := io.scratchWriteport.data.bits.writeData
       io.writePort.bits.data.strb := io.scratchWriteport.data.bits.strb
-      io.scratchWriteport.data.ready := true.B
 
       when(io.writePort.fire) {
-        activeAddr := activeAddr + burstSize
+        reg.addr := reg.addr + reg.burstStride
 
-        when(!burstMode){
-          burstCounter := burstCounter - 1.U
+        when(!reg.burstMode){
+          reg.burstCnt := reg.burstCnt - 1.U
         }
       }
     }
 
     // in streaming mode, the burst when exit out then the master asserts last
 
-    when(!burstMode){
-      when(burstCounter === 0.U && io.scratchWriteport.data.bits.last) { //FIXME: Not brilliant, fix
+    when(!reg.burstMode){
+      when(reg.burstCnt === 0.U && io.scratchWriteport.data.bits.last) { //FIXME: Not brilliant, fix
         isLocked := false.B
       }
     }.otherwise{

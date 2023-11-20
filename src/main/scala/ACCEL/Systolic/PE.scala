@@ -5,22 +5,6 @@ import chisel3.util._
 import chisel3.experimental.Analog
 import chisel3.util.HasBlackBoxInline
 
-// Multiplier Module
-/* class Multiplier(width: Int) extends Module {
-  val io = IO(new Bundle {
-    val a = Input(UInt(width.W))
-    val b = Input(UInt(width.W))
-    val enable = Input(Bool())
-    val result = Output(UInt(width.W))
-  })
-
-  io.result := 0.U
-  when(io.enable) {
-    io.result := io.a * io.b
-  }
-} */
-
-
 class DSPMultiplier(width: Int) extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
     val a = Input(UInt(width.W))
@@ -44,59 +28,59 @@ class DSPMultiplier(width: Int) extends BlackBox with HasBlackBoxInline {
 // PE Module
 class PE(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
-    val X_IN = Flipped(new PEX(c.arithDataWidth))
-    val X_OUT = new PEX(c.arithDataWidth)
-    val Y_IN = Flipped(new PEY(c.arithDataWidth,1))
-    val Y_OUT = new PEY(c.arithDataWidth,1)
+    val x = Flipped(new PEX(c.arithDataWidth))
+    val xOut = new PEX(c.arithDataWidth)
+    val y = Flipped(new PEY(c.arithDataWidth,1))
+    val yOut = new PEY(c.arithDataWidth,1)
   })
 
   //val multiplier = Module(new Multiplier(c.arithDataWidth))
   val multiplier = Module(new DSPMultiplier(c.arithDataWidth))
 
-  io.Y_OUT.PEState := io.Y_IN.PEState
-  io.Y_OUT.Y := DontCare
+  io.yOut.PEState := io.y.PEState
+  io.yOut.Y := DontCare
 
   val DataReg = RegInit(0.U(c.arithDataWidth.W))
   val XReg = RegInit(0.U(c.arithDataWidth.W))
   val YReg = RegInit(0.U(c.arithDataWidth.W))
 
-  XReg := io.X_IN.X
-  io.X_OUT.X := XReg
+  XReg := io.x.X
+  io.xOut.X := XReg
 
   multiplier.io.a := 0.U
   multiplier.io.b := 0.U
   //multiplier.io.enable := 0.U
 
-  switch(io.Y_IN.PEState.State) {
+  switch(io.y.PEState.State) {
     is(0.U) {
-      io.Y_OUT.Y := DataReg
-      multiplier.io.a := io.X_IN.X
+      io.yOut.Y := DataReg
+      multiplier.io.a := io.x.X
       multiplier.io.b := YReg
-      when(io.Y_IN.PEState.EN) {
+      when(io.y.PEState.EN) {
         //multiplier.io.enable := true.B
-        DataReg := multiplier.io.result + io.Y_IN.Y
+        DataReg := multiplier.io.result + io.y.Y
       }.otherwise {
         //multiplier.io.enable := false.B
-        when(io.Y_IN.PEState.Shift) {
-          YReg := io.Y_IN.Y
+        when(io.y.PEState.Shift) {
+          YReg := io.y.Y
         }
-        io.Y_OUT.Y := YReg
+        io.yOut.Y := YReg
       }
     }
     is(1.U) {
-      multiplier.io.a := io.X_IN.X
-      multiplier.io.b := io.Y_IN.Y
-      when(io.Y_IN.PEState.EN) {
+      multiplier.io.a := io.x.X
+      multiplier.io.b := io.y.Y
+      when(io.y.PEState.EN) {
         //multiplier.io.enable := true.B
         DataReg := multiplier.io.result + DataReg
-        YReg := io.Y_IN.Y
-        io.Y_OUT.Y := YReg
+        YReg := io.y.Y
+        io.yOut.Y := YReg
       }.otherwise {
         //multiplier.io.enable := false.B
-        when(io.Y_IN.PEState.Shift) {
-          DataReg := io.Y_IN.Y
+        when(io.y.PEState.Shift) {
+          DataReg := io.y.Y
         }
-        io.Y_OUT.Y := DataReg
+        io.yOut.Y := DataReg
       }
     }
   }

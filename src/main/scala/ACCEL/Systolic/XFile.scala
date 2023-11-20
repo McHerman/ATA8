@@ -7,27 +7,27 @@ import chisel3.util._
 class XFile(implicit c: Configuration) extends Module {
   var addr_width = log2Ceil(c.grainFIFOSize)
   val io = IO(new Bundle {
-    val Out = Output(Vec(c.grainDim, new PEX(c.arithDataWidth)))
+    val Out = Output(Vec(c.dataBusSize, new PEX(c.arithDataWidth)))
     val Activate = Input(Bool())
     val ActivateOut = Output(Bool())
-    val Memport = Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),addr_width)))
+    //val Memport = Flipped(Decoupled(new Memport(Vec(c.dataBusSize,UInt(c.arithDataWidth.W)),addr_width)))
+    val Memport = Flipped(Decoupled(Vec(c.dataBusSize,UInt(8.W)))) //TODO: change name 
   })
 
-  io.Memport.ready := true.B
-  io.Memport.bits.readData := DontCare
+  //io.Memport.ready := true.B
+  //io.Memport.bits.readData := DontCare
 
-  val moduleArray = Seq.fill(c.grainDim)(Module(new BufferFIFO(c.grainFIFOSize, UInt(c.arithDataWidth.W))))
-
-  val XACT = Reg(Vec(c.grainDim,UInt(1.W)))
+  val moduleArray = Seq.fill(c.dataBusSize)(Module(new BufferFIFO(c.grainFIFOSize, UInt(8.W))))
+  val XACT = Reg(Vec(c.dataBusSize,UInt(1.W)))
   
-  for(i <- 0 until c.grainDim){
+  for(i <- 0 until c.dataBusSize){
     if(i == 0){
       XACT(0) := io.Activate
     }else{
       XACT(i) := XACT(i-1)
     }
 
-    moduleArray(i).io.WriteData.valid := false.B
+    /* moduleArray(i).io.WriteData.valid := false.B
     moduleArray(i).io.WriteData.bits := 0.U
 
     when(io.Memport.valid){
@@ -35,7 +35,10 @@ class XFile(implicit c: Configuration) extends Module {
         moduleArray(i).io.WriteData.valid := true.B
         moduleArray(i).io.WriteData.bits := io.Memport.bits.writeData(i)
       }
-    }
+    } */
+
+    moduleArray(i).io.WriteData.valid := io.Memport.valid
+    moduleArray(i).io.WriteData.bits := io.Memport.bits(i)
     
     moduleArray(i).io.ReadData.request.valid := XACT(i)
     moduleArray(i).io.ReadData.request.bits := DontCare
@@ -47,7 +50,9 @@ class XFile(implicit c: Configuration) extends Module {
     }
   }
 
-  io.ActivateOut := XACT(c.grainDim-1)
+  io.ActivateOut := XACT.last
+  io.Memport.ready := VecInit(moduleArray.map(_.io.WriteData.ready)).reduceTree(_ && _)
+
 
   
   

@@ -3,17 +3,17 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-
-class ACCUFile(implicit c: Configuration) extends Module {
+class ACCUFile(val hasDelay: Boolean)(implicit c: Configuration) extends Module {
   var addr_width = log2Ceil(c.grainACCUSize)
   val io = IO(new Bundle {
-    val In = Input(Vec(c.grainDim, new PEY(c.arithDataWidth,1)))
+    val In = Input(Vec(c.dataBusSize, new PEY(c.arithDataWidth,1)))
     val Activate = Input(Bool())
+    val ActivateOut = Output(Bool())
     val Shift = Input(Bool())
     //val Memport = Flipped(Decoupled(new Memport_V3(dataWidth*grainWidth,addr_width)))
     //val Memport = Flipped(Decoupled(new Memport_V3(32,addr_width)))
-    //val Readport = Flipped(new Readport_V2(c.arithDataWidth*c.grainDim,10))
-    val Readport = Flipped(new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10))
+    //val Readport = Flipped(new Readport_V2(c.arithDataWidth*c.dataBusSize,10))
+    val Readport = Flipped(new Readport(Vec(c.dataBusSize,UInt(8.W)),0))
 
     val State = Input(UInt(1.W))
   })
@@ -22,21 +22,27 @@ class ACCUFile(implicit c: Configuration) extends Module {
   io.Readport.response.valid := true.B
   io.Readport.response.bits := DontCare
 
+  val moduleArray = Seq.fill(c.dataBusSize)(Module(new BufferFIFO(c.grainFIFOSize, UInt(c.arithDataWidth.W))))
 
-  val moduleArray = Seq.fill(c.grainDim)(Module(new BufferFIFO(c.grainFIFOSize, UInt(c.arithDataWidth.W))))
+  val ACCUAct = Reg(Vec(c.dataBusSize,UInt(1.W)))
 
-  val ACCUAct = Reg(Vec(c.grainDim,UInt(1.W)))
-  val ActDReg = RegInit(0.U(1.W))
+  val activateIn = Wire(Bool())
+  val ActDReg = RegInit(false.B)
 
-  ActDReg := io.Activate 
+  if(hasDelay){
+    ActDReg := io.Activate
+    activateIn := ActDReg
+  }else{
+    activateIn := io.Activate
+  }
 
   /* io.Readport.request <>  
 
   val dataVec = VecInit(moduleArray.map(_.io.ReadData.response.readData)) */
 
-  for(i <- 0 until c.grainDim){
+  for(i <- 0 until c.dataBusSize){
     if(i == 0){
-      ACCUAct(0) := ActDReg
+      ACCUAct(0) := activateIn
     }else{
       ACCUAct(i) := ACCUAct(i-1)
     }
@@ -63,10 +69,8 @@ class ACCUFile(implicit c: Configuration) extends Module {
     moduleArray(i).io.WriteData.bits := io.In(i).Y
 
   }
-}
 
-/*
-object ACCUFile extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new ACCUFile(32,512,8))
+  //io.ActivateOut := ACCUAct(c.dataBusSize)
+  io.ActivateOut := ACCUAct.last
+
 }
-*/

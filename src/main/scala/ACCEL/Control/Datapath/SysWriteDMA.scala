@@ -3,23 +3,21 @@ package ATA8
 import chisel3._
 import chisel3.util._
 
-class SysWriteDMA(implicit c: Configuration) extends Module {  
+
+object HelperFunctions{
   def uintToBoolVec(uint: UInt, n: Int): Vec[Bool] = {
     VecInit((0 until n).map(i => uint > i.U))
-  }
+  }  
+}
 
+class SysWriteDMA(implicit c: Configuration) extends Module {  
   val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new Bundle{val addr = UInt(16.W); val size = UInt(8.W); val tag = UInt(c.tagWidth.W)}))
+    val in = Flipped(new DMAWrite)
     val scratchOut = new WriteportScratch
-    val readPort = new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)
-    //val completed = Output(Bool())
-    val completed = Valid(UInt(c.tagWidth.W))
+    val readPort = new Readport(Vec(c.dataBusSize,UInt(8.W)),10)
   })
 
-  io.in.ready := false.B
-
-  io.completed.valid := false.B
-  io.completed.bits := DontCare
+  io.in.request.ready := false.B
 
   io.scratchOut.request.valid := false.B
   io.scratchOut.request.bits := DontCare
@@ -32,16 +30,20 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
   io.readPort.request.bits := DontCare
 
   val StateReg = RegInit(0.U(4.W))
-  val reg = Reg(new Bundle{val addr = UInt(16.W); val size = UInt(8.W); val tag = UInt(c.tagWidth.W)})
+  val reg = Reg(io.in.request.bits.cloneType)
 
   val burstCNT = RegInit(0.U(8.W))
 
+  io.in.response.valid := StateReg =/= 0.U //Indicates to controller that the DMA is invoked and working 
+  io.in.response.bits.completed := false.B
+  io.in.response.bits.tag := 0.U
+
   switch(StateReg){
     is(0.U){
-      io.in.ready := true.B
+      io.in.request.ready := true.B
       
-      when(io.in.valid){
-        reg := io.in.bits
+      when(io.in.request.valid){
+        reg := io.in.request.bits
         StateReg := 1.U
       }
     }
@@ -49,13 +51,19 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
       io.scratchOut.request.bits.addr := reg.addr
       //io.scratchOut.request.bits.burst := reg.size
       io.scratchOut.request.bits.burstMode := false.B //TODO: make this a string
-      io.scratchOut.request.bits.burstCnt := reg.size
-      io.scratchOut.request.bits.burstSize := reg.size
+      
+      io.scratchOut.request.bits.burstCnt := reg.burstCnt
+      io.scratchOut.request.bits.burstSize := reg.burstSize
+      io.scratchOut.request.bits.burstStride := reg.burstStride 
 
-      when(io.scratchOut.request.ready){
-        io.scratchOut.request.valid := true.B
-        StateReg := 2.U
-      } 
+      when(reg.burstSize =/= 0.U){ // FIXME: incredibly hacky. not a good solution 
+        when(io.scratchOut.request.ready){
+          io.scratchOut.request.valid := true.B
+          StateReg := 2.U
+        } 
+      }.otherwise{
+        StateReg := 3.U
+      }
     }
     is(2.U){
       io.readPort.request.bits.addr := reg.addr + burstCNT
@@ -64,12 +72,13 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
         io.readPort.request.valid := true.B
 
         io.scratchOut.data.bits.writeData := io.readPort.response.bits.readData
-        io.scratchOut.data.bits.strb := uintToBoolVec(reg.size, c.dataBusSize)
+        io.scratchOut.data.bits.strb := HelperFunctions.uintToBoolVec(reg.burstSize, c.dataBusSize) 
+        //FIXME: change this 
 
         when(io.readPort.response.valid){
           io.scratchOut.data.valid := true.B
 
-          when(burstCNT < (reg.size - 1.U)){ //FIXME: Might have to change size width
+          when(burstCNT < (reg.burstCnt - 1.U)){ //FIXME: Might have to change size width
             burstCNT := burstCNT + 1.U
           }.otherwise{
             io.scratchOut.data.bits.last := true.B
@@ -80,10 +89,12 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
       }
     }
     is(3.U){
-      io.completed.valid := true.B
-      io.completed.bits := reg.tag
+      io.in.response.bits.completed := true.B // Write complete successfully 
+      io.in.response.bits.tag := reg.tag
 
-      StateReg := 0.U
+      when(io.in.response.ready){
+        StateReg := 0.U
+      }
     }
   }
 }
