@@ -37,7 +37,7 @@ class ATA8(config: Configuration) extends Module {
 
   //// EXECUTE ////
 
-  Execute.io.scratchOut <> Scratchpad.io.Writeport(0)
+  //Execute.io.scratchOut <> Scratchpad.io.Writeport(0)
   Execute.io.scratchIn(0) <> Scratchpad.io.Readport(0)
   Execute.io.scratchIn(1) <> Scratchpad.io.Readport(1)
   Execute.io.eventIn <> Load.io.event
@@ -45,7 +45,7 @@ class ATA8(config: Configuration) extends Module {
   //// LOAD //// 
 
   Load.io.AXIST <> io.AXIST_inData
-  Load.io.scratchOut <> Scratchpad.io.Writeport(1)
+  //Load.io.scratchOut <> Scratchpad.io.Writeport(1)
 
   //// STORE //// 
 
@@ -53,6 +53,11 @@ class ATA8(config: Configuration) extends Module {
   Store.io.readPort <> Scratchpad.io.Readport(2)
   Store.io.event(0) := Load.io.event
   Store.io.event(1) := Execute.io.eventOut
+
+  //// SCRATCHPAD //// 
+
+  //Scratchpad.io.Writeport <> VecInit(Execute.io.scratchOut ++ Load.io.scratchOut)
+  Scratchpad.io.Writeport <> VecInit(Execute.io.scratchOut ++ VecInit(Seq(Load.io.scratchOut)))
 
   /// DEBUG /// 
 

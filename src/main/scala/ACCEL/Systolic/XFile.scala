@@ -12,6 +12,7 @@ class XFile(implicit c: Configuration) extends Module {
     val ActivateOut = Output(Bool())
     //val Memport = Flipped(Decoupled(new Memport(Vec(c.dataBusSize,UInt(c.arithDataWidth.W)),addr_width)))
     val Memport = Flipped(Decoupled(Vec(c.dataBusSize,UInt(8.W)))) //TODO: change name 
+    val size = Input(UInt(log2Ceil(c.dataBusSize + 1).W))
   })
 
   //io.Memport.ready := true.B
@@ -40,8 +41,12 @@ class XFile(implicit c: Configuration) extends Module {
     moduleArray(i).io.WriteData.valid := io.Memport.valid
     moduleArray(i).io.WriteData.bits := io.Memport.bits(i)
     
-    moduleArray(i).io.ReadData.request.valid := XACT(i)
+    moduleArray(i).io.ReadData.request.valid := false.B
     moduleArray(i).io.ReadData.request.bits := DontCare
+
+    when(io.size =/= 0.U){
+      moduleArray(i).io.ReadData.request.valid := XACT(i)
+    }
 
     when(moduleArray(i).io.ReadData.request.valid){
       io.Out(i).X := moduleArray(i).io.ReadData.response.bits.readData
@@ -52,14 +57,6 @@ class XFile(implicit c: Configuration) extends Module {
 
   io.ActivateOut := XACT.last
   io.Memport.ready := VecInit(moduleArray.map(_.io.WriteData.ready)).reduceTree(_ && _)
-
-
-  
   
 }
 
-/*
-object XFile extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new XFile(32,512,8))
-}
-*/

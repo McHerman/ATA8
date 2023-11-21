@@ -14,6 +14,7 @@ class ACCUFile(val hasDelay: Boolean)(implicit c: Configuration) extends Module 
     //val Memport = Flipped(Decoupled(new Memport_V3(32,addr_width)))
     //val Readport = Flipped(new Readport_V2(c.arithDataWidth*c.dataBusSize,10))
     val Readport = Flipped(new Readport(Vec(c.dataBusSize,UInt(8.W)),0))
+    val size = Input(UInt(log2Ceil(c.dataBusSize + 1).W))
 
     val State = Input(UInt(1.W))
   })
@@ -57,12 +58,14 @@ class ACCUFile(val hasDelay: Boolean)(implicit c: Configuration) extends Module 
 
     io.Readport.response.bits.readData(i) := moduleArray(i).io.ReadData.response.bits.readData // FIXME: All this shit sucks
 
-    switch(io.State){
-      is(0.U){
-        moduleArray(i).io.WriteData.valid := ACCUAct(i)
-      }
-      is(1.U){
-        moduleArray(i).io.WriteData.valid := io.Shift
+    when(io.size =/= 0.U){
+      switch(io.State){
+        is(0.U){
+          moduleArray(i).io.WriteData.valid := ACCUAct(i)
+        }
+        is(1.U){
+          moduleArray(i).io.WriteData.valid := io.Shift
+        }
       }
     }
 

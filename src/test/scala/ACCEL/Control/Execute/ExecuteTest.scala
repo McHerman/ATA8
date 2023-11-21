@@ -123,34 +123,34 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.scratchIn(0).data.valid.poke(false.B)
       dut.io.scratchIn(1).data.valid.poke(false.B)
 
-      dut.io.scratchOut.request.ready.poke(true.B)
+      dut.io.scratchOut(0).request.ready.poke(true.B)
 
-      while (dut.io.scratchOut.request.valid.peek().litToBoolean == false) {
+      while (dut.io.scratchOut(0).request.valid.peek().litToBoolean == false) {
         dut.clock.step()
       } 
 
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
-      dut.io.scratchOut.request.bits.addr.expect(128.U)
+      dut.io.scratchOut(0).request.bits.addr.expect(128.U)
       dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
-      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
-      dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstCnt.expect(8.U)
 
-      dut.io.scratchOut.data.ready.poke(true.B)
+      dut.io.scratchOut(0).data.ready.poke(true.B)
 
       dut.clock.step()
 
-      dut.io.scratchOut.data.valid.expect(true.B)
+      dut.io.scratchOut(0).data.valid.expect(true.B)
 
       for (row <- 0 until n) {
         for (col <- 0 until n) {
-          dut.io.scratchOut.data.bits.writeData(col).expect(expectedResult(row)(col).U(8.W))
+          dut.io.scratchOut(0).data.bits.writeData(col).expect(expectedResult(row)(col).U(8.W))
         }
         
         if (row == n - 1) {
-          dut.io.scratchOut.data.bits.last.expect(true.B)
+          dut.io.scratchOut(0).data.bits.last.expect(true.B)
         } else {
-          dut.io.scratchOut.data.bits.last.expect(false.B)
+          dut.io.scratchOut(0).data.bits.last.expect(false.B)
         }
 
         dut.clock.step()
@@ -254,36 +254,36 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.scratchIn(0).data.valid.poke(false.B)
       dut.io.scratchIn(1).data.valid.poke(false.B)
 
-      dut.io.scratchOut.request.ready.poke(true.B)
+      dut.io.scratchOut(0).request.ready.poke(true.B)
 
-      while (dut.io.scratchOut.request.valid.peek().litToBoolean == false) {
+      while (dut.io.scratchOut(0).request.valid.peek().litToBoolean == false) {
         dut.clock.step()
       } 
 
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
-      dut.io.scratchOut.request.bits.addr.expect(128.U)
-      //dut.io.scratchOut.request.bits.burst.expect(8.U)
-      dut.io.scratchOut.request.bits.burstStride.expect(8.U)
-      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
-      dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
+      dut.io.scratchOut(0).request.bits.addr.expect(128.U)
+      //dut.io.scratchOut(0).request.bits.burst.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstStride.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstCnt.expect(8.U)
 
 
-      dut.io.scratchOut.data.ready.poke(true.B)
+      dut.io.scratchOut(0).data.ready.poke(true.B)
 
       dut.clock.step()
 
-      dut.io.scratchOut.data.valid.expect(true.B)
+      dut.io.scratchOut(0).data.valid.expect(true.B)
 
       for (row <- 0 until n) {
         for (col <- 0 until n) {
-          dut.io.scratchOut.data.bits.writeData(col).expect(expectedResult(row)(col).U(8.W))
+          dut.io.scratchOut(0).data.bits.writeData(col).expect(expectedResult(row)(col).U(8.W))
         }
         
         if (row == n - 1) {
-          dut.io.scratchOut.data.bits.last.expect(true.B)
+          dut.io.scratchOut(0).data.bits.last.expect(true.B)
         } else {
-          dut.io.scratchOut.data.bits.last.expect(false.B)
+          dut.io.scratchOut(0).data.bits.last.expect(false.B)
         }
 
         dut.clock.step()
@@ -421,41 +421,41 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.scratchIn(0).request.ready.poke(false.B)
       dut.io.scratchIn(1).request.ready.poke(false.B)
 
-      dut.io.scratchOut.request.ready.poke(true.B)
+      dut.io.scratchOut(0).request.ready.poke(true.B)
 
-      while (dut.io.scratchOut.request.valid.peek().litToBoolean == false) {
+      while (dut.io.scratchOut(0).request.valid.peek().litToBoolean == false) {
         dut.clock.step()
       } 
 
       val expectedResult = matrixDotProduct(matrix3, matrix3)
 
-      dut.io.scratchOut.request.bits.addr.expect(256.U)
-      dut.io.scratchOut.request.bits.burstStride.expect(8.U)
-      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
-      dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
+      dut.io.scratchOut(0).request.bits.addr.expect(256.U)
+      dut.io.scratchOut(0).request.bits.burstStride.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstCnt.expect(8.U)
 
-      dut.io.scratchOut.data.ready.poke(true.B)
+      dut.io.scratchOut(0).data.ready.poke(true.B)
 
       dut.clock.step()
 
-      dut.io.scratchOut.data.valid.expect(true.B)
+      dut.io.scratchOut(0).data.valid.expect(true.B)
 
       for (row <- 0 until n) {
         for (col <- 0 until n) {
-          dut.io.scratchOut.data.bits.writeData(col).expect(expectedResult(row)(col).U(8.W))
+          dut.io.scratchOut(0).data.bits.writeData(col).expect(expectedResult(row)(col).U(8.W))
         }
         
         if (row == n - 1) {
-          dut.io.scratchOut.data.bits.last.expect(true.B)
+          dut.io.scratchOut(0).data.bits.last.expect(true.B)
         } else {
-          dut.io.scratchOut.data.bits.last.expect(false.B)
+          dut.io.scratchOut(0).data.bits.last.expect(false.B)
         }
 
         dut.clock.step()
       }
 
-      dut.io.scratchOut.request.ready.poke(false.B)
-      dut.io.scratchOut.data.ready.poke(false.B)
+      dut.io.scratchOut(0).request.ready.poke(false.B)
+      dut.io.scratchOut(0).data.ready.poke(false.B)
 
       dut.io.eventOut.valid.expect(true.B)
       dut.io.eventOut.bits.tag.expect(5.U)
@@ -515,34 +515,34 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.scratchIn(0).request.ready.poke(false.B)
       dut.io.scratchIn(1).request.ready.poke(false.B)
 
-      dut.io.scratchOut.request.ready.poke(true.B)
+      dut.io.scratchOut(0).request.ready.poke(true.B)
 
-      while (dut.io.scratchOut.request.valid.peek().litToBoolean == false) {
+      while (dut.io.scratchOut(0).request.valid.peek().litToBoolean == false) {
         dut.clock.step()
       } 
 
       val expectedResult2 = matrixDotProduct(matrix3, matrix3)
 
-      dut.io.scratchOut.request.bits.addr.expect(320.U)
+      dut.io.scratchOut(0).request.bits.addr.expect(320.U)
       dut.io.scratchIn(0).request.bits.burstStride.expect(8.U)
-      dut.io.scratchOut.request.bits.burstSize.expect(8.U)
-      dut.io.scratchOut.request.bits.burstCnt.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstSize.expect(8.U)
+      dut.io.scratchOut(0).request.bits.burstCnt.expect(8.U)
 
-      dut.io.scratchOut.data.ready.poke(true.B)
+      dut.io.scratchOut(0).data.ready.poke(true.B)
 
       dut.clock.step()
 
-      dut.io.scratchOut.data.valid.expect(true.B)
+      dut.io.scratchOut(0).data.valid.expect(true.B)
 
       for (row <- 0 until n) {
         for (col <- 0 until n) {
-          dut.io.scratchOut.data.bits.writeData(col).expect(expectedResult2(row)(col).U(8.W))
+          dut.io.scratchOut(0).data.bits.writeData(col).expect(expectedResult2(row)(col).U(8.W))
         }
         
         if (row == n - 1) {
-          dut.io.scratchOut.data.bits.last.expect(true.B)
+          dut.io.scratchOut(0).data.bits.last.expect(true.B)
         } else {
-          dut.io.scratchOut.data.bits.last.expect(false.B)
+          dut.io.scratchOut(0).data.bits.last.expect(false.B)
         }
 
         dut.clock.step()

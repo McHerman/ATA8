@@ -30,12 +30,17 @@ class ScratchWriteArbiter(numPorts: Int)(implicit c: Configuration) extends Modu
     }
   }
 
-  when(io.outPort.request.ready && !isLocked) {
+  /* when(io.outPort.request.ready && !isLocked) {
     when(io.inPorts(roundRobin).request.valid) {
       isLocked := true.B
       activePort := roundRobin
     }
-  }
+  } */
+
+  when(io.outPort.request.fire && !isLocked) {
+    isLocked := true.B
+    activePort := roundRobin
+  } 
 
   when(isLocked) {
     io.outPort <> io.inPorts(activePort)

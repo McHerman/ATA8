@@ -60,50 +60,6 @@ class StoreController(implicit c: Configuration) extends Module {
         }
       }
 		}
-    /*
-		is(1.U){
-			io.readport.request.valid := true.B
-			io.readport.request.bits.addr := reg.addrs(0).addr
-			io.readport.request.bits.burst := reg.size
-
-			/* when (io.AXIST.tready) {
-				io.readport.data.ready := true.B
-
-				when(io.readport.data.valid){
-          
-          io.AXIST.tdata := io.readport.data.bits.readData.reverse.reduce((a, b) => Cat(a, b))
-					io.AXIST.tkeep := "hff".U
-					io.AXIST.tstrb := "hff".U
-          io.AXIST.tvalid := true.B
-
-					when(burstAddrReg < (reg.size-1.U)){
-						burstAddrReg := burstAddrReg + 1.U
-					}.elsewhen(io.readport.data.bits.last){
-						io.AXIST.tlast := true.B
-            StateReg := 0.U
-					}			
-				}
-      } */
-
-      when(io.readport.data.valid) {
-				io.AXIST.tvalid := true.B
-
-				when(io.AXIST.tready){
-          io.AXIST.tdata := io.readport.data.bits.readData.reverse.reduce((a, b) => Cat(a, b))
-					io.AXIST.tkeep := "hff".U
-					io.AXIST.tstrb := "hff".U
-          //io.AXIST.tvalid := true.B
-
-					when(burstAddrReg < (reg.size-1.U)){
-						burstAddrReg := burstAddrReg + 1.U
-					}.elsewhen(io.readport.data.bits.last){
-						io.AXIST.tlast := true.B
-            StateReg := 0.U
-					}			
-				}
-      }
-    }  
-    */
     is(1.U){
       io.readport.request.bits.addr := reg.addrs(0).addr
 			//io.readport.request.bits.burst := reg.size

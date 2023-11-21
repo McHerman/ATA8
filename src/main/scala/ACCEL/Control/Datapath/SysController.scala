@@ -204,6 +204,7 @@ class SysController(implicit c: Configuration) extends Module {
 				opbuffer.io.WriteData.bits.mode := reg.mode
 				opbuffer.io.WriteData.bits.size := reg.size
         opbuffer.io.WriteData.bits.tag := reg.addrd(0).tag
+        opbuffer.io.WriteData.bits.sizes := VectorFillerFunctions.buildTree(reg.size, c.grainDim, c.dataBusSize)
 
         readBuffer.io.WriteData.valid := true.B
 				readBuffer.io.WriteData.bits.addr := reg.addrd(0).addr

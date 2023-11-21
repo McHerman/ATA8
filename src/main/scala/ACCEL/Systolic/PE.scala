@@ -56,7 +56,11 @@ class PE(implicit c: Configuration) extends Module {
       io.yOut.Y := DataReg
       multiplier.io.a := io.x.X
       multiplier.io.b := YReg
-      when(io.y.PEState.EN) {
+
+      DataReg := multiplier.io.result + io.y.Y
+
+
+      /* when(io.y.PEState.EN) {
         //multiplier.io.enable := true.B
         DataReg := multiplier.io.result + io.y.Y
       }.otherwise {
@@ -64,6 +68,11 @@ class PE(implicit c: Configuration) extends Module {
         when(io.y.PEState.Shift) {
           YReg := io.y.Y
         }
+        io.yOut.Y := YReg
+      } */
+
+      when(io.y.PEState.Shift) {
+        YReg := io.y.Y
         io.yOut.Y := YReg
       }
     }

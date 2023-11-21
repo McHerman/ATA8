@@ -59,5 +59,21 @@ package object ATA8 {
         8     // dataBusSize
       )
     }
+    def test16(): Configuration = {
+      Configuration(
+        4096, // scratchpadSize
+        3,    // bufferReadPorts
+        2,    // bufferWritePorts
+        2,    // grainDim
+        1,    // sysDim
+        64,  // grainFIFOSize
+        64,  // grainACCUSize
+        8,    // arithDataWidth
+        1,    // modeWidth
+        8,    // tagCount
+        16,   // addrWidth
+        8     // dataBusSize
+      )
+    }
   }
 }

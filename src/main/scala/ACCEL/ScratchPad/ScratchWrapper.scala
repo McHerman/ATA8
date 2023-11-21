@@ -5,14 +5,14 @@ import chisel3.util._
 
 class ScratchpadWrapper(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
-  	//val Readport = Vec(c.bufferReadPorts, Flipped(new ReadportBuf(c.arithDataWidth,10)))
-  	//val Writeport = Vec(c.bufferWritePorts, Flipped(new WriteportBuf(c.arithDataWidth,10)))
-  	val Writeport = Vec(c.bufferWritePorts, Flipped(new WriteportScratch()))
+  	//val Writeport = Vec(c.bufferWritePorts, Flipped(new WriteportScratch())) //FIXME: HACKY AF, fix 
+  	val Writeport = Vec(1 + c.grainDim, Flipped(new WriteportScratch())) //FIXME: HACKY AF, fix 
     val Readport = Vec(c.bufferReadPorts, Flipped(new ReadportScratch()))
   })
 
 
-  val WriteArbiter = Module(new ScratchWriteArbiter(c.bufferWritePorts))
+  //val WriteArbiter = Module(new ScratchWriteArbiter(c.bufferWritePorts))
+  val WriteArbiter = Module(new ScratchWriteArbiter(1 + c.grainDim))
   val Scratchpad = Module(new Scratchpad(1)) 
 
   val ReadBurstHandlerVec = Seq.fill(c.bufferReadPorts)(Module(new ReadBurstHandler))

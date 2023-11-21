@@ -34,7 +34,7 @@ class Grain(implicit c: Configuration) extends Module {
   SysCtrl.io.in <> io.in
   io.completed := SysCtrl.io.completed
 
-  //TODO: Replace all this with map statements
+  /// MEM SIGNALS ///
 
   (xFiles zip io.writePort(0)).foreach{case (file, port) => 
     file.io.Memport <> port
@@ -70,6 +70,7 @@ class Grain(implicit c: Configuration) extends Module {
       reciever.io.Enable := producer.io.EnableOut
     }
   }
+
   /// GLOBAL SIGNALS ///
 
   yFiles.foreach{file => 
@@ -81,25 +82,28 @@ class Grain(implicit c: Configuration) extends Module {
     file.io.State := SysCtrl.io.Mode
     file.io.Shift := SysCtrl.io.Shift
   }
-  
-  //YFile.io.State :=  SysCtrl.io.Mode // FIXME: kinda poopy, add another bit
-  //ACCUFile.io.State :=  SysCtrl.io.Mode
-  
-  //YFile.io.Shift := SysCtrl.io.Shift
-  //ACCUFile.io.Shift := SysCtrl.io.Shift
 
-  /* (array zip xFiles).foreach{case (row,file) =>
-    row.head.io.x := file.io.Out
-  } */
+  SysCtrl.io.activateLoopBack := accuFiles.last.io.ActivateOut
+
+  /// SIZE SIGNALS /// 
+
+  (xFiles zip SysCtrl.io.sizes).foreach{case (file,size) => 
+    file.io.size := size
+  }
+
+  (yFiles zip SysCtrl.io.sizes).foreach{case (file,size) => 
+    file.io.size := size
+  }
+
+  (accuFiles zip SysCtrl.io.sizes).foreach{case (file,size) => 
+    file.io.size := size
+  }
+
+  /// ARRAY CONNECTIONS /// 
 
   (array.head zip xFiles).foreach{case (row,file) =>
     row.io.x := file.io.Out
   }
-
-  /* (array.transpose zip yFiles zip accuFiles).foreach{case ((collum,yFile),accuFile) =>
-    collum.head.io.y := yFile.io.Out
-    accuFile.io.In := collum.last.io.yOut
-  } */
 
   (array.transpose.head zip yFiles).foreach{case (collum,yFile) =>
     collum.io.y := yFile.io.Out

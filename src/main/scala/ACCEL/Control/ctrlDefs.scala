@@ -101,6 +101,7 @@ class SysOP(implicit c: Configuration) extends Bundle {
   val mode = UInt(1.W)
   val size = UInt(8.W)
   val tag = UInt(c.tagWidth.W)
+  val sizes = Vec(c.grainDim, UInt(log2Ceil(c.dataBusSize + 1).W))
 } 
 
 

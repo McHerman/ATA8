@@ -15,6 +15,7 @@ class YFile(implicit c: Configuration) extends Module {
     //val Memport = Flipped(Decoupled(new Memport(Vec(c.dataBusSize,UInt(c.arithDataWidth.W)), addr_width)))
     val Memport = Flipped(Decoupled(Vec(c.dataBusSize,UInt(8.W)))) //TODO: change name 
     val State = Input(UInt(1.W))
+    val size = Input(UInt(log2Ceil(c.dataBusSize + 1).W))
   })
 
   //io.Memport.ready := true.B
@@ -62,20 +63,16 @@ class YFile(implicit c: Configuration) extends Module {
     moduleArray(i).io.ReadData.request.valid := false.B
     moduleArray(i).io.ReadData.request.bits := DontCare
 
-    val shiftdelay = RegInit(0.U(1.W))
-
-    switch(io.State){
-      is(0.U){
-        /* shiftdelay := io.Shift
-        moduleArray(i).io.ReadData.request.valid := io.Shift
-        io.Out(i).PEState.Shift := shiftdelay */
-
-        moduleArray(i).io.ReadData.request.valid := io.Shift
-        io.Out(i).PEState.Shift := io.Shift
-      }
-      is(1.U){
-        moduleArray(i).io.ReadData.request.valid := YACT(i)
-        io.Out(i).PEState.Shift := io.Shift
+    when(io.size =/= 0.U){
+      switch(io.State){
+        is(0.U){
+          moduleArray(i).io.ReadData.request.valid := io.Shift
+          io.Out(i).PEState.Shift := io.Shift
+        }
+        is(1.U){
+          moduleArray(i).io.ReadData.request.valid := YACT(i)
+          io.Out(i).PEState.Shift := io.Shift
+        }
       }
     }
   }

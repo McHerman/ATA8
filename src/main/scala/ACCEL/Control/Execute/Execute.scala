@@ -10,7 +10,8 @@ class Execute(config: Configuration) extends Module {
   val io = IO(new Bundle {
     val instructionStream = Flipped(Decoupled(new ExecuteInstIssue))
     //val tagDealloc = Decoupled(UInt(c.tagWidth.W))
-    val scratchOut = new WriteportScratch
+    //val scratchOut = new WriteportScratch
+    val scratchOut = Vec(c.grainDim,new WriteportScratch)
     val scratchIn = Vec(2,new ReadportScratch)
     //val event = Vec(2,Flipped(Valid(new Event())))
     val eventIn = Flipped(Valid(new Event()))
@@ -36,11 +37,13 @@ class Execute(config: Configuration) extends Module {
   /// SCRATCHPAD CONNECTIONS /// 
 
   if(c.grainDim != 1){
-    val WriteArbiter = Module(new ScratchWriteArbiter(c.grainDim))
+    //val WriteArbiter = Module(new ScratchWriteArbiter(c.grainDim))
     val ReadArbiter = Seq.fill(2)(Module(new ScratchReadArbiter(c.grainDim)))  
 
-    WriteArbiter.io.inPorts <> SysWrapper.io.scratchOut
-    io.scratchOut <> WriteArbiter.io.outPort
+    /* WriteArbiter.io.inPorts <> SysWrapper.io.scratchOut
+    io.scratchOut <> WriteArbiter.io.outPort */
+
+    io.scratchOut <> SysWrapper.io.scratchOut
 
     ReadArbiter(0).io.inPorts <> SysWrapper.io.scratchIn(0) //FIXME: A bit verbose
     ReadArbiter(1).io.inPorts <> SysWrapper.io.scratchIn(1)
@@ -48,7 +51,9 @@ class Execute(config: Configuration) extends Module {
     io.scratchIn(0) <> ReadArbiter(0).io.outPort
     io.scratchIn(1) <> ReadArbiter(1).io.outPort
   }else{
-    SysWrapper.io.scratchOut(0) <> io.scratchOut
+    //SysWrapper.io.scratchOut(0) <> io.scratchOut
+
+    SysWrapper.io.scratchOut <> io.scratchOut
 
     SysWrapper.io.scratchIn(0)(0) <> io.scratchIn(0)
     SysWrapper.io.scratchIn(1)(0) <> io.scratchIn(1)
