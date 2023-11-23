@@ -29,14 +29,14 @@ class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
 	)
 
   val WMatrix: Array[Array[Int]] = Array(
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4),
-    Array(1, 2, 3, 4, 1, 2, 3, 4)
+    Array(1, 2, 3, 4, 5, 6, 7, 8),
+    Array(1, 2, 3, 4, 5, 6, 7, 8),
+    Array(1, 2, 3, 4, 5, 6, 7, 8),
+    Array(1, 2, 3, 4, 5, 6, 7, 8),
+    Array(1, 2, 3, 4, 5, 6, 7, 8),
+    Array(1, 2, 3, 4, 5, 6, 7, 8),
+    Array(1, 2, 3, 4, 5, 6, 7, 8),
+    Array(1, 2, 3, 4, 5, 6, 7, 8)
   )
 
   //implicit val Config = Configuration.default()
@@ -128,7 +128,7 @@ class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.Writeport(0).request.ready.expect(true.B)
 
-      dut.io.Writeport(0).request.bits.addr.poke(1.U)
+      dut.io.Writeport(0).request.bits.addr.poke(3.U)
       //dut.io.Writeport(0).request.bits.burst.poke(n.U)
       dut.io.Writeport(0).request.bits.burstSize.poke(n.U)
       dut.io.Writeport(0).request.bits.burstStride.poke(n.U)
@@ -163,7 +163,7 @@ class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.Readport(0).request.ready.expect(true.B)
 
-      dut.io.Readport(0).request.bits.addr.poke(1.U)
+      dut.io.Readport(0).request.bits.addr.poke(3.U)
       //dut.io.Readport(0).request.bits.burst.poke(n.U)
       dut.io.Readport(0).request.bits.burstSize.poke(n.U)
       dut.io.Writeport(0).request.bits.burstStride.poke(n.U)
@@ -207,7 +207,7 @@ class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.Writeport(0).request.ready.expect(true.B)
 
-      dut.io.Writeport(0).request.bits.addr.poke(1.U)
+      dut.io.Writeport(0).request.bits.addr.poke(0.U)
       dut.io.Writeport(0).request.bits.burstMode.poke(true.B)
       dut.io.Writeport(0).request.bits.burstSize.poke(n.U)
       dut.io.Writeport(0).request.bits.burstStride.poke(n.U)
@@ -242,7 +242,7 @@ class ScratchpadTest extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.io.Readport(0).request.ready.expect(true.B)
 
-      dut.io.Readport(0).request.bits.addr.poke(1.U)
+      dut.io.Readport(0).request.bits.addr.poke(0.U)
       //dut.io.Readport(0).request.bits.burst.poke(n.U)
       dut.io.Readport(0).request.bits.burstSize.poke(n.U)
       dut.io.Writeport(0).request.bits.burstStride.poke(n.U)

@@ -32,7 +32,13 @@ class StoreController(implicit c: Configuration) extends Module {
 	io.AXIST.tlast := false.B
 
 	io.readport.request.valid := false.B
-  io.readport.request.bits := DontCare
+  //io.readport.request.bits := DontCare
+  
+  io.readport.request.bits.addr := 0.U
+  io.readport.request.bits.burstStride := 0.U
+  io.readport.request.bits.burstSize := 0.U
+  io.readport.request.bits.burstCnt := 0.U
+
 
 	io.readport.data.ready := false.B
 
@@ -44,6 +50,8 @@ class StoreController(implicit c: Configuration) extends Module {
   val reg = Reg(new StoreInstIssue)
 
   val StateReg = RegInit(0.U(4.W))
+
+  val transferReg = Reg(new Bundle{val totalTransfers = UInt(8.W); val hasPartial = Bool(); val partial = UInt(log2Ceil(c.dataBusSize + 1).W)})
 
   /// DEBUG ///
 
@@ -61,18 +69,35 @@ class StoreController(implicit c: Configuration) extends Module {
       }
 		}
     is(1.U){
-      io.readport.request.bits.addr := reg.addrs(0).addr
-			//io.readport.request.bits.burst := reg.size
-      io.readport.request.bits.burstSize := reg.size
-      io.readport.request.bits.burstCnt := reg.size
+      val totalElements = reg.size * reg.size
 
+      val fullTransfers = totalElements >> 3.U // Right shift by 3 for division by 8
+      val partial = totalElements & 0x7.U // Bitwise AND with 7 (0x7) for modulo
+      val hasPartial = partial =/= 0.U
+      when(hasPartial){
+
+
+      } 
+      val totalTransfers = fullTransfers + Mux(hasPartial, 1.U, 0.U)
+
+      transferReg.totalTransfers := totalTransfers
+      transferReg.hasPartial := hasPartial
+      transferReg.partial := partial
+
+      StateReg := 2.U
+    }
+    is(2.U){
+      io.readport.request.bits.addr := reg.addrs(0).addr
+      io.readport.request.bits.burstStride := c.dataBusSize.U
+      io.readport.request.bits.burstSize := c.dataBusSize.U
+      io.readport.request.bits.burstCnt := transferReg.totalTransfers
 
       when(io.readport.request.ready){
         io.readport.request.valid := true.B
-        StateReg := 2.U
+        StateReg := 3.U
       } 
     }
-    is(2.U){
+    is(3.U){
       when(io.AXIST.tready) {
 				io.readport.data.ready := true.B
 
@@ -82,9 +107,22 @@ class StoreController(implicit c: Configuration) extends Module {
 					io.AXIST.tstrb := "hff".U
           io.AXIST.tvalid := true.B
 
-					when(burstAddrReg < (reg.size-1.U)){
+					/* when(burstAddrReg < (reg.size-1.U)){
 						burstAddrReg := burstAddrReg + 1.U
 					}.elsewhen(io.readport.data.bits.last){
+            when(transferReg.hasPartial){
+              io.AXIST.tstrb := HelperFunctions.uintToBoolVec(transferReg.hasPartial, c.dataBusSize).asUInt
+            }
+
+						io.AXIST.tlast := true.B
+            StateReg := 0.U
+					} */
+
+          when(io.readport.data.bits.last){
+            when(transferReg.hasPartial){
+              io.AXIST.tstrb := HelperFunctions.uintToBoolVec(transferReg.hasPartial, c.dataBusSize).asUInt
+            }
+
 						io.AXIST.tlast := true.B
             StateReg := 0.U
 					}			

@@ -32,7 +32,7 @@ package object ATA8 {
         4096, // scratchpadSize
         3,    // bufferReadPorts
         2,    // bufferWritePorts
-        1,    // grainDim
+        2,    // grainDim
         1,    // sysDim
         64,  // grainFIFOSize
         64,  // grainACCUSize

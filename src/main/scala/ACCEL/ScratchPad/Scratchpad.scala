@@ -40,13 +40,33 @@ class Scratchpad(writeports: Int)(implicit c: Configuration) extends Module {
     val bankIdxOffset = wrAddr(log2Ceil(c.dataBusSize) - 1, 0)
 
     wrData.zipWithIndex.foreach { case (data, i) =>
-      val bankIdx = (bankIdxOffset + i.U)(log2Ceil(c.dataBusSize) - 1, 0)
-      val isWrapAround = (bankIdxOffset + i.U) >= c.dataBusSize.U
-      val effectiveBankAddr = bankAddr + isWrapAround.asUInt
+      //val bankIdx = (bankIdxOffset + i.U)(log2Ceil(c.dataBusSize) - 1, 0)
+      val bankIdx = Wire(UInt(log2Ceil(c.dataBusSize).W))
+      bankIdx := bankIdxOffset + i.U
 
-      writePorts(bankIdx).addr := effectiveBankAddr
+      val isWrapAround = Wire(Bool())
+      val effectiveIdx = Wire(UInt(log2Ceil(c.dataBusSize + 1).W))
+
+      effectiveIdx := bankIdxOffset + i.asUInt(log2Ceil(c.dataBusSize + 1).W)
+      isWrapAround := c.dataBusSize.U <= effectiveIdx
+
+
+
+      /* when(isWrapAround){
+        val effectiveBankAddr = bankAddr + 1.U
+      }.otherwise{
+        val effectiveBankAddr = bankAddr
+      } */
+
+
+      when(isWrapAround){
+        writePorts(bankIdx).addr := bankAddr + 1.U
+      }.otherwise{
+        writePorts(bankIdx).addr := bankAddr
+      }
+
+
       writePorts(bankIdx).data.writeData := data
-
       writePorts(bankIdx).data.en := mask(i) && port.fire
     }
   }
@@ -70,13 +90,30 @@ class Scratchpad(writeports: Int)(implicit c: Configuration) extends Module {
     val bankAddr = rdAddr(c.addrWidth - 1, log2Ceil(c.dataBusSize))
     val bankIdxOffset = rdAddr(log2Ceil(c.dataBusSize) - 1, 0)
 
+    val lastIdx = Reg(Vec(c.dataBusSize, UInt(log2Ceil(c.dataBusSize).W)))
+
     rdData.zipWithIndex.foreach {case (data,i) =>
-      val bankIdx = (bankIdxOffset + i.U)(log2Ceil(c.dataBusSize) - 1, 0)
-      val isWrapAround = (bankIdxOffset + i.U) >= c.dataBusSize.U
-      val effectiveBankAddr = bankAddr + isWrapAround.asUInt
-      
-      readPorts(bankIdx).addr := effectiveBankAddr
-      data := readPorts(bankIdx).readData
+      //val bankIdx = (bankIdxOffset + i.U)(log2Ceil(c.dataBusSize) - 1, 0)
+      val bankIdx = Wire(UInt(log2Ceil(c.dataBusSize).W))
+      bankIdx := bankIdxOffset + i.U
+
+      val isWrapAround = Wire(Bool())
+      val effectiveIdx = Wire(UInt(log2Ceil(c.dataBusSize + 1).W))
+
+      effectiveIdx := bankIdxOffset + i.asUInt(log2Ceil(c.dataBusSize + 1).W)
+      isWrapAround := c.dataBusSize.U <= effectiveIdx
+
+      lastIdx(i) := bankIdx
+
+      when(isWrapAround){
+        readPorts(bankIdx).addr := bankAddr + 1.U
+      }.otherwise{
+        readPorts(bankIdx).addr := bankAddr
+      }
+      //readPorts(bankIdx).addr := effectiveBankAddr
+      //data := readPorts(bankIdx).readData
+      data := readPorts(lastIdx(i)).readData
+
 
       port.response.valid := RegNext(port.request.valid)
     }

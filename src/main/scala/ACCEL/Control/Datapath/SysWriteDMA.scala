@@ -73,7 +73,6 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
 
         io.scratchOut.data.bits.writeData := io.readPort.response.bits.readData
         io.scratchOut.data.bits.strb := HelperFunctions.uintToBoolVec(reg.burstSize, c.dataBusSize) 
-        //FIXME: change this 
 
         when(io.readPort.response.valid){
           io.scratchOut.data.valid := true.B

@@ -67,7 +67,18 @@ class SysDMA(implicit c: Configuration) extends Module {
           //io.memport.bits.writeData := io.scratchIn.data.bits.readData
           //io.memport.bits.wenable := true.B
 
-          io.writePort.bits := io.scratchIn.data.bits.readData
+          val mask = HelperFunctions.uintToBoolVec(reg.burstSize, c.dataBusSize) 
+
+
+          (io.writePort.bits zip io.scratchIn.data.bits.readData zip mask).foreach{case ((port,data),mask) => 
+            when(mask){
+              port := data
+            }.otherwise{
+              port := 0.U
+            }
+          }
+
+          //io.writePort.bits := io.scratchIn.data.bits.readData
           io.writePort.valid := true.B
 
           /* when(burstCNT < (reg.size - 1.U)){
