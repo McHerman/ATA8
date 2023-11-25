@@ -36,10 +36,10 @@ class YFile(implicit c: Configuration) extends Module {
       YEn(i) := YEn(i-1)
     }
 
-    io.Out(i).PEState.Shift := false.B
-    io.Out(i).PEState.EN := YEn(i)
+    //io.Out(i).PEState.Shift := false.B
+    //io.Out(i).PEState.EN := YEn(i)
 
-    io.Out(i).PEState.State := io.State
+    //io.Out(i).PEState.State := io.State
 
     when(moduleArray(i).io.ReadData.response.valid){
       io.Out(i).Y := moduleArray(i).io.ReadData.response.bits.readData
@@ -67,11 +67,11 @@ class YFile(implicit c: Configuration) extends Module {
       switch(io.State){
         is(0.U){
           moduleArray(i).io.ReadData.request.valid := io.Shift
-          io.Out(i).PEState.Shift := io.Shift
+          //io.Out(i).PEState.Shift := io.Shift
         }
         is(1.U){
           moduleArray(i).io.ReadData.request.valid := YACT(i)
-          io.Out(i).PEState.Shift := io.Shift
+          //io.Out(i).PEState.Shift := io.Shift
         }
       }
     }

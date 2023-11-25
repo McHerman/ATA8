@@ -78,22 +78,6 @@ class SysCtrl(implicit c: Configuration) extends Module {
         ActivateCnt := 0.U
         StateReg := 4.U
       }
-      
-      /* when(EnableCnt < (inReg.size * 2.U)){
-        io.Enable := true.B
-        EnableCnt := EnableCnt + 1.U
-      }.otherwise{
-        ActivateCnt := 0.U
-        EnableCnt := 0.U
-        StateReg := 0.U
-
-        io.completed.bits.tag := inReg.tag
-        io.completed.valid := true.B
-      } */
-
-
-
-
     }
     is(4.U){
       when(ActivateCnt < inReg.size){

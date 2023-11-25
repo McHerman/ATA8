@@ -117,6 +117,10 @@ class Grain(implicit c: Configuration) extends Module {
 
   array.zipWithIndex.foreach { case (row, i) =>
     row.zipWithIndex.foreach { case (pe, k) =>
+      pe.io.ctrl.state := SysCtrl.io.Mode
+      pe.io.ctrl.shift := SysCtrl.io.Shift
+
+
       if (i != c.grainDim - 1) {
         pe.io.xOut <> array(i + 1)(k).io.x
       }

@@ -5,7 +5,7 @@ import chisel3.util._
 
 class PEY(val dataWidth: Int, val statewidth: Int) extends Bundle {
   val Y = Output(UInt(dataWidth.W))
-  val PEState = new PEState(statewidth) 
+  //val PEState = new PEState(statewidth) 
 }
 
 class PEState(val statewidth: Int) extends Bundle {  

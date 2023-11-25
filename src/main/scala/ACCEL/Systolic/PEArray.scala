@@ -9,6 +9,7 @@ class PEArray(val size: Int)(implicit c: Configuration) extends Module {
     val xOut = Output(Vec(size, new PEX(c.arithDataWidth)))
     val y = Input(Vec(size, new PEY(c.arithDataWidth,1)))
     val yOut = Output(Vec(size, new PEY(c.arithDataWidth,1)))
+    val ctrl = Input(new Bundle{val state = UInt(1.W); val shift = Bool()})
   })
 
   val peArray = Seq.fill(size, size)(Module(new PE())) // Create a 2D matrix of PE modules
@@ -16,6 +17,8 @@ class PEArray(val size: Int)(implicit c: Configuration) extends Module {
   // Interconnect PE modules with conditional logic to handle edges
   peArray.zipWithIndex.foreach { case (row, i) =>
     row.zipWithIndex.foreach { case (pe, k) =>
+      pe.io.ctrl <> io.ctrl
+
       if (i != size - 1) {
         pe.io.xOut <> peArray(i + 1)(k).io.x
       }
@@ -24,16 +27,6 @@ class PEArray(val size: Int)(implicit c: Configuration) extends Module {
       }
     }
   }
-
-  /* io.x <> VecInit(peArray.head.map(_.io.x))
-  io.xOut <> VecInit(peArray.last.map(_.io.xOut))
-  
-  //io.y <> VecInit(peArray.map(_(0).io.y))
-  //io.yOut <> VecInit(peArray.map(_.last.io.yOut))
-
-  io.y <> VecInit(peArray.transpose.head.map(_.io.y))
-  io.yOut <> VecInit(peArray.transpose.last.map(_.io.yOut))
-   */
 
   (peArray.head zip io.x).foreach{case (pe,port) => 
     pe.io.x <> port

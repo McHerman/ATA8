@@ -87,5 +87,5 @@ class ATA8(config: Configuration) extends Module {
 }
 
 object ATA8 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new ATA8(Configuration.default()))
+  (new chisel3.stage.ChiselStage).emitVerilog(new ATA8(Configuration.sys16()))
 }
