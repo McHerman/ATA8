@@ -17,9 +17,7 @@ class StoreController(implicit c: Configuration) extends Module {
     val instructionStream = new Readport(new StoreInstIssue,0)
     val AXIST = new AXIST_2(64,2,1,1,1) 
     val readport = new ReadportScratch
-		//val tagRead = new TagRead
-		//val tagDealloc = Decoupled(UInt(c.tagWidth.W))
-		//val event = Flipped(Valid(new Event()))
+
     val debug = new StoreDebug
   })
 
@@ -71,13 +69,12 @@ class StoreController(implicit c: Configuration) extends Module {
     is(1.U){
       val totalElements = reg.size * reg.size
 
+      // FIXME: Parameterize all this 
+
       val fullTransfers = totalElements >> 3.U // Right shift by 3 for division by 8
       val partial = totalElements & 0x7.U // Bitwise AND with 7 (0x7) for modulo
       val hasPartial = partial =/= 0.U
-      when(hasPartial){
 
-
-      } 
       val totalTransfers = fullTransfers + Mux(hasPartial, 1.U, 0.U)
 
       transferReg.totalTransfers := totalTransfers
@@ -107,17 +104,6 @@ class StoreController(implicit c: Configuration) extends Module {
 					io.AXIST.tstrb := "hff".U
           io.AXIST.tvalid := true.B
 
-					/* when(burstAddrReg < (reg.size-1.U)){
-						burstAddrReg := burstAddrReg + 1.U
-					}.elsewhen(io.readport.data.bits.last){
-            when(transferReg.hasPartial){
-              io.AXIST.tstrb := HelperFunctions.uintToBoolVec(transferReg.hasPartial, c.dataBusSize).asUInt
-            }
-
-						io.AXIST.tlast := true.B
-            StateReg := 0.U
-					} */
-
           when(io.readport.data.bits.last){
             when(transferReg.hasPartial){
               io.AXIST.tstrb := HelperFunctions.uintToBoolVec(transferReg.hasPartial, c.dataBusSize).asUInt
@@ -129,18 +115,5 @@ class StoreController(implicit c: Configuration) extends Module {
 				}
       }
     }  
-
-
-    
-
-
-		/* is(2.U){
-      io.tagDealloc.valid := true.B
-			io.tagDealloc.bits := tagReg
-			StateReg := 0.U
-		} */
   }
-
-  //BoringUtils.addSource(StateReg, "storecontrollerstate")
-
 }

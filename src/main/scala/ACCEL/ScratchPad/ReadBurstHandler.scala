@@ -20,19 +20,12 @@ class ReadBurstHandler(implicit c: Configuration) extends Module {
 
   val reg = Reg(io.scratchReadport.request.bits.cloneType)
 
-
-/*   val burstCounter = RegInit(0.U(8.W))
-  val burstSize = RegInit(0.U(8.W))
-  val activeAddr = RegInit(0.U(16.W)) */
-
   val isLocked = RegInit(false.B)
 
   io.scratchReadport.request.ready := !isLocked
 
-  when(io.scratchReadport.request.fire()) {
+  when(io.scratchReadport.request.fire) {
     isLocked := true.B
-
-    //reg := io.request.bits
 
     reg.addr := io.scratchReadport.request.bits.addr
     reg.burstSize := io.scratchReadport.request.bits.burstSize
@@ -44,10 +37,10 @@ class ReadBurstHandler(implicit c: Configuration) extends Module {
     when(io.readPort.request.ready) {
       io.readPort.request.valid := true.B
       io.readPort.request.bits.addr := reg.addr
-      //io.scratchReadport.data.valid := io.readPort.response.valid
+
       io.scratchReadport.data.bits.readData := io.readPort.response.bits.readData.asTypeOf(Vec(c.dataBusSize, UInt(8.W)))
 
-      when(io.readPort.request.fire()) {
+      when(io.readPort.request.fire) {
         reg.addr := reg.addr + reg.burstStride
       } 
 

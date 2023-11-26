@@ -49,7 +49,6 @@ class SysWriteDMA(implicit c: Configuration) extends Module {
     }
     is(1.U){
       io.scratchOut.request.bits.addr := reg.addr
-      //io.scratchOut.request.bits.burst := reg.size
       io.scratchOut.request.bits.burstMode := false.B //TODO: make this a string
       
       io.scratchOut.request.bits.burstCnt := reg.burstCnt

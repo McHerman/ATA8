@@ -105,7 +105,7 @@ class FrontendTest extends AnyFlatSpec with ChiselScalatestTester {
           1    // Replace with integer for the 4-bit field
         )
 
-        println(exeInst)
+        //println(exeInst)
 
         dut.io.AXIST.tdata.poke(exeInst.U(64.W))
         dut.io.AXIST.tvalid.poke(true.B)

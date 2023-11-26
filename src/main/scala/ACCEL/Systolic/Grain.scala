@@ -5,25 +5,17 @@ import chisel3.util._
   
 class Grain(implicit c: Configuration) extends Module {  
   val io = IO(new Bundle {
-    //val State = Input(UInt(1.W))
-    //val Size = Input(UInt(8.W))
     val in = Flipped(Decoupled(new SysOP)) 
-    //val Memport = Flipped(Decoupled(new Memport_V3(c.arithDataWidth*c.grainDim,10))) // Add actual memport
-    //val Memport = Vec(2,Flipped(Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10))))
+
     val writePort = Vec(2,Vec(c.grainDim,Flipped(Decoupled(Vec(c.dataBusSize,UInt(8.W))))))
-    //val readPort = Flipped(new Readport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)) 
+
     val readPort = Vec(c.grainDim,Flipped(new Readport(Vec(c.dataBusSize,UInt(c.arithDataWidth.W)),0)))
     val completed = Valid(new Bundle{val tag = UInt(c.tagWidth.W)})
   })
 
-  /* val XFile = Module(new XFile())
-  val YFile = Module(new YFile())
-  val ACCUFile = Module(new ACCUFile()) */
-
   val xFiles = Seq.fill(c.grainDim)(Module(new XFile())) 
   val yFiles = Seq.fill(c.grainDim)(Module(new YFile())) 
-  //val ACCUFile = Seq.fill(c.grainDim)(Module(new ACCUFile())) 
-  //val accuFiles = Seq.tabulate(c.grainDim)(i => Module(new ACCUFile(i == 0))) // First module has a delay on the input on activate  
+
   val accuFiles = Seq.fill(c.grainDim)(Module(new ACCUFile(false))) 
 
 

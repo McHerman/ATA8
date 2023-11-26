@@ -43,10 +43,4 @@ class PEArray(val size: Int)(implicit c: Configuration) extends Module {
   (peArray.transpose.last zip io.yOut).foreach{case (pe,port) => 
     pe.io.yOut <> port
   }
-
-
-
-  
-
-
 }

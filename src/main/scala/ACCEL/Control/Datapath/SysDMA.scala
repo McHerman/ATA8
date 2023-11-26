@@ -7,13 +7,8 @@ class SysDMA(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val in = Flipped(new DMARead)
     val scratchIn = new ReadportScratch
-    //val memport = Decoupled(new Memport(Vec(c.grainDim,UInt(c.arithDataWidth.W)),10)) //FIXME: replace with updated memport
     val writePort = Decoupled(Vec(c.dataBusSize,UInt(8.W))) 
-    //val completed = Output(Bool())
-    //val completeAgnoledge = Input(Bool())
   })
-
-  //io.completed := false.B
 
   io.in.request.ready := false.B
 
@@ -30,11 +25,11 @@ class SysDMA(implicit c: Configuration) extends Module {
 
   val burstCNT = RegInit(0.U(8.W))
 
-  io.in.response.valid := StateReg =/= 0.U //Indicates to controller that the DMA is invoked and working 
+  io.in.response.valid := StateReg =/= 0.U //Indicates to controller that the DMA is invoked and working. Used for determining when read is complete in SysController
   io.in.response.bits.completed := false.B
 
   switch(StateReg){
-    is(0.U){
+    is(0.U){ // Recieves operation
       io.in.request.ready := true.B
       
       when(io.in.request.valid){
@@ -42,7 +37,7 @@ class SysDMA(implicit c: Configuration) extends Module {
         StateReg := 1.U
       }
     }
-    is(1.U){
+    is(1.U){ // Requests Scratchpad transfer
       io.scratchIn.request.bits.addr := reg.addr
 
       io.scratchIn.request.bits.burstSize := reg.burstSize
@@ -58,17 +53,12 @@ class SysDMA(implicit c: Configuration) extends Module {
         StateReg := 3.U
       }
     }
-    is(2.U){
+    is(2.U){ // Writes data into Systolic array buffers
       when(io.writePort.ready){
         io.scratchIn.data.ready := true.B
         
         when(io.scratchIn.data.valid){
-          //io.memport.bits.addr := reg.addr + burstCNT
-          //io.memport.bits.writeData := io.scratchIn.data.bits.readData
-          //io.memport.bits.wenable := true.B
-
           val mask = HelperFunctions.uintToBoolVec(reg.burstSize, c.dataBusSize) 
-
 
           (io.writePort.bits zip io.scratchIn.data.bits.readData zip mask).foreach{case ((port,data),mask) => 
             when(mask){
@@ -78,32 +68,19 @@ class SysDMA(implicit c: Configuration) extends Module {
             }
           }
 
-          //io.writePort.bits := io.scratchIn.data.bits.readData
           io.writePort.valid := true.B
 
-          /* when(burstCNT < (reg.size - 1.U)){
-            burstCNT := burstCNT + 1.U 
-          }.otherwise{
-            burstCNT := 0.U 
-            StateReg := 3.U
-          } */
           when(io.scratchIn.data.bits.last){
             StateReg := 3.U
           }
         }
       }
     }
-    is(3.U){ // FIXME: Change this
-      /* io.completed := true.B
-
-      when(io.completeAgnoledge){
-        StateReg := 0.U
-      } */
-
+    is(3.U){ // Waits for Controller to agnoledge finis
       io.in.response.valid := true.B
       io.in.response.bits.completed := true.B // Write completed succesfully 
 
-      when(io.in.response.ready){
+      when(io.in.response.ready){ 
         StateReg := 0.U
       }
     }

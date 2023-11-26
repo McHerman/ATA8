@@ -28,7 +28,6 @@ class SysCtrl(implicit c: Configuration) extends Module {
   io.completed.valid := false.B
   io.completed.bits := DontCare
 
-  //val FinalCnt = RegInit(0.U(8.W))
   val ShiftCnt = RegInit(0.U(8.W))
   val ActivateCnt = RegInit(0.U(8.W))
   val EnableCnt = RegInit(0.U(8.W))
@@ -86,7 +85,6 @@ class SysCtrl(implicit c: Configuration) extends Module {
         }
       }.otherwise{
         ActivateCnt := 0.U
-        //EnableCnt := 0.U
         StateReg := 0.U
 
         io.completed.bits.tag := inReg.tag

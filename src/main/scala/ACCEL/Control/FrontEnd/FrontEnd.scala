@@ -7,14 +7,14 @@ import chisel3.util._
 class FrontEnd(implicit c: Configuration) extends Module {          
   val io = IO(new Bundle {
     val AXIST = Flipped(new AXIST_2(64,2,1,1,1))
-    //val instructionStream = Decoupled(new InstructionPackage)
+
     val exeStream = Decoupled(new ExecuteInstIssue)
     val loadStream = Decoupled(new LoadInstIssue)
     val storeStream = Decoupled(new StoreInstIssue)
     val event = Vec(2,Flipped(Valid(new Event()))) 
     val receiverDebug = Valid(UInt(64.W))
     val decodeDebug = Valid(new LoadInst)
-    //val fetchDebug = Valid(UInt(64.W))
+
     val frontEndDebug = Output(new Bundle{val decodeReady = Bool(); val ROBFetchReady = Bool(); val exeOutReady = Bool(); val loadOutReady = Bool(); val storeOutReady = Bool()})
     val robDebug = Output(Vec(c.tagCount,new mapping()))
   })
@@ -31,19 +31,12 @@ class FrontEnd(implicit c: Configuration) extends Module {
   io.robDebug <> ROB.io.debug
 
   Reciever.io.AXIST <> io.AXIST
-  //instQueue.io.WriteData <> Reciever.io.instructionStream
-  instQueue.io.enq <> Reciever.io.instructionStream
 
-  //Decoder.io.instructionStream <> instQueue.io.ReadData
+  instQueue.io.enq <> Reciever.io.instructionStream
   Decoder.io.instructionStream <> instQueue.io.deq
 
   io.decodeDebug.valid := Decoder.io.issueStream.valid
   io.decodeDebug.bits := Decoder.io.issueStream.bits.data(1)
-
-
-  //Decoder.io.tagFetch <> ROB.io.ReadData
-  //Decoder.io.tagRegister <> ROB.io.Writeport
-  //Decoder.io.event := io.event
 
   ROBFetch.io.instructionStream <> Decoder.io.issueStream
   ROBFetch.io.tagFetch <> ROB.io.ReadData
@@ -51,16 +44,11 @@ class FrontEnd(implicit c: Configuration) extends Module {
   ROBFetch.io.event := io.event
 
   ROB.io.event := io.event
-  
-  //io.exeStream <> Decoder.io.exeStream
-  //io.loadStream <> Decoder.io.loadStream
-  //io.storeStream <> Decoder.io.storeStream
 
   io.exeStream <> ROBFetch.io.issueStream(0)
   io.loadStream <> ROBFetch.io.issueStream(1)
   io.storeStream <> ROBFetch.io.issueStream(2)
 
-  //io.frontEndDebug.decodeReady := Decoder.io.instructionStream.request.ready
   io.frontEndDebug.decodeReady := Decoder.io.instructionStream.ready
   io.frontEndDebug.ROBFetchReady := ROBFetch.io.instructionStream.ready 
   io.frontEndDebug.exeOutReady := io.exeStream.ready

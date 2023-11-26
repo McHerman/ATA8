@@ -3,8 +3,6 @@ package ATA8
 import chisel3._
 import chisel3.experimental._
 import chisel3.util._
-//import chisel3.util.experimental.BoringUtils
-
 
 class LoadController(implicit c: Configuration) extends Module {          
   def splitInt(input: UInt, totalWidth: Int, subWidth: Int): Seq[UInt] = {
@@ -77,20 +75,9 @@ class LoadController(implicit c: Configuration) extends Module {
         io.AXIST.tready := true.B
 
         when(io.AXIST.tvalid){
-          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,8)) //FIXME: big fucking problem here 
+          io.writeport.data.bits.writeData := VecInit(splitInt(io.AXIST.tdata,64,8))
           io.writeport.data.bits.strb := io.AXIST.tstrb.asBools
           io.writeport.data.valid := true.B
-
-          /* when(burstAddrReg < (reg.size - 1.U)){
-            burstAddrReg := burstAddrReg + 1.U
-          }.elsewhen(io.AXIST.tlast){
-            StateReg := 3.U
-            burstAddrReg := 0.U
-            io.writeport.data.bits.last := true.B
-          }.otherwise{
-            //return an error of some kind 
-            StateReg := 0.U
-          } */
 
           when(io.AXIST.tlast){
             StateReg := 3.U
@@ -100,24 +87,10 @@ class LoadController(implicit c: Configuration) extends Module {
 			}
 		}
 		is(3.U){
-      /* when(io.tagRegister.addr.ready){
-        io.tagRegister.addr.bits.addr := reg.addrs(0)
-        io.tagRegister.addr.bits.ready := true.B
-
-        io.tagRegister.addr.valid := true.B 
-
-        when(io.tagRegister.tag.valid){
-          StateReg := 0.U
-        }
-      } */
-
       io.event.valid := true.B
       io.event.bits.tag := reg.addrd(0).tag
 
       StateReg := 0.U
 		}
-  }
-
-  //BoringUtils.addSource(StateReg, "loadcontrollerstate")
-  
+  }  
 }

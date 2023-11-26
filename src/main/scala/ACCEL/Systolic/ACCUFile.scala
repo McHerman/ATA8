@@ -10,9 +10,7 @@ class ACCUFile(val hasDelay: Boolean)(implicit c: Configuration) extends Module 
     val Activate = Input(Bool())
     val ActivateOut = Output(Bool())
     val Shift = Input(Bool())
-    //val Memport = Flipped(Decoupled(new Memport_V3(dataWidth*grainWidth,addr_width)))
-    //val Memport = Flipped(Decoupled(new Memport_V3(32,addr_width)))
-    //val Readport = Flipped(new Readport_V2(c.arithDataWidth*c.dataBusSize,10))
+
     val Readport = Flipped(new Readport(Vec(c.dataBusSize,UInt(8.W)),0))
     val size = Input(UInt(log2Ceil(c.dataBusSize + 1).W))
 
@@ -37,11 +35,7 @@ class ACCUFile(val hasDelay: Boolean)(implicit c: Configuration) extends Module 
     activateIn := io.Activate
   }
 
-  /* io.Readport.request <>  
-
-  val dataVec = VecInit(moduleArray.map(_.io.ReadData.response.readData)) */
-
-  for(i <- 0 until c.dataBusSize){
+  for(i <- 0 until c.dataBusSize){ // TODO: Fix with Foreach loop
     if(i == 0){
       ACCUAct(0) := activateIn
     }else{
@@ -73,7 +67,5 @@ class ACCUFile(val hasDelay: Boolean)(implicit c: Configuration) extends Module 
 
   }
 
-  //io.ActivateOut := ACCUAct(c.dataBusSize)
   io.ActivateOut := ACCUAct.last
-
 }

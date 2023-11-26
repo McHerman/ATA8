@@ -20,7 +20,6 @@ class ATA8(config: Configuration) extends Module {
   val Load = Module(new Load(config))
   val Store = Module(new Store(config))
 
-  //val Scratchpad = Module(new Scratchpad)
   val Scratchpad = Module(new ScratchpadWrapper)
 
   val Config = Module(new Config())
@@ -37,7 +36,6 @@ class ATA8(config: Configuration) extends Module {
 
   //// EXECUTE ////
 
-  //Execute.io.scratchOut <> Scratchpad.io.Writeport(0)
   Execute.io.scratchIn(0) <> Scratchpad.io.Readport(0)
   Execute.io.scratchIn(1) <> Scratchpad.io.Readport(1)
   Execute.io.eventIn <> Load.io.event
@@ -45,7 +43,6 @@ class ATA8(config: Configuration) extends Module {
   //// LOAD //// 
 
   Load.io.AXIST <> io.AXIST_inData
-  //Load.io.scratchOut <> Scratchpad.io.Writeport(1)
 
   //// STORE //// 
 
@@ -56,7 +53,6 @@ class ATA8(config: Configuration) extends Module {
 
   //// SCRATCHPAD //// 
 
-  //Scratchpad.io.Writeport <> VecInit(Execute.io.scratchOut ++ Load.io.scratchOut)
   Scratchpad.io.Writeport <> VecInit(Execute.io.scratchOut ++ VecInit(Seq(Load.io.scratchOut)))
 
   /// DEBUG /// 

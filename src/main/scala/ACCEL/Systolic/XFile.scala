@@ -10,13 +10,10 @@ class XFile(implicit c: Configuration) extends Module {
     val Out = Output(Vec(c.dataBusSize, new PEX(c.arithDataWidth)))
     val Activate = Input(Bool())
     val ActivateOut = Output(Bool())
-    //val Memport = Flipped(Decoupled(new Memport(Vec(c.dataBusSize,UInt(c.arithDataWidth.W)),addr_width)))
+
     val Memport = Flipped(Decoupled(Vec(c.dataBusSize,UInt(8.W)))) //TODO: change name 
     val size = Input(UInt(log2Ceil(c.dataBusSize + 1).W))
   })
-
-  //io.Memport.ready := true.B
-  //io.Memport.bits.readData := DontCare
 
   val moduleArray = Seq.fill(c.dataBusSize)(Module(new BufferFIFO(c.grainFIFOSize, UInt(8.W))))
   val XACT = Reg(Vec(c.dataBusSize,UInt(1.W)))
@@ -27,16 +24,6 @@ class XFile(implicit c: Configuration) extends Module {
     }else{
       XACT(i) := XACT(i-1)
     }
-
-    /* moduleArray(i).io.WriteData.valid := false.B
-    moduleArray(i).io.WriteData.bits := 0.U
-
-    when(io.Memport.valid){
-      when(io.Memport.bits.wenable){
-        moduleArray(i).io.WriteData.valid := true.B
-        moduleArray(i).io.WriteData.bits := io.Memport.bits.writeData(i)
-      }
-    } */
 
     moduleArray(i).io.WriteData.valid := io.Memport.valid
     moduleArray(i).io.WriteData.bits := io.Memport.bits(i)

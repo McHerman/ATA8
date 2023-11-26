@@ -27,25 +27,15 @@ class ScratchReadArbiter(numPorts: Int)(implicit c: Configuration) extends Modul
 
   // Round-robin increment
   when(!isLocked) {
-    //roundRobin := Mux(roundRobin === (numPorts.U - 1.U), 0.U, roundRobin + 1.U)
     roundRobin := roundRobin + 1.U
   }
 
   // Arbitration logic
   io.inPorts.zipWithIndex.foreach { case (port, index) =>
     when((index.U === roundRobin) && !isLocked) {
-      //port.request <> io.outPort.request
       port <> io.outPort
     }
   }
-
-  // Locking mechanism
-  /* when(io.outPort.request.fire() && !isLocked) {
-    when(io.inPorts(roundRobin).request.valid) {
-      isLocked := true.B
-      activePort := roundRobin
-    }
-  } */
 
   when(io.outPort.request.fire && !isLocked) {
     isLocked := true.B
@@ -54,12 +44,11 @@ class ScratchReadArbiter(numPorts: Int)(implicit c: Configuration) extends Modul
 
   // Data transfer
   when(isLocked) {
-    //io.inPorts(activePort).data <> io.outPort.data
     io.inPorts(activePort) <> io.outPort
   }
 
   // Unlocking mechanism
-  when(isLocked && io.outPort.data.fire() && io.outPort.data.bits.last) {
+  when(isLocked && io.outPort.data.fire && io.outPort.data.bits.last) {
     isLocked := false.B
   }
 }

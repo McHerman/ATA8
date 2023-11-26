@@ -15,14 +15,9 @@ package object ATA8 {
     modeWidth: Int,
     tagCount: Int,
     addrWidth: Int,
-    dataBusSize: Int/* ,
-    initialStateMap: Seq[Int],
-    simulation: Boolean = false */
+    dataBusSize: Int
   ){
     val tagWidth =  log2Ceil(tagCount)
-    val syncIdWidth = log2Ceil(sysDim)
-    val sysWidth = log2Ceil(2)
-    //val sysWidth = log2Ceil(sysDim*sysDim) //Gives 0 
     val grainSizeWidth = log2Ceil(grainDim)
   }
 

@@ -9,8 +9,6 @@ class mapping(implicit c: Configuration) extends Bundle {
   val valid = Bool()
 } 
 
-//class ResStation(implicit c: Configuration) extends Module {
-//class ROB(tagCount: Int, tagReadPorts: Int)(implicit c: Configuration) extends Module {
 class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuration) extends Module {
   implicit val c = config
 
@@ -44,12 +42,11 @@ class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuratio
 
   val io = IO(new Bundle {
     val Writeport = Flipped(new TagWrite())
-    // val Writeport = Vec(c.tagProducers,Flipped(Decoupled(new Bundle {val addr = Output(UInt(c.addrWidth.W)); val tag = Input(UInt(c.tagWidth.W))})))
+
     val ReadData = Vec(tagReadPorts,Flipped(new TagRead())) // Two request from ExeDecoder, one from StoreController
-    //val ReadData = Flipped(new TagRead())
-    //val tagDealloc = Flipped(Decoupled(UInt(c.tagWidth.W)))
+
     val event = Vec(2,Flipped(Valid(new Event())))
-    val readAddr = Vec(readPorts/* FIXME: magic fucking number*/,Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
+    val readAddr = Vec(readPorts, Flipped(new Readport(UInt(c.addrWidth.W), c.tagWidth)))
     val debug = Output(Vec(tagCount,new mapping()))
   })
 
@@ -66,8 +63,6 @@ class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuratio
   io.ReadData.foreach{case (element) => element.response.valid := false.B; element.response.bits := DontCare}
   io.readAddr.foreach{case (element) => element.request.ready := false.B; element.response.valid := false.B; element.response.bits := DontCare}
 
-  //io.tagDealloc.ready := !empty
-
   io.Writeport.addr.ready := false.B
 	io.Writeport.tag.valid := false.B
 	io.Writeport.tag.bits := DontCare
@@ -79,7 +74,6 @@ class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuratio
   io.ReadData.foreach { case (element) => 
     when(element.request.valid){
       val (tag,valid,ready) = vecSearch(Map,element.request.bits.addr) 
-      //element.response.bits.tag := tag + offset.U// TODO: Add offset
       element.response.bits.tag := tag
 
 			io.event.foreach{case (event) => //event forwarding 
@@ -97,9 +91,6 @@ class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuratio
   io.readAddr.foreach {case (element) => // For use in SysCtrl, checks for stat
     element.request.ready := true.B
     when(element.request.valid){
-      //element.response.bits.readData := Map(element.request.bits.addr).addr - offset.U// TODO: subtract offset
-      //element.response.valid := Map(element.request.bits.addr).valid - offset.U // TODO: subtract 
-      
       element.response.bits.readData := Map(element.request.bits.addr).addr
       element.response.valid := Map(element.request.bits.addr).valid
     }
@@ -113,7 +104,6 @@ class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuratio
     Map(Head).valid := true.B
 
     io.Writeport.tag.valid := true.B
-    //io.Writeport.tag.bits := Head + offset.U // TODO: Add offset
     io.Writeport.tag.bits := Head
 
     when(Head === (tagCount.U - 1.U)){
@@ -123,17 +113,6 @@ class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuratio
       Head := Head + 1.U
     }
   }
- 
-  /* when(io.tagDealloc.valid && Tail === io.tagDealloc.bits){
-    Map(Tail).valid := false.B
-
-    when(Tail === (c.grainFIFOSize.U - 1.U)){
-      Tail := 0.U
-      TailFlip := ~TailFlip
-    }.otherwise{
-      Tail := Tail + 1.U
-    }
-  } */
 
   io.event.foreach{case (element) => 
     when(element.valid){
@@ -142,17 +121,6 @@ class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuratio
       } 
     }
   }
-
-  /* when(io.tagDealloc.valid && Tail === io.tagDealloc.bits){
-    Map(Tail).valid := false.B
-
-    when(Tail === (c.grainFIFOSize.U - 1.U)){
-      Tail := 0.U
-      TailFlip := ~TailFlip
-    }.otherwise{
-      Tail := Tail + 1.U
-    }
-  } */
 
   when(Map(Tail).ready){
     Map(Tail).valid := false.B
@@ -164,7 +132,4 @@ class ROB(tagCount: Int, tagReadPorts: Int, readPorts: Int)(config: Configuratio
       Tail := Tail + 1.U
     }
   }
-
-
-
 }
