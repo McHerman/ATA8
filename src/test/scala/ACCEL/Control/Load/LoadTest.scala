@@ -52,7 +52,9 @@ class LoadTest extends AnyFlatSpec with ChiselScalatestTester {
     //val n = 2 + Random.nextInt(30)
     //val n = 16
 
-    test(new Load(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+	implicit val c = Configuration.test()
+
+    test(new Load()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
 			dut.io.instructionStream.ready.expect(true.B)
 			dut.io.instructionStream.valid.poke(true.B)
 

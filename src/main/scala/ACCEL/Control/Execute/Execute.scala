@@ -4,9 +4,7 @@ import chisel3._
 import chisel3.experimental._
 import chisel3.util._
 
-class Execute(config: Configuration) extends Module {
-  implicit val c = config
-
+class Execute(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val instructionStream = Flipped(Decoupled(new ExecuteInstIssue))
 
@@ -20,7 +18,7 @@ class Execute(config: Configuration) extends Module {
 
   val queue = Module(new DependTrack(32,new ExecuteInstIssue,2)) // TODO: add to config
 
-  val SysWrapper = Module(new SysWrapper(c))
+  val SysWrapper = Module(new SysWrapper)
 
   queue.io.WriteData <> io.instructionStream
 
@@ -53,8 +51,4 @@ class Execute(config: Configuration) extends Module {
   /// DEBUG /// 
 
   SysWrapper.io.debug <> io.debug
-}
-
-object Execute extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Execute(Configuration.default()))
 }

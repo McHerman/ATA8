@@ -3,10 +3,7 @@ package ATA8
 import chisel3._
 import chisel3.util._
   
-class SysWrapper(config: Configuration) extends Module {
-
-  implicit val c = config
-  
+class SysWrapper(implicit c: Configuration) extends Module {  
   val io = IO(new Bundle {
     val in = new Readport(new ExecuteInstIssue,0)
     val scratchOut = Vec(c.grainDim, new WriteportScratch)
@@ -59,8 +56,4 @@ class SysWrapper(config: Configuration) extends Module {
   /// DEBUG /// 
 
   SysController.io.debug <> io.debug
-}
-
-object SysWrapper extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new SysWrapper(Configuration.default()))
 }

@@ -40,8 +40,10 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
   //implicit val Config = Configuration.default().copy(issueQueueSize = n, simulation = true)
 
+  implicit val c = Configuration.test()
+
   it should "execute with 1 missing depend" in {
-    test(new Execute(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+    test(new Execute()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
       dut.io.instructionStream.ready.expect(true.B)
       dut.io.instructionStream.valid.poke(true.B)
 
@@ -164,7 +166,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
 
   it should "execute with 2 missing depend" in {
-    test(new Execute(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+    test(new Execute()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
       dut.io.instructionStream.ready.expect(true.B)
       dut.io.instructionStream.valid.poke(true.B)
 
@@ -295,7 +297,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
   }
 
   it should "allocate multible instructions" in {
-    test(new Execute(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+    test(new Execute()).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
       dut.io.instructionStream.ready.expect(true.B)
       dut.io.instructionStream.valid.poke(true.B)
 

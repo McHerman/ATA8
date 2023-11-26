@@ -4,9 +4,7 @@ import chisel3._
 import chisel3.experimental._
 import chisel3.util._
 
-class Store(config: Configuration) extends Module {
-  implicit val c = config
-
+class Store(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val instructionStream = Flipped(Decoupled(new StoreInstIssue))
 
@@ -33,8 +31,4 @@ class Store(config: Configuration) extends Module {
 
   StoreController.io.debug <> io.debug
   
-}
-
-object Store extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Store(Configuration.default()))
 }

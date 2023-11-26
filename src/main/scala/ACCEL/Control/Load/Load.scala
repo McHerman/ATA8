@@ -4,9 +4,7 @@ import chisel3._
 import chisel3.experimental._
 import chisel3.util._
 
-class Load(config: Configuration) extends Module {
-  implicit val c = config
-
+class Load(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val instructionStream = Flipped(Decoupled(new LoadInstIssue))
 
@@ -32,8 +30,4 @@ class Load(config: Configuration) extends Module {
 
   LoadController.io.debug <> io.debug
 
-}
-
-object Load extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Load(Configuration.default()))
 }

@@ -16,9 +16,9 @@ class ATA8(config: Configuration) extends Module {
 
   val FrontEnd = Module(new FrontEnd)
 
-  val Execute = Module(new Execute(config))
-  val Load = Module(new Load(config))
-  val Store = Module(new Store(config))
+  val Execute = Module(new Execute())
+  val Load = Module(new Load())
+  val Store = Module(new Store())
 
   val Scratchpad = Module(new ScratchpadWrapper)
 
