@@ -42,11 +42,13 @@ class Grain(implicit c: Configuration) extends Module {
 
   /// CARRY SIGNALS ///
 
-  xFiles.head.io.Activate := SysCtrl.io.Activate
+  //xFiles.head.io.Activate := SysCtrl.io.Activate
+  xFiles.head.io.Activate := SysCtrl.io.activate
   accuFiles.head.io.Activate := xFiles.last.io.ActivateOut
 
-  yFiles.head.io.Activate := SysCtrl.io.Activate
-  yFiles.head.io.Enable := SysCtrl.io.Enable
+  //yFiles.head.io.Activate := SysCtrl.io.Activate
+  //yFiles.head.io.Enable := SysCtrl.io.Enable
+  yFiles.head.io.Activate := SysCtrl.io.activate
 
   if(c.grainDim != 1){
     xFiles.sliding(2).foreach{case Seq(producer, reciever) => 
@@ -59,20 +61,24 @@ class Grain(implicit c: Configuration) extends Module {
 
     yFiles.sliding(2).foreach{case Seq(producer, reciever) => 
       reciever.io.Activate := producer.io.ActivateOut
-      reciever.io.Enable := producer.io.EnableOut
+      //reciever.io.Enable := producer.io.EnableOut
     }
   }
 
   /// GLOBAL SIGNALS ///
 
   yFiles.foreach{file => 
-    file.io.State := SysCtrl.io.Mode
-    file.io.Shift := SysCtrl.io.Shift
+    //file.io.State := SysCtrl.io.Mode
+    //file.io.Shift := SysCtrl.io.Shift
+    file.io.State := SysCtrl.io.ctrl.state
+    file.io.Shift := SysCtrl.io.ctrl.shift
   }
 
   accuFiles.foreach{file => 
-    file.io.State := SysCtrl.io.Mode
-    file.io.Shift := SysCtrl.io.Shift
+    //file.io.State := SysCtrl.io.Mode
+    //file.io.Shift := SysCtrl.io.Shift
+    file.io.State := SysCtrl.io.ctrl.state
+    file.io.Shift := SysCtrl.io.ctrl.shift
   }
 
   SysCtrl.io.activateLoopBack := accuFiles.last.io.ActivateOut
@@ -109,8 +115,10 @@ class Grain(implicit c: Configuration) extends Module {
 
   array.zipWithIndex.foreach { case (row, i) =>
     row.zipWithIndex.foreach { case (pe, k) =>
-      pe.io.ctrl.state := SysCtrl.io.Mode
-      pe.io.ctrl.shift := SysCtrl.io.Shift
+      //pe.io.ctrl.state := SysCtrl.io.Mode
+      //pe.io.ctrl.shift := SysCtrl.io.Shift
+
+      pe.io.ctrl := SysCtrl.io.ctrl
 
 
       if (i != c.grainDim - 1) {

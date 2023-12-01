@@ -9,8 +9,8 @@ class YFile(implicit c: Configuration) extends Module {
     val Out = Output(Vec(c.dataBusSize, new PEY(c.arithDataWidth,1))) // TODO: change dis shit
     val Activate = Input(Bool())
     val ActivateOut = Output(Bool())
-    val Enable = Input(Bool())
-    val EnableOut = Output(Bool())
+    //val Enable = Input(Bool())
+    //val EnableOut = Output(Bool())
     val Shift = Input(Bool())
 
     val Memport = Flipped(Decoupled(Vec(c.dataBusSize,UInt(8.W)))) //TODO: change name 
@@ -24,16 +24,16 @@ class YFile(implicit c: Configuration) extends Module {
   val moduleArray = Seq.fill(c.dataBusSize)(Module(new BufferFIFO(c.grainFIFOSize, UInt(8.W))))
 
   val YACT = Reg(Vec(c.dataBusSize,UInt(1.W)))
-  val YEn = Reg(Vec(c.dataBusSize,UInt(1.W)))
+  //val YEn = Reg(Vec(c.dataBusSize,UInt(1.W)))
   
   for(i <- 0 until c.dataBusSize){
     if(i == 0){
       YACT(0) := io.Activate
       //YEn(0) := EnDelayReg
-      YEn(0) := io.Enable
+      //YEn(0) := io.Enable
     }else{
       YACT(i) := YACT(i-1)
-      YEn(i) := YEn(i-1)
+      //YEn(i) := YEn(i-1)
     }
 
     when(moduleArray(i).io.ReadData.response.valid){
@@ -61,7 +61,7 @@ class YFile(implicit c: Configuration) extends Module {
   }
 
   io.ActivateOut := YACT.last
-  io.EnableOut := YEn.last
+  //io.EnableOut := YEn.last
 
   io.Memport.ready := VecInit(moduleArray.map(_.io.WriteData.ready)).reduceTree(_ && _)
 }

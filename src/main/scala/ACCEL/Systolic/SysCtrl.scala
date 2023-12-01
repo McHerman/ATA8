@@ -8,10 +8,13 @@ class SysCtrl(implicit c: Configuration) extends Module {
   val io = IO(new Bundle {
     val in = Flipped(Decoupled(new SysOP))
     
-    val Activate = Output(Bool()) //TODO: change to camelcase
-    val Shift = Output(Bool())
+    val activate = Output(Bool()) //TODO: change to camelcase
+    /* val Shift = Output(Bool())
     val Enable = Output(Bool())
-    val Mode = Output(UInt(1.W))
+    val Mode = Output(UInt(1.W)) */
+
+    val ctrl = Output(new Bundle{val state = UInt(1.W); val shift = Bool()})
+    
     val sizes = Output(Vec(c.grainDim, UInt(log2Ceil(c.dataBusSize + 1).W)))
     val activateLoopBack = Input(Bool())
 
@@ -20,10 +23,10 @@ class SysCtrl(implicit c: Configuration) extends Module {
 
   io.in.ready := false.B
 
-  io.Shift := false.B
+  /* io.Shift := false.B
   io.Activate := false.B
   io.Enable := false.B
-  io.Mode := 0.U
+  io.Mode := 0.U */
 
   io.completed.valid := false.B
   io.completed.bits := DontCare
@@ -33,6 +36,23 @@ class SysCtrl(implicit c: Configuration) extends Module {
   val EnableCnt = RegInit(0.U(8.W))
   val WaitCnt = RegInit(0.U(8.W))
 
+  val ctrlOutReg = Reg(new Bundle{val state = UInt(1.W); val shift = Bool()})
+  val activateOutReg = RegInit(false.B)
+
+  val ctrlOut = Wire(new Bundle{val state = UInt(1.W); val shift = Bool()})
+  ctrlOut.state := 0.U
+  ctrlOut.shift := false.B
+
+  ctrlOutReg := ctrlOut
+  io.ctrl := ctrlOutReg
+
+  val activateOut = Wire(Bool())
+  activateOut := false.B
+
+  activateOutReg := activateOut
+  io.activate := activateOutReg
+
+  
   val StateReg = RegInit(0.U(4.W))
 
   val inReg = Reg(new SysOP)
@@ -57,10 +77,12 @@ class SysCtrl(implicit c: Configuration) extends Module {
       }
     }
     is(1.U){
-      io.Mode := 0.U
+      //io.Mode := 0.U
+      ctrlOut.state := 0.U
 
       when(ShiftCnt < inReg.size){
-        io.Shift := true.B
+        //io.Shift := true.B
+        ctrlOut.shift := true.B
         ShiftCnt := ShiftCnt + 1.U
       }.otherwise{
         ShiftCnt := 0.U
@@ -68,10 +90,12 @@ class SysCtrl(implicit c: Configuration) extends Module {
       }
     }
     is(2.U){ // 
-      io.Mode := 0.U
+      //io.Mode := 0.U
+      ctrlOut.state := 0.U
 
       when(ActivateCnt < inReg.size){
-        io.Activate := true.B
+        //io.Activate := true.B
+        activateOut := true.B
         ActivateCnt := ActivateCnt + 1.U
       }.otherwise{
         ActivateCnt := 0.U
@@ -93,15 +117,17 @@ class SysCtrl(implicit c: Configuration) extends Module {
     }
 
     is(5.U){
-      io.Mode := 1.U
+      //io.Mode := 0.U
+      ctrlOut.state := 1.U
 
       when(ActivateCnt < inReg.size){
-        io.Activate := true.B
+        //io.Activate := true.B
+        activateOut := true.B
         ActivateCnt := ActivateCnt + 1.U
       }
       
       when(EnableCnt < ((inReg.size * 2.U))){
-        io.Enable := true.B
+        //io.Enable := true.B
         EnableCnt := EnableCnt + 1.U
       }.otherwise{
         ActivateCnt := 0.U
@@ -110,7 +136,8 @@ class SysCtrl(implicit c: Configuration) extends Module {
       }
     }
     is(6.U){
-      io.Mode := 1.U
+      //io.Mode := 0.U
+      ctrlOut.state := 1.U
 
       when(WaitCnt < inReg.size){
         WaitCnt := WaitCnt + 1.U
@@ -120,10 +147,12 @@ class SysCtrl(implicit c: Configuration) extends Module {
       }
     }
     is(7.U){ // 
-      io.Mode := 1.U
+      //io.Mode := 0.U
+      ctrlOut.state := 1.U
 
       when(ShiftCnt < inReg.size){
-        io.Shift := true.B
+        //io.Shift := true.B
+        ctrlOut.shift := true.B
         ShiftCnt := ShiftCnt + 1.U
       }.otherwise{
         ShiftCnt := 0.U

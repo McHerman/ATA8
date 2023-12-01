@@ -8,10 +8,10 @@ class DSPMultiplier(width: Int) extends BlackBox with HasBlackBoxInline {
   val io = IO(new Bundle {
     val a = Input(UInt(width.W))
     val b = Input(UInt(width.W))
-    val result = Output(UInt(width.W)) // Output width is twice the input width
+    val result = Output(UInt((2 * width).W)) // Output width is twice the input width
   })
 
-  // The purpose of this module is to ensure that vivado instantiates DSP's 
+  // The purpose of this module is to ensure that Vivado instantiates DSP's 
 
   setInline("DSPMultiplier.v",
     s"""|(* use_dsp48 = "yes" *)
@@ -20,7 +20,7 @@ class DSPMultiplier(width: Int) extends BlackBox with HasBlackBoxInline {
         |)(
         |    input [WIDTH-1:0] a,
         |    input [WIDTH-1:0] b,
-        |    output [WIDTH-1:0] result
+        |    output [2*WIDTH-1:0] result // Adjusted output width
         |);
         |    assign result = a * b; // Perform multiplication
         |endmodule
@@ -51,30 +51,30 @@ class PE(implicit c: Configuration) extends Module {
   multiplier.io.b := 0.U
 
   switch(io.ctrl.state) {
-    is(0.U) { // Weight Stationary mode
-      io.yOut.Y := DataReg
-      multiplier.io.a := io.x.X
-      multiplier.io.b := YReg
-
-      DataReg := multiplier.io.result + io.y.Y
-
+    is(0.U) {
       when(io.ctrl.shift){
         YReg := io.y.Y
         io.yOut.Y := YReg
+      }.otherwise{
+        io.yOut.Y := DataReg
+        multiplier.io.a := io.x.X
+        multiplier.io.b := YReg
+
+        DataReg := multiplier.io.result(7,0) + io.y.Y
       }
     }
-    is(1.U) { // Output Stationary mode 
-      multiplier.io.a := io.x.X
-      multiplier.io.b := io.y.Y
-
-      DataReg := multiplier.io.result + DataReg
-
-      YReg := io.y.Y
-      io.yOut.Y := YReg
-
+    is(1.U) {
       when(io.ctrl.shift){
         DataReg := io.y.Y
         io.yOut.Y := DataReg
+      }.otherwise{
+        multiplier.io.a := io.x.X
+        multiplier.io.b := io.y.Y
+
+        DataReg := multiplier.io.result(7,0) + DataReg
+
+        YReg := io.y.Y
+        io.yOut.Y := YReg
       }
     }
   }

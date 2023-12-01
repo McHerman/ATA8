@@ -29,7 +29,6 @@ abstract class InstBase(addrsSize: Int, addrdSize: Int)(implicit c: Configuratio
 
 class ExecuteInst(implicit c: Configuration) extends InstBase(2,1){
   val mode = UInt(1.W)
-  //val grainSize = UInt(4.W)
 }
 
 class LoadInst(implicit c: Configuration) extends InstBase(0,1){
