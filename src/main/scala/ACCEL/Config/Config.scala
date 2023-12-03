@@ -9,7 +9,7 @@ import play.api.libs.json._
 
 
 class Config(implicit c: Configuration) extends Module {
-  val registersCount = 33
+  val registersCount = 38
 
   val io = IO(new Bundle {
     val axi_s0 = Flipped(new CustomAXI4Lite(32, 32))
@@ -48,7 +48,7 @@ class Config(implicit c: Configuration) extends Module {
 
   regs(0) := io.loadDebug.state
   regs(1) := io.exeDebug.state
-  regs(2) := io.storeDebug.state
+  regs(2) := io.storeDebug.asUInt
   regs(3) := io.AXIDebug.asUInt
 
   when(io.receiverDebug.valid){
@@ -95,9 +95,9 @@ class Config(implicit c: Configuration) extends Module {
 
   io.robDebug.zipWithIndex.foreach{case (id,i) => 
     regs(20+i) := Cat(id.valid, id.ready, id.addr)
-  }
+  } 
 
-  regs(28) := io.frontEndDebug.asUInt
+  regs(36) := io.frontEndDebug.asUInt
 
 
 

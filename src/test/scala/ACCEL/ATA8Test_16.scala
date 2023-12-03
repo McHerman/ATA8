@@ -435,4 +435,167 @@ class ATA8Test_16 extends AnyFlatSpec with ChiselScalatestTester {
 			}
     }
   }
+
+  it should "execute twice" in {
+    //val n = 2 + Random.nextInt(30)
+    val n = 32
+
+    test(new ATA8(Configuration.sys16_largeMem())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+      val source = Source.fromFile("testProgram16_double_Output.txt")
+
+      dut.io.AXIST_inInst.tready.expect(true.B)
+      dut.io.AXIST_inData.tready.expect(false.B)
+      
+      dut.io.AXIST_out.tvalid.expect(false.B)
+
+      for (instruction <- source.getLines()) {
+        dut.clock.step(Random.nextInt(10))
+        
+        dut.io.AXIST_inInst.tready.expect(true.B)
+
+        val instBigInt = BigInt(instruction, 2)
+
+        dut.io.AXIST_inInst.tready.expect(true.B)
+        dut.io.AXIST_inInst.tvalid.poke(true.B)
+        dut.io.AXIST_inInst.tstrb.poke(255.U)
+
+        dut.io.AXIST_inInst.tdata.poke(instBigInt.U(64.W))
+        //c.io.instruction.poke(instBigInt.U(64.W))
+
+        dut.clock.step(1)
+
+        dut.io.AXIST_inInst.tvalid.poke(false.B)
+      }
+
+      println("instructions written")
+
+      dut.io.AXIST_inInst.tlast.poke(true.B)
+      
+      dut.clock.step(1)
+
+      dut.io.AXIST_inInst.tvalid.poke(false.B)
+      dut.io.AXIST_inInst.tlast.poke(false.B)
+
+      while (dut.io.AXIST_inData.tready.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      println("addr1 loaded")
+
+      for (row <- 0 until n) {
+				dut.io.AXIST_inData.tdata.poke(matrix(row))
+				dut.io.AXIST_inData.tstrb.poke(255.U)
+        dut.io.AXIST_inData.tvalid.poke(true.B)
+
+				if (row == n - 1) {
+					dut.io.AXIST_inData.tlast.poke(true.B)  // assert tlast on the last line of the matrix
+				}
+				dut.clock.step(1)
+			}
+
+      dut.io.AXIST_inData.tready.expect(false.B)
+
+      dut.io.AXIST_inData.tvalid.poke(false.B)
+      dut.io.AXIST_inData.tlast.poke(false.B)
+
+      while (dut.io.AXIST_inData.tready.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      println("addr2 loaded")
+
+      for (row <- 0 until n) {
+				dut.io.AXIST_inData.tdata.poke(matrix(row))
+				dut.io.AXIST_inData.tstrb.poke(255.U)
+        dut.io.AXIST_inData.tvalid.poke(true.B)
+
+				if (row == n - 1) {
+					dut.io.AXIST_inData.tlast.poke(true.B)  // assert tlast on the last line of the matrix
+				}
+				dut.clock.step(1)
+			}
+
+      dut.io.AXIST_inData.tready.expect(false.B)
+
+      dut.io.AXIST_inData.tvalid.poke(false.B)
+      dut.io.AXIST_inData.tlast.poke(false.B)
+
+      while (dut.io.AXIST_inData.tready.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      println("addr3 loaded")
+
+      for (row <- 0 until n) {
+				dut.io.AXIST_inData.tdata.poke(matrix(row))
+				dut.io.AXIST_inData.tstrb.poke(255.U)
+        dut.io.AXIST_inData.tvalid.poke(true.B)
+
+				if (row == n - 1) {
+					dut.io.AXIST_inData.tlast.poke(true.B)  // assert tlast on the last line of the matrix
+				}
+				dut.clock.step(1)
+			}
+
+      dut.io.AXIST_inData.tready.expect(false.B)
+
+      dut.io.AXIST_inData.tvalid.poke(false.B)
+      dut.io.AXIST_inData.tlast.poke(false.B)
+
+      while (dut.io.AXIST_inData.tready.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      println("addr4 loaded")
+
+      for (row <- 0 until n) {
+				dut.io.AXIST_inData.tdata.poke(matrix(row))
+				dut.io.AXIST_inData.tstrb.poke(255.U)
+        dut.io.AXIST_inData.tvalid.poke(true.B)
+
+				if (row == n - 1) {
+					dut.io.AXIST_inData.tlast.poke(true.B)  // assert tlast on the last line of the matrix
+				}
+				dut.clock.step(1)
+			}
+
+
+      dut.io.AXIST_inData.tready.expect(false.B)
+
+      dut.io.AXIST_inInst.tvalid.poke(false.B)
+      dut.io.AXIST_inInst.tlast.poke(false.B)
+
+      dut.io.AXIST_out.tready.poke(true.B)
+
+      while (dut.io.AXIST_out.tvalid.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      for (row <- 0 until n) {
+				//dut.io.AXIST_inData.tdata.poke(matrix(row))
+				dut.io.AXIST_out.tdata.expect(resultMatrix(row))
+
+				if (row == n - 1) {
+					dut.io.AXIST_out.tlast.expect(true.B)  // assert tlast on the last line of the matrix
+				}
+				dut.clock.step(1)
+			}
+
+      dut.io.AXIST_out.tready.poke(true.B)
+
+      while (dut.io.AXIST_out.tvalid.peek().litToBoolean == false) {
+        dut.clock.step()
+      } 
+
+      for (row <- 0 until n) {
+				//dut.io.AXIST_inData.tdata.poke(matrix(row))
+				dut.io.AXIST_out.tdata.expect(resultMatrix(row))
+
+				if (row == n - 1) {
+					dut.io.AXIST_out.tlast.expect(true.B)  // assert tlast on the last line of the matrix
+				}
+				dut.clock.step(1)
+			}
+    }
+  }
 }

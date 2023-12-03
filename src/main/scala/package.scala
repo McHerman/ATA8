@@ -54,6 +54,22 @@ package object ATA8 {
         8     // dataBusSize
       )
     }
+    def sys16_largeMem(): Configuration = {
+      Configuration(
+        16384, // scratchpadSize
+        3,    // bufferReadPorts
+        2,    // bufferWritePorts
+        2,    // grainDim
+        1,    // sysDim
+        64,  // grainFIFOSize
+        64,  // grainACCUSize
+        8,    // arithDataWidth
+        1,    // modeWidth
+        16,    // tagCount
+        16,   // addrWidth
+        8     // dataBusSize
+      )
+    }
     def sys32(): Configuration = {
       Configuration(
         4096, // scratchpadSize

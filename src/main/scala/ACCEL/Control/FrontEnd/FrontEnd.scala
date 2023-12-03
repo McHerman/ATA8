@@ -21,7 +21,7 @@ class FrontEnd(implicit c: Configuration) extends Module {
 
   val Reciever = Module(new InstReciever)
   //val instQueue = Module(new BufferFIFO(16, new InstructionPackage)) //FIXME: non parameterized constant
-  val instQueue = Module(new Queue(new InstructionPackage, 16))
+  val instQueue = Module(new Queue(new InstructionPackage, 32))
   val Decoder = Module(new Decoder)
   val ROBFetch = Module(new ROBFetch)
   val ROB = Module(new ROB(c.tagCount,2,0)(c))

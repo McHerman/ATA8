@@ -33,7 +33,7 @@ class ReadBurstHandler(implicit c: Configuration) extends Module {
     reg.burstCnt := io.scratchReadport.request.bits.burstCnt - 1.U //TODO: not great, fix at invocation
   }
 
-  when(isLocked) {
+  /* when(isLocked) {
     when(io.readPort.request.ready) {
       io.readPort.request.valid := true.B
       io.readPort.request.bits.addr := reg.addr
@@ -57,5 +57,32 @@ class ReadBurstHandler(implicit c: Configuration) extends Module {
     when(reg.burstCnt === 0.U) {
       isLocked := false.B
     }
+  } */
+
+  when(isLocked) {
+    when(io.readPort.request.ready) { //FIXME: Sorta shitty
+      io.readPort.request.valid := true.B
+      io.readPort.request.bits.addr := reg.addr
+
+      io.scratchReadport.data.valid := io.readPort.response.valid
+      io.scratchReadport.data.bits.readData := io.readPort.response.bits.readData.asTypeOf(Vec(c.dataBusSize, UInt(8.W)))
+
+      when(io.scratchReadport.data.fire){
+        io.readPort.request.bits.addr := reg.addr + reg.burstStride
+        reg.addr := reg.addr + reg.burstStride
+        reg.burstCnt := reg.burstCnt - 1.U
+
+        when(reg.burstCnt === 0.U){
+          io.scratchReadport.data.bits.last := true.B
+        }
+      }
+
+      // Remove the address increment logic from here
+
+      when(reg.burstCnt === 0.U) {
+        isLocked := false.B
+      }
+    }
   }
+
 }

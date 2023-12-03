@@ -3,24 +3,33 @@ import scala.io.Source
 
 object Assembler {
 
-  // Helper to pad zeros to reach the required bit length
   def padZeros(value: String, length: Int): String = {
     "0" * (length - value.length) + value
   }
 
-  // Convert decimal integer to binary string with padding
   def decToBinary(value: Int, length: Int): String = {
     padZeros(value.toBinaryString, length)
   }
 
   def main(args: Array[String]): Unit = {
-    val source = Source.fromFile("testProgram.txt")
-    val out = new PrintWriter(new BufferedWriter(new FileWriter("output.txt")))
+    if (args.length != 1) {
+      println("Usage: Assembler <input file>")
+      return
+    }
+
+    val inputFile = args(0)
+    val baseFileName = inputFile.takeWhile(_ != '.')
+    val outputBinaryFile = baseFileName + "_Out_bin.txt"
+    val outputIntFile = baseFileName + "_Out_int.txt"
+
+    val source = Source.fromFile(inputFile)
+    val outBinary = new PrintWriter(new BufferedWriter(new FileWriter(outputBinaryFile)))
+    val outInt = new PrintWriter(new BufferedWriter(new FileWriter(outputIntFile)))
     
     for (line <- source.getLines()) {
       val tokens = line.split(" ").map(_.replace(",", ""))
-      val op = tokens(0)   
-      val binaryInstruction = op.toLowerCase match {
+      val op = tokens(0)
+      val binaryInstruction: String = op.toLowerCase match {
         case "gemm" =>
           val size = decToBinary(tokens(1).toInt, 8)
           val addrs1 = decToBinary(tokens(2).toInt, 16)
@@ -43,12 +52,19 @@ object Assembler {
 
         case _ =>
           println(s"Unknown instruction: $op")
-          ""
+          "" // Return an empty string
       }
-      out.println(binaryInstruction)
+
+      if (binaryInstruction.nonEmpty) {
+        outBinary.println(binaryInstruction)
+        outInt.println(java.lang.Long.parseLong(binaryInstruction, 2))
+      } else {
+        println(s"Empty or invalid binary instruction for line: $line")
+      }
     }
 
     source.close()
-    out.close()
+    outBinary.close()
+    outInt.close()
   }
 }

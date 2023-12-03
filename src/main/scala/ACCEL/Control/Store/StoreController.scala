@@ -54,6 +54,8 @@ class StoreController(implicit c: Configuration) extends Module {
   /// DEBUG ///
 
   io.debug.state := StateReg
+  io.debug.axiReady := io.AXIST.tready
+  io.debug.readPortValid := io.readport.data.valid
 
   switch(StateReg){
 		is(0.U){

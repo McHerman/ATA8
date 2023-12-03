@@ -29,7 +29,7 @@ def main():
     # Open files
     DATA_WRITE = os.open("/dev/xdma0_h2c_0", os.O_WRONLY)
     INST_WRITE = os.open("/dev/xdma0_h2c_1", os.O_WRONLY)
-    DEBUG_READ = os.open("/dev/xdma0_user", os.O_RDONLY)
+    DEBUG_READ = os.open("/dev/xdma0_user", os.O_RDONLY)    
     fd_c2h = os.open("/dev/xdma0_c2h_0", os.O_RDONLY)
 
     # Read all states from the debug interface
@@ -37,10 +37,15 @@ def main():
 
     # Generate instructions as bytes
     #instructions = struct.pack('<Q', 134217730) + struct.pack('<Q', 34493956098) + struct.pack('<Q', 4503633987110913) + struct.pack('<Q',68853694467)
-    instructions = struct.pack('<Q', 268435458) + struct.pack('<Q', 1099780063234) + struct.pack('<Q', 144116287587487745) + struct.pack('<Q',2199291691011)
+    instructions1 = struct.pack('<Q', 268435458) + struct.pack('<Q', 17592454479874) + struct.pack('<Q', 2305860601399742465) + struct.pack('<Q', 35184640524291) 
 
-    write_to_device(INST_WRITE, instructions)
-    print("Instructions written")
+    write_to_device(INST_WRITE, instructions1)
+    print("Instruction1 written")
+
+    instructions2 = struct.pack('<Q', 1099780063234) + struct.pack('<Q', 18691966107650) + struct.pack('<Q', 2377919294966075393) + struct.pack('<Q',36284152152067)
+
+    write_to_device(INST_WRITE, instructions2)
+    print("Instruction2 written")
 
     #read_all_states(DEBUG_READ, 'config.json')
 
@@ -49,17 +54,27 @@ def main():
     write_to_device(DATA_WRITE, matrix1)
     print("Data1 written")
 
-    #read_all_states(DEBUG_READ, 'config.json')
-
     matrix2 = struct.pack('<Q', 0x0102030401020304) * 32
     write_to_device(DATA_WRITE, matrix2)
     print("Data2 written")
+
+    matrix3 = struct.pack('<Q', 0x0102030401020304) * 32
+    write_to_device(DATA_WRITE, matrix3)
+    print("Data3 written")
+
+    matrix4 = struct.pack('<Q', 0x0102030401020304) * 32
+    write_to_device(DATA_WRITE, matrix4)
+    print("Data4 written")
+
 
     #read_all_states(DEBUG_READ, 'config.json')
 
     # Read 8 separate 64-bit integers from FPGA
     read_data = read_from_device(fd_c2h)
     print("Read Data: ", read_data)
+
+    read_data2 = read_from_device(fd_c2h)
+    print("Read Data: ", read_data2)
 
     # Close device files
     os.close(DATA_WRITE)

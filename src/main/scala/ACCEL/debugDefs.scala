@@ -10,6 +10,8 @@ class LoadDebug extends Bundle {
 
 class StoreDebug extends Bundle {
   val state = Output(UInt(4.W))
+  val axiReady = Output(Bool())
+  val readPortValid = Output(Bool())
 }
 
 class ExeDebug extends Bundle {
