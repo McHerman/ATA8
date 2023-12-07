@@ -104,8 +104,8 @@ class ATA8Test extends AnyFlatSpec with ChiselScalatestTester {
     //val n = 2 + Random.nextInt(30)
     //val n = 16
 
-    test(new ATA8(Configuration.default())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
-      val source = Source.fromFile("output.txt")
+    test(new ATA8(Configuration.test())).withAnnotations(Seq(VerilatorBackendAnnotation, WriteVcdAnnotation)) { dut =>
+      val source = Source.fromFile("testProgram_Out_bin.txt")
 
       dut.io.AXIST_inInst.tready.expect(true.B)
       dut.io.AXIST_inData.tready.expect(false.B)

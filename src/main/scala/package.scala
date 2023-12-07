@@ -15,7 +15,8 @@ package object ATA8 {
     modeWidth: Int,
     tagCount: Int,
     addrWidth: Int,
-    dataBusSize: Int
+    dataBusSize: Int,
+    fixedpoint: Boolean
   ){
     val tagWidth =  log2Ceil(tagCount)
     val grainSizeWidth = log2Ceil(grainDim)
@@ -35,7 +36,8 @@ package object ATA8 {
         1,    // modeWidth
         8,    // tagCount
         16,   // addrWidth
-        8     // dataBusSize
+        8,     // dataBusSize
+        true
       )
     }
     def sys16(): Configuration = {
@@ -51,7 +53,8 @@ package object ATA8 {
         1,    // modeWidth
         8,    // tagCount
         16,   // addrWidth
-        8     // dataBusSize
+        8,     // dataBusSize
+        true
       )
     }
     def sys16_largeMem(): Configuration = {
@@ -67,7 +70,8 @@ package object ATA8 {
         1,    // modeWidth
         16,    // tagCount
         16,   // addrWidth
-        8     // dataBusSize
+        8,     // dataBusSize
+        true
       )
     }
     def sys32(): Configuration = {
@@ -83,7 +87,8 @@ package object ATA8 {
         1,    // modeWidth
         8,    // tagCount
         16,   // addrWidth
-        8     // dataBusSize
+        8,     // dataBusSize
+        true
       )
     }
     def test(): Configuration = {
@@ -99,7 +104,8 @@ package object ATA8 {
         1,    // modeWidth
         8,    // tagCount
         16,   // addrWidth
-        8     // dataBusSize
+        8,     // dataBusSize
+        false
       )
     }
     def test16(): Configuration = {
@@ -115,7 +121,25 @@ package object ATA8 {
         1,    // modeWidth
         8,    // tagCount
         16,   // addrWidth
-        8     // dataBusSize
+        8,     // dataBusSize
+        false
+      )
+    }
+    def sys16_largeMem_test(): Configuration = {
+      Configuration(
+        16384, // scratchpadSize
+        3,    // bufferReadPorts
+        2,    // bufferWritePorts
+        2,    // grainDim
+        1,    // sysDim
+        64,  // grainFIFOSize
+        64,  // grainACCUSize
+        8,    // arithDataWidth
+        1,    // modeWidth
+        16,    // tagCount
+        16,   // addrWidth
+        8,     // dataBusSize
+        false
       )
     }
   }

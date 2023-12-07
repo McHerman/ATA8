@@ -60,7 +60,11 @@ class PE(implicit c: Configuration) extends Module {
         multiplier.io.a := io.x.X
         multiplier.io.b := YReg
 
-        DataReg := multiplier.io.result(7,0) + io.y.Y
+        if(c.fixedpoint){
+          DataReg := multiplier.io.result(15,8) + io.y.Y
+        }else{
+          DataReg := multiplier.io.result(7,0) + io.y.Y
+        }
       }
     }
     is(1.U) {
@@ -71,7 +75,11 @@ class PE(implicit c: Configuration) extends Module {
         multiplier.io.a := io.x.X
         multiplier.io.b := io.y.Y
 
-        DataReg := multiplier.io.result(7,0) + DataReg
+        if(c.fixedpoint){
+          DataReg := multiplier.io.result(15,8) + io.y.Y
+        }else{
+          DataReg := multiplier.io.result(7,0) + io.y.Y
+        }
 
         YReg := io.y.Y
         io.yOut.Y := YReg
